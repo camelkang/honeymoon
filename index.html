@@ -39,7 +39,7 @@
   header .sub { color: var(--muted); font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .app { flex: 1; display: flex; min-height: 0; }
   aside {
-    width: 380px; max-width: 100%; background: var(--panel); border-right: 1px solid var(--line);
+    width: 420px; max-width: 100%; background: var(--panel); border-right: 1px solid var(--line);
     display: flex; flex-direction: column; min-height: 0;
   }
   #map { flex: 1; min-height: 0; background: #ddd; }
@@ -97,6 +97,10 @@
   .leg { margin-left: 30px; font-size: 11.5px; color: var(--muted); }
   .empty { color: var(--muted); font-size: 12.5px; padding: 6px 0; }
   hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+  .pop { color: #1f2430; }
+  .pop .muted { color: #6b7280; }
+  .pop .btn, .pop select { background: #fff; color: #1f2430; border-color: #d9d4c9; }
+  .pop .btn.primary { background: #0b7285; color: #fff; border-color: #0b7285; }
   .pop h3 { margin: 0 0 4px; font-size: 15px; }
   .pop p { margin: 4px 0; font-size: 12.5px; line-height: 1.45; }
   .pop .tip { background: #fff7e6; color: #5c3d00; padding: 5px 7px; border-radius: 6px; }
@@ -126,6 +130,22 @@
   dialog input { width: 100%; }
   dialog h2 { margin-top: 0; font-size: 16px; }
   dialog ol { padding-left: 18px; line-height: 1.6; }
+  .g-only { display: none !important; }
+  body.gmode .g-only { display: revert !important; }
+  .notice { background: #fff4e6; color: #7a3e00; border-radius: 8px; padding: 8px 10px; margin: 10px 0; font-size: 12.5px; line-height: 1.5; }
+  .gd { margin-top: 6px; font-size: 12.5px; }
+  .gd img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; display: block; margin-bottom: 6px; }
+  .gd .stars { color: #e67700; font-weight: 700; }
+  .gd details { margin-top: 4px; }
+  .gd summary { cursor: pointer; }
+  .gd ul { margin: 4px 0; padding-left: 16px; }
+  .leg.real { color: var(--ink); }
+  .stop input[type=time] { padding: 2px 3px; font-size: 11.5px; width: 96px; flex: none; }
+  .stop { gap: 5px; }
+  .stop .btn.icon { padding: 2px 5px; }
+  .gres { padding: 7px 6px; border-bottom: 1px dashed var(--line); cursor: pointer; border-radius: 6px; }
+  .gres:hover { background: var(--chip); }
+  .gres .nm { font-weight: 600; }
   @media (max-width: 800px) {
     header .sub { display: none; }
     .app { flex-direction: column-reverse; }
@@ -144,13 +164,19 @@
 
 <div class="app">
   <aside>
+    <div class="notice" id="apiNotice" hidden style="margin:10px 12px 0"></div>
     <div class="tabs">
       <button data-tab="places" class="on">🗺️ 장소</button>
       <button data-tab="plan">🗓️ 일정</button>
     </div>
 
     <div class="pane on" id="pane-places">
-      <input type="search" id="q" placeholder="장소 검색 (예: 오페라, 해변, 브런치)" style="width:100%">
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="search" id="q" placeholder="장소 검색 (예: 오페라, 해변, 브런치)" style="flex:1;min-width:0">
+        <button class="btn primary g-only" id="btnGSearch" title="구글 지도에서 검색">🔎 구글 검색</button>
+      </div>
+      <div class="muted g-only" style="margin-top:6px">💡 지도 위 구글 장소(가게·명소 아이콘)를 클릭해도 바로 일정에 담을 수 있어요.</div>
+      <div id="gResults"></div>
       <div class="chips" id="chips"></div>
       <div id="list"></div>
     </div>
@@ -194,14 +220,16 @@
 
 <dialog id="settings">
   <h2>⚙️ 지도 설정</h2>
-  <p class="muted">기본 지도는 API 키 없이 동작합니다. <b>Google Maps JavaScript API 키</b>를 입력하면 실제 구글 지도로 전환됩니다.</p>
-  <input type="text" id="apiKey" placeholder="AIza... (비워두면 기본 지도)">
+  <p class="muted"><b>Google Maps API 키</b>를 넣으면 이 페이지 안에서 구글 지도, 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색을 모두 쓸 수 있어요.</p>
+  <input type="text" id="apiKey" placeholder="AIza... (비워두면 기본 무료 지도)">
   <ol class="muted">
-    <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 생성</li>
-    <li>"Maps JavaScript API" 사용 설정 → API 키 발급</li>
+    <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 선택</li>
+    <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 지도가 어둡게 <i>"For development purposes only"</i>로 표시되고 경로·장소 정보도 막힙니다. 개인 여행 계획 정도는 월 무료 사용량 안이라 보통 과금되지 않아요.</li>
+    <li><a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener">API 라이브러리</a>에서 3개 사용 설정:
+      <b>Maps JavaScript API</b>, <b>Places API (New)</b>, <b>Routes API</b></li>
+    <li>API 키에 제한을 걸었다면 위 3개 API를 허용 목록에 포함</li>
     <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
   </ol>
-  <p class="muted">어느 지도든 각 장소의 <b>구글맵</b> 버튼과 <b>구글맵 길찾기</b> 버튼은 항상 구글 지도로 열립니다.</p>
   <div class="row" style="justify-content:flex-end">
     <button class="btn" id="setCancel">닫기</button>
     <button class="btn primary" id="setSave">저장 후 새로고침</button>
@@ -362,7 +390,7 @@ const SAMPLE = [
 /* ============================== 상태 ============================== */
 const LS_KEY = "sydney-honeymoon-v1";
 const defaultState = () => ({
-  startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"" })),
+  startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"", times:{} })),
   mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
 });
 let state = load();
@@ -376,11 +404,15 @@ function load() {
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
 
 const allPlaces = () => PLACES.concat(state.custom);
-const byId = id => allPlaces().find(p => p.id === id);
+const tempPlaces = {};   // 구글 검색/클릭으로 열어본, 아직 저장 안 한 장소
+const byId = id => allPlaces().find(p => p.id === id) || tempPlaces[id];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function gQuery(p) { return p.en ? `${p.en}, Sydney NSW` : `${p.lat},${p.lng}`; }
-function gPlaceUrl(p) { return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(gQuery(p)); }
+function gPlaceUrl(p) {
+  if (p.gid) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.name) + "&query_place_id=" + p.gid;
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(gQuery(p));
+}
 function gDirUrl(stops, mode) {
   if (stops.length < 2) return stops.length ? gPlaceUrl(stops[0]) : null;
   const q = stops.map(gQuery);
@@ -393,6 +425,151 @@ function km(a, b) {
   const dLat = r(b.lat-a.lat), dLng = r(b.lng-a.lng);
   const h = Math.sin(dLat/2)**2 + Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* ============================== 구글 API (Places / Routes) ============================== */
+// 키가 있으면 페이지 안에서 장소 정보·실제 이동경로를 바로 보여줌 (결과는 브라우저에 캐시해 호출 최소화)
+let GMODE = false;
+const apiErrors = {};
+const GCACHE_KEY = "sydney-gcache-v1";
+let gcache = { det:{}, leg:{} };
+try { gcache = Object.assign(gcache, JSON.parse(localStorage.getItem(GCACHE_KEY)) || {}); } catch (e) {}
+function saveCache() { try { localStorage.setItem(GCACHE_KEY, JSON.stringify(gcache)); } catch (e) {} }
+
+const API_NAMES = { places:"Places API (New)", routes:"Routes API" };
+async function gApi(service, url, body, fieldMask) {
+  if (apiErrors[service]) throw new Error(apiErrors[service]);
+  const headers = { "X-Goog-Api-Key": API_KEY, "X-Goog-FieldMask": fieldMask };
+  if (body) headers["Content-Type"] = "application/json";
+  const res = await fetch(url, { method: body ? "POST" : "GET", headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = (data.error && data.error.message) || ("HTTP " + res.status);
+    if (res.status === 401 || res.status === 403) { apiErrors[service] = msg; showApiNotice(); }
+    throw new Error(msg);
+  }
+  return data;
+}
+function showApiNotice() {
+  const el = document.getElementById("apiNotice");
+  const items = Object.entries(apiErrors).map(([k, m]) => `<b>${API_NAMES[k]}</b>: ${esc(m)}`);
+  el.hidden = !items.length;
+  el.innerHTML = `⚠️ 구글 API 호출이 거부됐어요.<br>${items.join("<br>")}<br>⚙️ 설정의 안내대로 <b>결제 계정 연결</b>과 <b>API 사용 설정</b>을 확인해 주세요.`;
+  scheduleRender();
+}
+
+const PF = ["id","displayName","formattedAddress","location","rating","userRatingCount","regularOpeningHours.weekdayDescriptions",
+            "photos","googleMapsUri","websiteUri","internationalPhoneNumber","primaryTypeDisplayName"];
+function toDetail(pl) {
+  return {
+    gid: pl.id, name: pl.displayName && pl.displayName.text, addr: pl.formattedAddress,
+    lat: pl.location && pl.location.latitude, lng: pl.location && pl.location.longitude,
+    rating: pl.rating, count: pl.userRatingCount, hours: pl.regularOpeningHours && pl.regularOpeningHours.weekdayDescriptions,
+    photo: pl.photos && pl.photos[0] && pl.photos[0].name, uri: pl.googleMapsUri, web: pl.websiteUri,
+    phone: pl.internationalPhoneNumber, type: pl.primaryTypeDisplayName && pl.primaryTypeDisplayName.text, t: Date.now(),
+  };
+}
+async function gTextSearch(textQuery, center, radius) {
+  const r = await gApi("places", "https://places.googleapis.com/v1/places:searchText", {
+    textQuery, languageCode: "ko", regionCode: "AU",
+    locationBias: { circle: { center: { latitude: center.lat, longitude: center.lng }, radius } },
+  }, PF.map(f => "places." + f).join(","));
+  return (r.places || []).map(toDetail);
+}
+async function getDetails(p) {
+  const c = gcache.det[p.id];
+  if (c && Date.now() - c.t < 7 * 864e5) return c;
+  let d = null;
+  if (p.gid) {
+    d = toDetail(await gApi("places", `https://places.googleapis.com/v1/places/${encodeURIComponent(p.gid)}?languageCode=ko&regionCode=AU`, null, PF.join(",")));
+  } else {
+    d = (await gTextSearch(gQuery(p), p, 1000))[0] || null;
+  }
+  if (d) { gcache.det[p.id] = d; saveCache(); }
+  return d;
+}
+function photoUrl(name) { return `https://places.googleapis.com/v1/${name}/media?maxWidthPx=480&key=${encodeURIComponent(API_KEY)}`; }
+function detailsHtml(d) {
+  if (!d) return `<span class="muted">구글 장소 정보를 찾지 못했어요.</span>`;
+  return `${d.photo ? `<img src="${photoUrl(d.photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+    ${d.rating ? `<div><span class="stars">★ ${d.rating.toFixed(1)}</span> <span class="muted">리뷰 ${(d.count || 0).toLocaleString()}개${d.type ? " · " + esc(d.type) : ""}</span></div>` : ""}
+    ${d.addr ? `<div class="muted">📍 ${esc(d.addr)}</div>` : ""}
+    ${d.hours ? `<details><summary>🕒 영업시간</summary><ul>${d.hours.map(h => `<li>${esc(h)}</li>`).join("")}</ul></details>` : ""}
+    <div class="row" style="margin-top:4px">
+      ${d.web ? `<a href="${esc(d.web)}" target="_blank" rel="noopener">🌐 웹사이트</a>` : ""}
+      ${d.phone ? `<span class="muted">📞 ${esc(d.phone)}</span>` : ""}
+    </div>`;
+}
+
+// ---- 실제 이동 경로 (Routes API) ----
+const RMODE = { transit:"TRANSIT", walking:"WALK", driving:"DRIVE" };
+const MODE_ICON = { transit:"🚆", walking:"🚶", driving:"🚗" };
+const VEH = { BUS:"🚌", INTERCITY_BUS:"🚌", TROLLEYBUS:"🚌", SUBWAY:"🚇", METRO_RAIL:"🚇", HEAVY_RAIL:"🚆", RAIL:"🚆",
+              COMMUTER_TRAIN:"🚆", HIGH_SPEED_TRAIN:"🚆", LONG_DISTANCE_TRAIN:"🚆", LIGHT_RAIL:"🚊", TRAM:"🚊", FERRY:"⛴️", MONORAIL:"🚝" };
+const legKey = (a, b, mode) => `${mode}|${a.lat.toFixed(5)},${a.lng.toFixed(5)}|${b.lat.toFixed(5)},${b.lng.toFixed(5)}`;
+const legPending = new Set();
+function getLeg(a, b, mode) {
+  const k = legKey(a, b, mode);
+  if (gcache.leg[k]) return gcache.leg[k];
+  if (!GMODE || apiErrors.routes || legPending.has(k)) return null;
+  legPending.add(k);
+  fetchLeg(a, b, mode)
+    .then(l => { gcache.leg[k] = l; saveCache(); scheduleRender(); })
+    .catch(() => {})
+    .finally(() => legPending.delete(k));
+  return null;
+}
+function nextSydneyMorning() {
+  // 대중교통 시간표 기준: 내일 오전 10~11시 (시드니) — 지금이 새벽이어도 현실적인 소요시간이 나오도록
+  const d = new Date(); d.setUTCDate(d.getUTCDate() + 1); d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+async function fetchLeg(a, b, mode) {
+  const loc = p => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } });
+  const FM = "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.travelMode,routes.legs.steps.transitDetails";
+  const req = m => gApi("routes", "https://routes.googleapis.com/directions/v2:computeRoutes", Object.assign(
+    { origin: loc(a), destination: loc(b), travelMode: RMODE[m], languageCode: "ko", units: "METRIC" },
+    m === "transit" ? { departureTime: nextSydneyMorning() } : {}), FM);
+  let used = mode, r = await req(mode);
+  if (!(r.routes && r.routes.length) && mode === "transit") { used = "walking"; r = await req("walking"); }
+  const rt = r.routes && r.routes[0];
+  if (!rt) return { none: true };
+  const lines = []; let anyTransit = false;
+  (rt.legs || []).forEach(l => (l.steps || []).forEach(s => {
+    if (s.travelMode !== "TRANSIT") return;
+    anyTransit = true;
+    const tl = s.transitDetails && s.transitDetails.transitLine;
+    if (!tl) return;
+    const lab = (VEH[tl.vehicle && tl.vehicle.type] || "🚌") + " " + (tl.nameShort || tl.name || "");
+    if (lines[lines.length - 1] !== lab) lines.push(lab);
+  }));
+  if (used === "transit" && !anyTransit) used = "walking";
+  return { sec: parseInt(rt.duration, 10) || 0, m: rt.distanceMeters || 0, poly: rt.polyline && rt.polyline.encodedPolyline, mode: used, lines };
+}
+function decodePolyline(str) {
+  const pts = []; let i = 0, lat = 0, lng = 0;
+  while (i < str.length) {
+    for (const k of [0, 1]) {
+      let shift = 0, result = 0, b;
+      do { b = str.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      const v = (result & 1) ? ~(result >> 1) : (result >> 1);
+      if (k === 0) lat += v; else lng += v;
+    }
+    pts.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return pts;
+}
+const fmtDur = s => { const m = Math.max(1, Math.round(s / 60)); return m < 60 ? `${m}분` : `${Math.floor(m / 60)}시간${m % 60 ? " " + (m % 60) + "분" : ""}`; };
+const fmtDist = m => m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`;
+let renderT;
+function scheduleRender() {
+  clearTimeout(renderT);
+  renderT = setTimeout(() => {
+    // 메모·시간 입력 중에는 다시 그리지 않음 (포커스 유지)
+    const a = document.activeElement;
+    if (a && a.closest && a.closest("#days") && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return scheduleRender();
+    renderDays();
+  }, 300);
 }
 
 /* ============================== 지도 어댑터 ============================== */
@@ -427,11 +604,11 @@ function leafletAdapter() {
       const m = L.marker([p.lat,p.lng], { icon, zIndexOffset:1000 }).on("click", onClick).addTo(map);
       return { remove(){ m.remove(); } };
     },
-    line(pts, color) {
-      const l = L.polyline(pts.map(p => [p.lat,p.lng]), { color, weight:4, opacity:.8, dashArray:"8 6" }).addTo(map);
+    line(pts, color, solid) {
+      const l = L.polyline(pts.map(p => [p.lat,p.lng]), solid ? { color, weight:5, opacity:.85 } : { color, weight:4, opacity:.8, dashArray:"8 6" }).addTo(map);
       return { remove(){ l.remove(); } };
     },
-    popup(p, html) { popup.setLatLng([p.lat,p.lng]).setContent(html).openOn(map); },
+    popup(p, node) { popup.setLatLng([p.lat,p.lng]).setContent(node).openOn(map); },
     closePopup() { map.closePopup(); },
     fly(p, z) { map.flyTo([p.lat,p.lng], Math.max(map.getZoom(), z || 15), { duration:.6 }); },
     fit(pts) {
@@ -448,36 +625,43 @@ function googleAdapter() {
   const g = google.maps;
   const map = new g.Map(document.getElementById("map"), {
     center: CENTER, zoom: 14, mapTypeControl: true, streetViewControl: true, fullscreenControl: false,
-    clickableIcons: false,
+    clickableIcons: true,
   });
   const info = new g.InfoWindow({ maxWidth: 300 });
   const circleIcon = (color, scale) => ({ path:g.SymbolPath.CIRCLE, fillColor:color, fillOpacity:1, strokeColor:"#fff", strokeWeight:2, scale });
   return {
     pin(p, html, onClick, color, emoji) {
-      const m = new g.Marker({ position:p, title:p.name, icon:circleIcon(color, 14), label:{ text:emoji, fontSize:"15px" } });
+      const m = new g.Marker({ position:{ lat:p.lat, lng:p.lng }, title:p.name, icon:circleIcon(color, 14), label:{ text:emoji, fontSize:"15px" } });
       m.addListener("click", onClick);
       return { show(v){ m.setMap(v ? map : null); }, z(v){ m.setZIndex(v); } };
     },
     num(p, html, onClick, color, n) {
-      const m = new g.Marker({ position:p, map, zIndex:1000, icon:circleIcon(color, 11),
+      const m = new g.Marker({ position:{ lat:p.lat, lng:p.lng }, map, zIndex:1000, icon:circleIcon(color, 11),
         label:{ text:String(n), color:"#fff", fontSize:"12px", fontWeight:"700" } });
       m.addListener("click", onClick);
       return { remove(){ m.setMap(null); } };
     },
-    line(pts, color) {
-      const l = new g.Polyline({ path:pts, map, strokeOpacity:0,
-        icons:[{ icon:{ path:"M 0,-1 0,1", strokeOpacity:.85, strokeColor:color, scale:3 }, offset:"0", repeat:"14px" }] });
+    line(pts, color, solid) {
+      const l = solid
+        ? new g.Polyline({ path:pts, map, strokeColor:color, strokeOpacity:.85, strokeWeight:5 })
+        : new g.Polyline({ path:pts, map, strokeOpacity:0,
+            icons:[{ icon:{ path:"M 0,-1 0,1", strokeOpacity:.85, strokeColor:color, scale:3 }, offset:"0", repeat:"14px" }] });
       return { remove(){ l.setMap(null); } };
     },
-    popup(p, html) { info.setContent(html); info.setPosition(p); info.open({ map }); },
+    popup(p, node) { info.setContent(node); info.setPosition({ lat:p.lat, lng:p.lng }); info.open({ map }); },
     closePopup() { info.close(); },
-    fly(p, z) { map.panTo(p); if (map.getZoom() < (z||15)) map.setZoom(z||15); },
+    fly(p, z) { map.panTo({ lat:p.lat, lng:p.lng }); if (map.getZoom() < (z||15)) map.setZoom(z||15); },
     fit(pts) {
       if (!pts.length) return;
       if (pts.length === 1) return this.fly(pts[0], 15);
-      const b = new g.LatLngBounds(); pts.forEach(p => b.extend(p)); map.fitBounds(b, 50);
+      const b = new g.LatLngBounds(); pts.forEach(p => b.extend({ lat:p.lat, lng:p.lng })); map.fitBounds(b, 50);
     },
-    onClick(fn) { map.addListener("click", e => fn({ lat:e.latLng.lat(), lng:e.latLng.lng() })); },
+    onClick(fn) {
+      map.addListener("click", e => {
+        if (e.placeId) e.stop();   // 구글 기본 정보창 대신 우리 팝업 사용
+        fn({ lat:e.latLng.lat(), lng:e.latLng.lng(), placeId:e.placeId });
+      });
+    },
     cursor(c) { map.setOptions({ draggableCursor: c === "" ? null : c }); },
   };
 }
@@ -523,15 +707,70 @@ function popupHtml(p) {
       <a class="g" href="${gPlaceUrl(p)}" target="_blank" rel="noopener">구글맵에서 보기</a>
       <select id="popDay">${opts}</select>
       <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">+ 일정에 추가</button>
-      ${p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">삭제</button>` : ""}
+      ${tempPlaces[p.id] ? `<button class="btn sm" onclick="saveTemp('${p.id}')">⭐ 내 장소로 저장</button>`
+        : p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">삭제</button>` : ""}
     </div>
+    ${GMODE ? `<div class="gd"><span class="muted">구글 장소 정보 불러오는 중…</span></div>` : ""}
   </div>`;
 }
 
+let popSeq = 0;
 function openPlace(id, fly = true) {
   const p = byId(id); if (!p) return;
   if (fly) M.fly(p, 15);
-  M.popup(p, popupHtml(p));
+  const node = document.createElement("div");
+  node.innerHTML = popupHtml(p);
+  M.popup(p, node);
+  if (!GMODE) return;
+  const seq = ++popSeq;
+  getDetails(p).then(d => {
+    if (seq !== popSeq) return;
+    if (d && tempPlaces[p.id]) {   // 구글 장소를 처음 연 경우: 이름·위치를 구글 정보로 채움
+      Object.assign(p, { name: d.name || p.name, desc: d.type || "", lat: d.lat ?? p.lat, lng: d.lng ?? p.lng });
+      node.innerHTML = popupHtml(p);
+    }
+    node.querySelector(".gd").innerHTML = detailsHtml(d);
+  }).catch(e => {
+    if (seq === popSeq) node.querySelector(".gd").innerHTML = `<span class="muted">구글 장소 정보를 불러오지 못했어요 (${esc(e.message)})</span>`;
+  });
+}
+
+// 구글 지도 위 장소 아이콘 클릭 → 우리 팝업으로 열기
+function showGooglePlace(gid, pos) {
+  const saved = allPlaces().find(p => p.gid === gid);
+  if (saved) return openPlace(saved.id, false);
+  const id = "g_" + gid.replace(/[^\w-]/g, "");
+  tempPlaces[id] = tempPlaces[id] || { id, gid, cat:"mine", name:"구글 장소", lat:pos.lat, lng:pos.lng, area:"", desc:"" };
+  openPlace(id, false);
+}
+
+async function googleSearch() {
+  const q = document.getElementById("q").value.trim();
+  const box = document.getElementById("gResults");
+  if (!q) { box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="muted" style="margin:8px 0">구글에서 "${esc(q)}" 검색 중…</div>`;
+  try {
+    const list = (await gTextSearch(q, CENTER, 30000)).slice(0, 10).map(d => {
+      const saved = allPlaces().find(p => p.gid === d.gid);
+      if (saved) return saved;
+      const id = "g_" + d.gid.replace(/[^\w-]/g, "");
+      gcache.det[id] = d;
+      return tempPlaces[id] = Object.assign(tempPlaces[id] || {}, { id, gid:d.gid, cat:"mine", name:d.name, lat:d.lat, lng:d.lng, desc:d.type || "", area:"" });
+    });
+    saveCache();
+    box.innerHTML = `<div class="row" style="justify-content:space-between;margin:10px 0 4px">
+        <b>구글 검색 결과 ${list.length}곳</b><button class="btn sm" data-gclose>닫기</button></div>` +
+      (list.length ? list.map(p => {
+        const d = gcache.det[p.id] || {};
+        return `<div class="gres" data-id="${p.id}"><div class="nm">📍 ${esc(p.name)}
+          ${d.rating ? `<span class="stars" style="color:#e67700">★ ${d.rating.toFixed(1)}</span>` : ""}</div>
+          <div class="muted">${esc(d.addr || p.desc || "")}</div></div>`;
+      }).join("") : `<div class="empty">검색 결과가 없어요.</div>`);
+    if (list.length) M.fit(list);
+    if (list.length === 1) openPlace(list[0].id, false);
+  } catch (e) {
+    box.innerHTML = `<div class="notice">구글 검색 실패: ${esc(e.message)}</div>`;
+  }
 }
 
 function renderChips() {
@@ -572,15 +811,22 @@ function renderDays() {
   document.getElementById("days").innerHTML = state.days.map((d, i) => {
     const color = DAY_COLORS[i % DAY_COLORS.length];
     const stops = d.stops.map(byId).filter(Boolean);
-    let total = 0;
+    let total = 0, totalSec = 0;
     const rows = stops.map((p, j) => {
       let leg = "";
       if (j > 0) {
-        const k = km(stops[j-1], p); total += k;
-        leg = `<div class="leg">↓ 직선 ${k < 1 ? Math.round(k*1000) + "m" : k.toFixed(1) + "km"}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
+        const r = getLeg(stops[j-1], p, state.mode);
+        if (r && !r.none) {
+          total += r.m / 1000; totalSec += r.sec;
+          leg = `<div class="leg real">↓ ${MODE_ICON[r.mode]} ${fmtDur(r.sec)} · ${fmtDist(r.m)}${r.lines.length ? " · " + esc(r.lines.join(" → ")) : ""}</div>`;
+        } else {
+          const k = km(stops[j-1], p); total += k;
+          leg = `<div class="leg">↓ ${GMODE && !r && !apiErrors.routes ? "경로 계산 중… · " : ""}직선 ${fmtDist(k * 1000)}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
+        }
       }
       return `${leg}<div class="stop">
         <div class="n" style="background:${color}">${j+1}</div>
+        <input type="time" data-time="${i}|${p.id}" value="${esc((d.times || {})[p.id] || "")}" title="방문 시간">
         <div class="nm" data-open="${p.id}">${CATS[p.cat].emoji} ${esc(p.name)}</div>
         <button class="btn icon" title="위로" data-mv="${i},${j},-1" ${j===0?"disabled":""}>↑</button>
         <button class="btn icon" title="아래로" data-mv="${i},${j},1" ${j===stops.length-1?"disabled":""}>↓</button>
@@ -593,14 +839,14 @@ function renderDays() {
       <div class="day-h">
         <div class="sw" style="background:${color}"></div>
         <div class="t">${esc(dayLabel(i))}</div>
-        <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}</span>
+        <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}${totalSec ? ` · 이동 ${fmtDur(totalSec)}` : ""}</span>
         <button class="btn sm ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시">👁️</button>
       </div>
       <div class="day-b">
         ${rows || `<div class="empty">장소 탭이나 지도 핀에서 "+ 일정에 추가"를 눌러주세요.</div>`}
         <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
         ${url ? `<div class="row" style="margin-top:6px">
-          <a class="btn sm primary" href="${url}" target="_blank" rel="noopener">🧭 구글맵 길찾기로 열기</a>
+          <a class="btn sm" href="${url}" target="_blank" rel="noopener">🧭 휴대폰 구글맵 앱으로 길안내</a>
           ${stops.length > 10 ? `<span class="muted">경유지는 최대 9곳까지 반영될 수 있어요.</span>` : ""}
         </div>` : ""}
       </div>
@@ -617,7 +863,10 @@ function drawRoutes() {
     if (state.focusDay !== null && state.focusDay !== i) return;
     const color = DAY_COLORS[i % DAY_COLORS.length];
     const stops = d.stops.map(byId).filter(Boolean);
-    if (stops.length > 1) routeLayers.push(M.line(stops, color));
+    for (let j = 1; j < stops.length; j++) {
+      const r = GMODE ? getLeg(stops[j-1], stops[j], state.mode) : null;
+      routeLayers.push(r && r.poly ? M.line(decodePolyline(r.poly), color, true) : M.line([stops[j-1], stops[j]], color, false));
+    }
     stops.forEach((p, j) => {
       const html = `<div class="num" style="background:${color}">${j+1}</div>`;
       routeLayers.push(M.num(p, html, () => openPlace(p.id, false), color, j+1));
@@ -626,8 +875,17 @@ function drawRoutes() {
 }
 
 /* ============================== 동작 ============================== */
+function saveTemp(id, quiet) {
+  const p = tempPlaces[id]; if (!p) return;
+  delete tempPlaces[id];
+  if (!state.custom.some(c => c.id === id)) state.custom.push({ ...p });
+  if (!state.cats.includes("mine")) state.cats.push("mine");
+  save(); buildMarkers(); renderChips(); filter();
+  if (!quiet) { M.closePopup(); toast(`⭐ ${p.name} 저장했어요`); }
+}
 function addToDay(id, day) {
   const d = state.days[day]; if (!d) return;
+  if (tempPlaces[id]) saveTemp(id, true);
   if (!d.stops.includes(id)) d.stops.push(id);
   save(); renderDays(); M.closePopup();
   toast(`${byId(id).name} → ${dayLabel(day)}에 추가했어요`);
@@ -638,7 +896,7 @@ function removeCustom(id) {
   state.days.forEach(d => d.stops = d.stops.filter(s => s !== id));
   save(); M.closePopup(); buildMarkers(); renderDays();
 }
-window.addToDay = addToDay; window.removeCustom = removeCustom;
+window.addToDay = addToDay; window.removeCustom = removeCustom; window.saveTemp = saveTemp;
 
 let toastT;
 function toast(msg) {
@@ -662,6 +920,12 @@ function bindUI() {
     document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + b.dataset.tab));
   });
   document.getElementById("q").oninput = filter;
+  document.getElementById("q").onkeydown = e => { if (e.key === "Enter" && GMODE) googleSearch(); };
+  document.getElementById("btnGSearch").onclick = googleSearch;
+  document.getElementById("gResults").onclick = e => {
+    if (e.target.closest("[data-gclose]")) return document.getElementById("gResults").innerHTML = "";
+    const el = e.target.closest(".gres"); if (el) openPlace(el.dataset.id);
+  };
   document.getElementById("chips").onclick = e => {
     const c = e.target.closest(".chip"); if (!c) return;
     const k = c.dataset.cat;
@@ -714,6 +978,12 @@ function bindUI() {
   };
   daysEl.oninput = e => {
     if (e.target.dataset.note !== undefined) { state.days[+e.target.dataset.note].note = e.target.value; save(); }
+    if (e.target.dataset.time) {
+      const [i, id] = e.target.dataset.time.split("|"); const d = state.days[+i];
+      d.times = d.times || {};
+      if (e.target.value) d.times[id] = e.target.value; else delete d.times[id];
+      save();
+    }
   };
 
   document.getElementById("btnSample").onclick = () => {
@@ -747,7 +1017,7 @@ function bindUI() {
   document.getElementById("btnAddMode").onclick = () => setAddMode(!addMode);
   document.addEventListener("keydown", e => { if (e.key === "Escape" && addMode) setAddMode(false); });
   M.onClick(pos => {
-    if (!addMode) return;
+    if (!addMode) { if (pos.placeId) showGooglePlace(pos.placeId, pos); return; }
     const name = prompt("장소 이름을 입력하세요 (예: 우리 숙소, 웨딩 촬영지)");
     setAddMode(false);
     if (!name) return;
@@ -775,7 +1045,10 @@ function start(adapter) {
 
 if (API_KEY) {
   let done = false;
-  window.__gmInit = () => { done = true; start(googleAdapter()); };
+  window.__gmInit = () => {
+    done = true; GMODE = true; document.body.classList.add("gmode");
+    start(googleAdapter());
+  };
   window.gm_authFailure = () => {
     alert("Google Maps API 키 인증에 실패했습니다. 기본 지도로 표시합니다. (⚙️에서 키를 확인하세요)");
     try { localStorage.removeItem("gmaps-key"); } catch (e) {}
