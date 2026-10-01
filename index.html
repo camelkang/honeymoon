@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시드니 신혼여행 지도</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --panel: #ffffff;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e5e1d8;
+    --accent: #0b7285;
+    --accent-ink: #ffffff;
+    --chip: #f1eee6;
+    --shadow: 0 2px 10px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171c; --panel: #1c2027; --ink: #e8e6e1; --muted: #9aa1ad;
+      --line: #2e333c; --accent: #3bc9db; --accent-ink: #0b1215; --chip: #262b33;
+      --shadow: 0 2px 10px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    font-size: 14px; display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 17px; margin: 0; white-space: nowrap; }
+  header .sub { color: var(--muted); font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app { flex: 1; display: flex; min-height: 0; }
+  aside {
+    width: 380px; max-width: 100%; background: var(--panel); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  #map { flex: 1; min-height: 0; background: #ddd; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    flex: 1; padding: 11px 0; border: 0; background: none; color: var(--muted);
+    font: inherit; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  .tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+  .pane { flex: 1; overflow-y: auto; padding: 12px 14px 24px; display: none; }
+  .pane.on { display: block; }
+  input[type=text], input[type=search], input[type=date], select, textarea {
+    font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 9px;
+  }
+  textarea { width: 100%; resize: vertical; min-height: 44px; }
+  .btn {
+    font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.sm { padding: 3px 7px; font-size: 12px; }
+  .btn.icon { padding: 2px 6px; }
+  .btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip {
+    border: 1px solid var(--line); background: var(--chip); color: var(--ink); border-radius: 999px;
+    padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer;
+  }
+  .chip.off { opacity: .4; }
+  .chip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .place {
+    display: flex; gap: 10px; padding: 9px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px;
+  }
+  .place:hover { background: var(--chip); }
+  .place .emo { font-size: 20px; width: 28px; text-align: center; flex: none; }
+  .place .nm { font-weight: 600; }
+  .place .ds { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .place .tag { font-size: 11px; color: var(--accent); margin-left: 4px; font-weight: 600; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .day { border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; overflow: hidden; }
+  .day-h { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--chip); }
+  .day-h .sw { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .day-h .t { font-weight: 700; flex: 1; }
+  .day-b { padding: 6px 10px 10px; }
+  .stop { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .stop .n {
+    width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700;
+    display: grid; place-items: center; flex: none;
+  }
+  .stop .nm { flex: 1; cursor: pointer; }
+  .leg { margin-left: 30px; font-size: 11.5px; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 12.5px; padding: 6px 0; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+  .pop h3 { margin: 0 0 4px; font-size: 15px; }
+  .pop p { margin: 4px 0; font-size: 12.5px; line-height: 1.45; }
+  .pop .tip { background: #fff7e6; color: #5c3d00; padding: 5px 7px; border-radius: 6px; }
+  .pop .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  .pop .acts a, .pop .acts button, .pop .acts select { font-size: 12px; }
+  .pop a.g { background: #1a73e8; color: #fff; padding: 4px 8px; border-radius: 6px; text-decoration: none; }
+  .pin {
+    width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    display: grid; place-items: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
+  .pin span { transform: rotate(45deg); font-size: 15px; line-height: 1; }
+  .num {
+    width: 24px; height: 24px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px;
+    display: grid; place-items: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  }
+  .banner {
+    position: absolute; z-index: 1000; top: 10px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 7px 14px; border-radius: 999px; font-size: 13px;
+    display: none; box-shadow: var(--shadow);
+  }
+  .mapwrap { flex: 1; position: relative; display: flex; min-height: 0; }
+  dialog {
+    border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink);
+    max-width: 480px; width: calc(100% - 32px); box-shadow: var(--shadow);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  dialog input { width: 100%; }
+  dialog h2 { margin-top: 0; font-size: 16px; }
+  dialog ol { padding-left: 18px; line-height: 1.6; }
+  @media (max-width: 800px) {
+    header .sub { display: none; }
+    .app { flex-direction: column-reverse; }
+    aside { width: 100%; height: 48vh; border-right: 0; border-top: 1px solid var(--line); }
+    .mapwrap { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>💍 시드니 신혼여행 지도</h1>
+  <div class="sub">장소를 눌러 일정에 담고, 날짜별 동선을 구글맵 길찾기로 바로 열어보세요.</div>
+  <button class="btn sm" id="btnAddMode" title="지도를 클릭해 나만의 장소 추가">📍 장소 추가</button>
+  <button class="btn sm" id="btnSettings" title="지도 설정">⚙️</button>
+</header>
+
+<div class="app">
+  <aside>
+    <div class="tabs">
+      <button data-tab="places" class="on">🗺️ 장소</button>
+      <button data-tab="plan">🗓️ 일정</button>
+    </div>
+
+    <div class="pane on" id="pane-places">
+      <input type="search" id="q" placeholder="장소 검색 (예: 오페라, 해변, 브런치)" style="width:100%">
+      <div class="chips" id="chips"></div>
+      <div id="list"></div>
+    </div>
+
+    <div class="pane" id="pane-plan">
+      <div class="row">
+        <label class="muted">출발일</label>
+        <input type="date" id="startDate">
+        <label class="muted">일수</label>
+        <button class="btn icon" id="dayMinus">−</button>
+        <b id="dayCount">5</b>
+        <button class="btn icon" id="dayPlus">+</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="muted">이동수단</label>
+        <select id="mode">
+          <option value="transit">🚆 대중교통</option>
+          <option value="walking">🚶 도보</option>
+          <option value="driving">🚗 자동차</option>
+        </select>
+        <label class="muted"><input type="checkbox" id="routesOn" checked> 지도에 동선 표시</label>
+      </div>
+      <div id="days"></div>
+      <hr>
+      <div class="row">
+        <button class="btn" id="btnSample">✨ 추천 일정 불러오기</button>
+        <button class="btn" id="btnExport">⬇️ 내보내기</button>
+        <button class="btn" id="btnImport">⬆️ 가져오기</button>
+        <button class="btn" id="btnReset">🗑️ 초기화</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <p class="muted">일정은 이 브라우저에 자동 저장됩니다. 다른 기기로 옮길 땐 내보내기/가져오기를 이용하세요.</p>
+    </div>
+  </aside>
+
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="banner" id="banner">지도를 클릭해 장소를 추가하세요 (Esc 취소)</div>
+  </div>
+</div>
+
+<dialog id="settings">
+  <h2>⚙️ 지도 설정</h2>
+  <p class="muted">기본 지도는 API 키 없이 동작합니다. <b>Google Maps JavaScript API 키</b>를 입력하면 실제 구글 지도로 전환됩니다.</p>
+  <input type="text" id="apiKey" placeholder="AIza... (비워두면 기본 지도)">
+  <ol class="muted">
+    <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 생성</li>
+    <li>"Maps JavaScript API" 사용 설정 → API 키 발급</li>
+    <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
+  </ol>
+  <p class="muted">어느 지도든 각 장소의 <b>구글맵</b> 버튼과 <b>구글맵 길찾기</b> 버튼은 항상 구글 지도로 열립니다.</p>
+  <div class="row" style="justify-content:flex-end">
+    <button class="btn" id="setCancel">닫기</button>
+    <button class="btn primary" id="setSave">저장 후 새로고침</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ============================== 데이터 ============================== */
+const CATS = {
+  sight: { label: "명소",      emoji: "🏛️", color: "#e8590c" },
+  view:  { label: "뷰포인트",  emoji: "🌅", color: "#f08c00" },
+  nature:{ label: "공원·자연", emoji: "🌿", color: "#2f9e44" },
+  beach: { label: "해변",      emoji: "🏖️", color: "#1c7ed6" },
+  food:  { label: "맛집",      emoji: "🍽️", color: "#c2255c" },
+  cafe:  { label: "카페·브런치",emoji: "☕", color: "#8d5b3e" },
+  bar:   { label: "바·루프탑", emoji: "🍸", color: "#7048e8" },
+  shop:  { label: "쇼핑",      emoji: "🛍️", color: "#d6336c" },
+  hotel: { label: "숙소",      emoji: "🏨", color: "#495057" },
+  trans: { label: "교통",      emoji: "⛴️", color: "#0b7285" },
+  mine:  { label: "내 장소",   emoji: "⭐", color: "#e03131" },
+};
+
+// 좌표는 대략적인 위치입니다. 정확한 위치·영업시간은 구글맵 버튼으로 확인하세요.
+const PLACES = [
+  // 명소
+  { id:"opera", cat:"sight", name:"시드니 오페라 하우스", en:"Sydney Opera House", lat:-33.8568, lng:151.2153, area:"서큘러 키",
+    desc:"시드니의 상징. 내부 가이드 투어나 공연 관람을 추천.", tip:"공연 티켓은 미리 예매. 저녁 조명이 켜진 모습도 꼭 보기." },
+  { id:"bridge", cat:"sight", name:"하버 브리지", en:"Sydney Harbour Bridge", lat:-33.8523, lng:151.2108, area:"더 록스",
+    desc:"도보로 건널 수 있는 아치형 다리. 다리 위에서 보는 오페라 하우스 뷰가 일품.", tip:"동쪽 보행로가 오페라 하우스 쪽 뷰." },
+  { id:"climb", cat:"sight", name:"브리지클라임", en:"BridgeClimb Sydney", lat:-33.8578, lng:151.2078, area:"더 록스",
+    desc:"하버 브리지 아치 꼭대기까지 올라가는 체험. 신혼여행 버킷리스트 단골.", tip:"선셋 클라임은 일찍 매진. 약 3시간 소요." },
+  { id:"rocks", cat:"sight", name:"더 록스", en:"The Rocks Sydney", lat:-33.8599, lng:151.2085, area:"더 록스",
+    desc:"시드니에서 가장 오래된 동네. 골목, 펍, 주말 마켓.", tip:"토·일 '더 록스 마켓' 운영." },
+  { id:"mca", cat:"sight", name:"현대미술관 (MCA)", en:"Museum of Contemporary Art Australia", lat:-33.8600, lng:151.2090, area:"서큘러 키",
+    desc:"무료 입장 현대미술관. 옥상 카페에서 오페라 하우스 뷰.", tip:"" },
+  { id:"agnsw", cat:"sight", name:"뉴사우스웨일스 주립미술관", en:"Art Gallery of New South Wales", lat:-33.8688, lng:151.2173, area:"도메인",
+    desc:"무료 상설전. 신관 '시드니 모던' 건축도 볼거리.", tip:"" },
+  { id:"stmary", cat:"sight", name:"세인트 메리 대성당", en:"St Mary's Cathedral Sydney", lat:-33.8712, lng:151.2133, area:"CBD",
+    desc:"고딕 양식의 웅장한 성당. 하이드 파크 바로 옆.", tip:"" },
+  { id:"tower", cat:"view", name:"시드니 타워 아이", en:"Sydney Tower Eye", lat:-33.8705, lng:151.2089, area:"CBD",
+    desc:"시드니에서 가장 높은 전망대. 도시 360° 파노라마.", tip:"해 질 무렵 방문 추천." },
+  { id:"seallife", cat:"sight", name:"씨 라이프 시드니 아쿠아리움", en:"SEA LIFE Sydney Aquarium", lat:-33.8697, lng:151.2021, area:"달링 하버",
+    desc:"듀공, 상어 터널이 유명한 수족관.", tip:"근처 와일드라이프 동물원과 콤보 티켓 가능." },
+  { id:"taronga", cat:"sight", name:"타롱가 동물원", en:"Taronga Zoo Sydney", lat:-33.8436, lng:151.2413, area:"모스만",
+    desc:"코알라·캥거루와 함께 오페라 하우스 뷰. 서큘러 키에서 페리 12분.", tip:"페리 + 스카이 사파리 케이블카 조합 추천." },
+  { id:"luna", cat:"sight", name:"루나 파크", en:"Luna Park Sydney", lat:-33.8476, lng:151.2099, area:"밀슨스 포인트",
+    desc:"하버 브리지 북단의 레트로 놀이공원. 거대한 얼굴 입구가 포토 스팟.", tip:"" },
+
+  // 뷰포인트
+  { id:"mrsmac", cat:"view", name:"미세스 매쿼리스 체어", en:"Mrs Macquarie's Chair", lat:-33.8597, lng:151.2228, area:"보타닉 가든",
+    desc:"오페라 하우스와 하버 브리지가 한 프레임에 담기는 최고의 포토 스팟.", tip:"일출·선셋 모두 좋음." },
+  { id:"obshill", cat:"view", name:"옵저버토리 힐", en:"Observatory Hill Park", lat:-33.8595, lng:151.2045, area:"더 록스",
+    desc:"하버 브리지를 정면에서 바라보는 언덕 공원. 피크닉 명소.", tip:"" },
+  { id:"pylon", cat:"view", name:"파일런 전망대", en:"Pylon Lookout Sydney Harbour Bridge", lat:-33.8546, lng:151.2101, area:"하버 브리지",
+    desc:"브리지클라임보다 저렴하게 다리 위 뷰를 즐기는 방법.", tip:"" },
+  { id:"blueview", cat:"view", name:"블루 마운틴 (에코 포인트)", en:"Echo Point Lookout Katoomba", lat:-33.7320, lng:150.3115, area:"근교 (기차 2시간)",
+    desc:"세 자매봉으로 유명한 국립공원. 시드니 근교 당일치기 1순위.", tip:"센트럴역에서 카툼바행 기차. 시닉 월드 함께 방문." },
+
+  // 공원·자연
+  { id:"botanic", cat:"nature", name:"왕립 식물원", en:"Royal Botanic Garden Sydney", lat:-33.8642, lng:151.2166, area:"보타닉 가든",
+    desc:"오페라 하우스 옆 바닷가 정원. 산책하며 미세스 매쿼리스 체어까지.", tip:"무료 입장." },
+  { id:"hyde", cat:"nature", name:"하이드 파크", en:"Hyde Park Sydney", lat:-33.8731, lng:151.2111, area:"CBD",
+    desc:"도심 한가운데 공원. 아치볼드 분수와 가로수길.", tip:"" },
+  { id:"barangaroo", cat:"nature", name:"바랑가루 리저브", en:"Barangaroo Reserve", lat:-33.8559, lng:151.2017, area:"바랑가루",
+    desc:"해안 산책로가 아름다운 공원. 노을 맛집.", tip:"" },
+  { id:"b2c", cat:"nature", name:"본다이-쿠지 해안 산책로", en:"Bondi to Coogee Coastal Walk", lat:-33.8990, lng:151.2720, area:"이스턴 비치",
+    desc:"절벽 해안을 따라 걷는 약 6km 코스(2~3시간). 브론테, 클로벨리 해변 경유.", tip:"선크림·물 필수. 본다이에서 출발 추천." },
+
+  // 해변
+  { id:"bondi", cat:"beach", name:"본다이 비치", en:"Bondi Beach", lat:-33.8915, lng:151.2767, area:"본다이",
+    desc:"세계적으로 유명한 서핑 해변.", tip:"CBD에서 버스 333번 또는 기차+버스." },
+  { id:"coogee", cat:"beach", name:"쿠지 비치", en:"Coogee Beach", lat:-33.9205, lng:151.2580, area:"쿠지",
+    desc:"해안 산책로 종착점. 아늑하고 조용한 해변.", tip:"" },
+  { id:"manly", cat:"beach", name:"맨리 비치", en:"Manly Beach", lat:-33.7969, lng:151.2878, area:"맨리",
+    desc:"페리로 가는 해변 마을. 페리 위에서 보는 하버 뷰가 하이라이트.", tip:"페리는 오팔 카드/컨택리스 결제 가능." },
+  { id:"watsons", cat:"beach", name:"왓슨스 베이", en:"Watsons Bay", lat:-33.8443, lng:151.2817, area:"왓슨스 베이",
+    desc:"갭 파크 절벽 전망과 해산물 레스토랑. 페리로 이동.", tip:"Doyles에서 피시앤칩스." },
+
+  // 맛집
+  { id:"quay", cat:"food", name:"Quay (퀘이)", en:"Quay Restaurant Sydney", lat:-33.8580, lng:151.2098, area:"서큘러 키",
+    desc:"오페라 하우스 뷰 파인다이닝. 특별한 기념일 디너로.", tip:"1~2개월 전 예약 권장." },
+  { id:"bennelong", cat:"food", name:"Bennelong (베넬롱)", en:"Bennelong Sydney Opera House", lat:-33.8572, lng:151.2150, area:"오페라 하우스",
+    desc:"오페라 하우스 안의 레스토랑. 건축물 내부에서 즐기는 디너.", tip:"예약 필수." },
+  { id:"aria", cat:"food", name:"Aria (아리아)", en:"Aria Restaurant Sydney", lat:-33.8601, lng:151.2128, area:"서큘러 키",
+    desc:"하버 브리지와 오페라 하우스를 바라보는 모던 오스트레일리안.", tip:"" },
+  { id:"mrwong", cat:"food", name:"Mr. Wong (미스터 웡)", en:"Mr. Wong Sydney", lat:-33.8659, lng:151.2077, area:"CBD",
+    desc:"인기 캔토니즈 레스토랑. 딤섬과 베이징덕.", tip:"" },
+  { id:"fishmkt", cat:"food", name:"시드니 피시 마켓", en:"Sydney Fish Market", lat:-33.8730, lng:151.1925, area:"피어몬트",
+    desc:"굴, 랍스터, 사시미 등 신선한 해산물을 저렴하게.", tip:"점심 전 방문이 여유로움." },
+  { id:"harrys", cat:"food", name:"해리스 카페 드 휠스", en:"Harry's Cafe de Wheels Woolloomooloo", lat:-33.8695, lng:151.2223, area:"울루물루",
+    desc:"1938년부터 이어온 미트파이 노점.", tip:"'타이거 파이' 추천." },
+  { id:"icebergs", cat:"food", name:"Icebergs Dining Room", en:"Icebergs Dining Room and Bar", lat:-33.8947, lng:151.2742, area:"본다이",
+    desc:"본다이 해변과 수영장이 내려다보이는 레스토랑.", tip:"" },
+  { id:"mamak", cat:"food", name:"Mamak (마막)", en:"Mamak Haymarket", lat:-33.8786, lng:151.2036, area:"차이나타운",
+    desc:"줄 서서 먹는 말레이시아 로티 맛집.", tip:"" },
+
+  // 카페
+  { id:"grounds", cat:"cafe", name:"더 그라운즈 오브 알렉산드리아", en:"The Grounds of Alexandria", lat:-33.9105, lng:151.1947, area:"알렉산드리아",
+    desc:"정원 같은 브런치 카페. 사진 찍기 좋은 곳.", tip:"주말은 대기 길어요." },
+  { id:"bourke", cat:"cafe", name:"버크 스트리트 베이커리", en:"Bourke Street Bakery Surry Hills", lat:-33.8888, lng:151.2135, area:"서리 힐스",
+    desc:"소시지롤과 타르트가 유명한 베이커리.", tip:"" },
+  { id:"singleo", cat:"cafe", name:"Single O", en:"Single O Surry Hills", lat:-33.8843, lng:151.2108, area:"서리 힐스",
+    desc:"시드니 스페셜티 커피의 대표 주자.", tip:"" },
+
+  // 바·루프탑
+  { id:"operabar", cat:"bar", name:"오페라 바", en:"Opera Bar Sydney", lat:-33.8575, lng:151.2141, area:"오페라 하우스",
+    desc:"하버 브리지를 바라보며 한잔. 시드니 대표 야외 바.", tip:"선셋 타임 강추." },
+  { id:"glenmore", cat:"bar", name:"글렌모어 호텔 루프탑", en:"The Glenmore Hotel", lat:-33.8592, lng:151.2083, area:"더 록스",
+    desc:"오페라 하우스가 보이는 펍 루프탑.", tip:"" },
+  { id:"blu36", cat:"bar", name:"Blu Bar on 36", en:"Blu Bar on 36 Shangri-La", lat:-33.8615, lng:151.2063, area:"더 록스",
+    desc:"샹그릴라 36층 칵테일 바. 야경 데이트 코스.", tip:"" },
+  { id:"baxter", cat:"bar", name:"The Baxter Inn", en:"The Baxter Inn", lat:-33.8698, lng:151.2058, area:"CBD",
+    desc:"숨겨진 지하 위스키 바.", tip:"" },
+
+  // 쇼핑
+  { id:"qvb", cat:"shop", name:"퀸 빅토리아 빌딩 (QVB)", en:"Queen Victoria Building", lat:-33.8718, lng:151.2067, area:"CBD",
+    desc:"19세기 로마네스크 양식의 아름다운 쇼핑 아케이드.", tip:"" },
+  { id:"strand", cat:"shop", name:"스트랜드 아케이드", en:"The Strand Arcade Sydney", lat:-33.8697, lng:151.2073, area:"CBD",
+    desc:"빅토리아 양식 아케이드. 호주 디자이너 브랜드.", tip:"" },
+  { id:"pitt", cat:"shop", name:"피트 스트리트 몰", en:"Pitt Street Mall", lat:-33.8700, lng:151.2085, area:"CBD",
+    desc:"시드니 대표 보행자 쇼핑 거리.", tip:"" },
+  { id:"paddys", cat:"shop", name:"패디스 마켓", en:"Paddy's Markets Haymarket", lat:-33.8800, lng:151.2030, area:"차이나타운",
+    desc:"기념품 쇼핑하기 좋은 재래시장.", tip:"수~일 운영." },
+  { id:"darling", cat:"sight", name:"달링 하버", en:"Darling Harbour", lat:-33.8748, lng:151.1987, area:"달링 하버",
+    desc:"레스토랑과 바가 모인 항구. 주말 밤 불꽃놀이(시즌별).", tip:"" },
+
+  // 숙소
+  { id:"parkhyatt", cat:"hotel", name:"파크 하얏트 시드니", en:"Park Hyatt Sydney", lat:-33.8556, lng:151.2097, area:"더 록스",
+    desc:"오페라 하우스 정면 뷰 객실. 신혼여행 인기 호텔.", tip:"" },
+  { id:"fourseasons", cat:"hotel", name:"포시즌스 시드니", en:"Four Seasons Hotel Sydney", lat:-33.8613, lng:151.2078, area:"서큘러 키",
+    desc:"서큘러 키 도보권. 하버 뷰 객실.", tip:"" },
+  { id:"shangrila", cat:"hotel", name:"샹그릴라 시드니", en:"Shangri-La Sydney", lat:-33.8615, lng:151.2066, area:"더 록스",
+    desc:"고층 하버 뷰가 뛰어난 호텔.", tip:"" },
+  { id:"pierone", cat:"hotel", name:"피어 원 시드니 하버", en:"Pier One Sydney Harbour", lat:-33.8549, lng:151.2085, area:"월시 베이",
+    desc:"하버 브리지 바로 아래, 부두 위 부티크 호텔.", tip:"" },
+
+  // 교통
+  { id:"cquay", cat:"trans", name:"서큘러 키 페리 터미널", en:"Circular Quay Wharf", lat:-33.8611, lng:151.2108, area:"서큘러 키",
+    desc:"맨리·타롱가·왓슨스 베이행 페리 출발지. 기차역 연결.", tip:"" },
+  { id:"central", cat:"trans", name:"센트럴역", en:"Central Station Sydney", lat:-33.8832, lng:151.2070, area:"헤이마켓",
+    desc:"공항철도 및 블루 마운틴행 기차.", tip:"" },
+  { id:"syd", cat:"trans", name:"시드니 공항", en:"Sydney Airport International Terminal", lat:-33.9366, lng:151.1655, area:"마스콧",
+    desc:"공항철도로 시티까지 약 15분.", tip:"" },
+];
+
+const DAY_COLORS = ["#e8590c","#1c7ed6","#2f9e44","#ae3ec9","#f08c00","#0c8599","#c2255c","#5c940d","#3b5bdb","#862e9c"];
+
+const SAMPLE = [
+  { stops:["syd","parkhyatt","cquay","opera","botanic","mrsmac","operabar","bennelong"], note:"도착 → 체크인 → 하버 산책 → 오페라 바 선셋 → 디너" },
+  { stops:["rocks","mca","climb","obshill","barangaroo","darling","glenmore"], note:"더 록스 골목 → 브리지클라임 → 바랑가루 노을" },
+  { stops:["bondi","icebergs","b2c","coogee","bourke"], note:"본다이 브런치 → 해안 산책로 → 쿠지" },
+  { stops:["cquay","taronga","manly","quay"], note:"페리 데이: 타롱가 동물원 → 맨리 → 기념일 디너" },
+  { stops:["qvb","strand","pitt","hyde","stmary","agnsw","harrys","mrwong","blu36"], note:"시티 쇼핑 & 미술관 → 야경 칵테일" },
+  { stops:["central","blueview"], note:"(선택) 블루 마운틴 당일치기" },
+];
+
+/* ============================== 상태 ============================== */
+const LS_KEY = "sydney-honeymoon-v1";
+const defaultState = () => ({
+  startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"" })),
+  mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
+});
+let state = load();
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY));
+    if (s && Array.isArray(s.days)) return Object.assign(defaultState(), s);
+  } catch (e) {}
+  return defaultState();
+}
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+
+const allPlaces = () => PLACES.concat(state.custom);
+const byId = id => allPlaces().find(p => p.id === id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function gQuery(p) { return p.en ? `${p.en}, Sydney NSW` : `${p.lat},${p.lng}`; }
+function gPlaceUrl(p) { return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(gQuery(p)); }
+function gDirUrl(stops, mode) {
+  if (stops.length < 2) return stops.length ? gPlaceUrl(stops[0]) : null;
+  const q = stops.map(gQuery);
+  const u = new URLSearchParams({ api:"1", origin:q[0], destination:q[q.length-1], travelmode:mode });
+  if (q.length > 2) u.set("waypoints", q.slice(1,-1).join("|"));
+  return "https://www.google.com/maps/dir/?" + u.toString();
+}
+function km(a, b) {
+  const R = 6371, r = x => x * Math.PI / 180;
+  const dLat = r(b.lat-a.lat), dLng = r(b.lng-a.lng);
+  const h = Math.sin(dLat/2)**2 + Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* ============================== 지도 어댑터 ============================== */
+// Google Maps 키가 있으면 Google Maps, 없으면 Leaflet(무료 타일)로 같은 기능을 제공.
+const params = new URLSearchParams(location.search);
+let API_KEY = params.get("key") || "";
+try { API_KEY = API_KEY || localStorage.getItem("gmaps-key") || ""; } catch (e) {}
+
+const CENTER = { lat:-33.8650, lng:151.2094 };
+let M; // 어댑터
+
+function leafletAdapter() {
+  const map = L.map("map", { zoomControl:true }).setView([CENTER.lat, CENTER.lng], 14);
+  const base = {
+    "기본 지도": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20, subdomains:"abcd",
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>' }),
+    "위성": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 19, attribution:"Tiles &copy; Esri" }),
+  };
+  base["기본 지도"].addTo(map);
+  L.control.layers(base, null, { position:"topright" }).addTo(map);
+  const popup = L.popup({ maxWidth: 300 });
+  return {
+    pin(p, html, onClick) {
+      const icon = L.divIcon({ className:"", html, iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-28] });
+      const m = L.marker([p.lat,p.lng], { icon, title:p.name }).on("click", onClick);
+      return { show(v){ v ? m.addTo(map) : m.remove(); }, z(v){ m.setZIndexOffset(v); } };
+    },
+    num(p, html, onClick) {
+      const icon = L.divIcon({ className:"", html, iconSize:[24,24], iconAnchor:[12,12] });
+      const m = L.marker([p.lat,p.lng], { icon, zIndexOffset:1000 }).on("click", onClick).addTo(map);
+      return { remove(){ m.remove(); } };
+    },
+    line(pts, color) {
+      const l = L.polyline(pts.map(p => [p.lat,p.lng]), { color, weight:4, opacity:.8, dashArray:"8 6" }).addTo(map);
+      return { remove(){ l.remove(); } };
+    },
+    popup(p, html) { popup.setLatLng([p.lat,p.lng]).setContent(html).openOn(map); },
+    closePopup() { map.closePopup(); },
+    fly(p, z) { map.flyTo([p.lat,p.lng], Math.max(map.getZoom(), z || 15), { duration:.6 }); },
+    fit(pts) {
+      if (!pts.length) return;
+      if (pts.length === 1) return this.fly(pts[0], 15);
+      map.fitBounds(pts.map(p => [p.lat,p.lng]), { padding:[50,50] });
+    },
+    onClick(fn) { map.on("click", e => fn({ lat:e.latlng.lat, lng:e.latlng.lng })); },
+    cursor(c) { map.getContainer().style.cursor = c; },
+  };
+}
+
+function googleAdapter() {
+  const g = google.maps;
+  const map = new g.Map(document.getElementById("map"), {
+    center: CENTER, zoom: 14, mapTypeControl: true, streetViewControl: true, fullscreenControl: false,
+    clickableIcons: false,
+  });
+  const info = new g.InfoWindow({ maxWidth: 300 });
+  const circleIcon = (color, scale) => ({ path:g.SymbolPath.CIRCLE, fillColor:color, fillOpacity:1, strokeColor:"#fff", strokeWeight:2, scale });
+  return {
+    pin(p, html, onClick, color, emoji) {
+      const m = new g.Marker({ position:p, title:p.name, icon:circleIcon(color, 14), label:{ text:emoji, fontSize:"15px" } });
+      m.addListener("click", onClick);
+      return { show(v){ m.setMap(v ? map : null); }, z(v){ m.setZIndex(v); } };
+    },
+    num(p, html, onClick, color, n) {
+      const m = new g.Marker({ position:p, map, zIndex:1000, icon:circleIcon(color, 11),
+        label:{ text:String(n), color:"#fff", fontSize:"12px", fontWeight:"700" } });
+      m.addListener("click", onClick);
+      return { remove(){ m.setMap(null); } };
+    },
+    line(pts, color) {
+      const l = new g.Polyline({ path:pts, map, strokeOpacity:0,
+        icons:[{ icon:{ path:"M 0,-1 0,1", strokeOpacity:.85, strokeColor:color, scale:3 }, offset:"0", repeat:"14px" }] });
+      return { remove(){ l.setMap(null); } };
+    },
+    popup(p, html) { info.setContent(html); info.setPosition(p); info.open({ map }); },
+    closePopup() { info.close(); },
+    fly(p, z) { map.panTo(p); if (map.getZoom() < (z||15)) map.setZoom(z||15); },
+    fit(pts) {
+      if (!pts.length) return;
+      if (pts.length === 1) return this.fly(pts[0], 15);
+      const b = new g.LatLngBounds(); pts.forEach(p => b.extend(p)); map.fitBounds(b, 50);
+    },
+    onClick(fn) { map.addListener("click", e => fn({ lat:e.latLng.lat(), lng:e.latLng.lng() })); },
+    cursor(c) { map.setOptions({ draggableCursor: c === "" ? null : c }); },
+  };
+}
+
+/* ============================== 렌더링 ============================== */
+const markers = {};      // placeId -> marker
+let routeLayers = [];    // 동선 레이어
+let addMode = false;
+
+function pinHtml(p) {
+  const c = CATS[p.cat];
+  return `<div class="pin" style="background:${c.color}"><span>${c.emoji}</span></div>`;
+}
+
+function buildMarkers() {
+  Object.values(markers).forEach(m => m.show(false));
+  for (const k in markers) delete markers[k];
+  allPlaces().forEach(p => {
+    const c = CATS[p.cat];
+    markers[p.id] = M.pin(p, pinHtml(p), () => openPlace(p.id, false), c.color, c.emoji);
+  });
+  filter();
+}
+
+function dayLabel(i) {
+  if (!state.startDate) return `Day ${i+1}`;
+  const d = new Date(state.startDate + "T00:00:00"); d.setDate(d.getDate() + i);
+  const wd = "일월화수목금토"[d.getDay()];
+  return `Day ${i+1} · ${d.getMonth()+1}/${d.getDate()}(${wd})`;
+}
+
+function popupHtml(p) {
+  const c = CATS[p.cat];
+  const inDays = state.days.map((d,i) => d.stops.includes(p.id) ? i+1 : null).filter(Boolean);
+  const opts = state.days.map((_,i) => `<option value="${i}">${esc(dayLabel(i))}</option>`).join("");
+  return `<div class="pop">
+    <h3>${c.emoji} ${esc(p.name)}</h3>
+    <div class="muted">${esc(c.label)}${p.area ? " · " + esc(p.area) : ""}${p.en ? " · " + esc(p.en) : ""}</div>
+    ${p.desc ? `<p>${esc(p.desc)}</p>` : ""}
+    ${p.tip ? `<p class="tip">💡 ${esc(p.tip)}</p>` : ""}
+    ${inDays.length ? `<p class="muted">📌 일정 포함: ${inDays.map(n => "Day " + n).join(", ")}</p>` : ""}
+    <div class="acts">
+      <a class="g" href="${gPlaceUrl(p)}" target="_blank" rel="noopener">구글맵에서 보기</a>
+      <select id="popDay">${opts}</select>
+      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">+ 일정에 추가</button>
+      ${p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">삭제</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function openPlace(id, fly = true) {
+  const p = byId(id); if (!p) return;
+  if (fly) M.fly(p, 15);
+  M.popup(p, popupHtml(p));
+}
+
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.innerHTML = Object.entries(CATS).map(([k,c]) =>
+    `<button class="chip ${state.cats.includes(k) ? "" : "off"}" data-cat="${k}"><span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.label}</button>`
+  ).join("") + `<button class="chip" data-cat="__all">전체</button>`;
+}
+
+function matches(p, q) {
+  if (!state.cats.includes(p.cat)) return false;
+  if (!q) return true;
+  const hay = [p.name, p.en, p.desc, p.area, CATS[p.cat].label].join(" ").toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
+}
+
+function filter() {
+  const q = document.getElementById("q").value.trim();
+  const inPlan = new Set(state.days.flatMap(d => d.stops));
+  const list = allPlaces().filter(p => matches(p, q));
+  allPlaces().forEach(p => markers[p.id] && markers[p.id].show(matches(p, q) || inPlan.has(p.id)));
+  document.getElementById("list").innerHTML = list.length ? list.map(p => {
+    const c = CATS[p.cat];
+    const days = state.days.map((d,i) => d.stops.includes(p.id) ? "D" + (i+1) : null).filter(Boolean);
+    return `<div class="place" data-id="${p.id}">
+      <div class="emo">${c.emoji}</div>
+      <div><div class="nm">${esc(p.name)}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
+      <div class="ds">${esc(p.area || c.label)} — ${esc(p.desc || "")}</div></div>
+    </div>`;
+  }).join("") : `<div class="empty">검색 결과가 없습니다.</div>`;
+}
+
+function renderDays() {
+  document.getElementById("dayCount").textContent = state.days.length;
+  document.getElementById("startDate").value = state.startDate;
+  document.getElementById("mode").value = state.mode;
+  document.getElementById("routesOn").checked = state.routesOn;
+  document.getElementById("days").innerHTML = state.days.map((d, i) => {
+    const color = DAY_COLORS[i % DAY_COLORS.length];
+    const stops = d.stops.map(byId).filter(Boolean);
+    let total = 0;
+    const rows = stops.map((p, j) => {
+      let leg = "";
+      if (j > 0) {
+        const k = km(stops[j-1], p); total += k;
+        leg = `<div class="leg">↓ 직선 ${k < 1 ? Math.round(k*1000) + "m" : k.toFixed(1) + "km"}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
+      }
+      return `${leg}<div class="stop">
+        <div class="n" style="background:${color}">${j+1}</div>
+        <div class="nm" data-open="${p.id}">${CATS[p.cat].emoji} ${esc(p.name)}</div>
+        <button class="btn icon" title="위로" data-mv="${i},${j},-1" ${j===0?"disabled":""}>↑</button>
+        <button class="btn icon" title="아래로" data-mv="${i},${j},1" ${j===stops.length-1?"disabled":""}>↓</button>
+        <button class="btn icon" title="다른 날로" data-shift="${i},${j}">⇄</button>
+        <button class="btn icon" title="삭제" data-rm="${i},${j}">✕</button>
+      </div>`;
+    }).join("");
+    const url = gDirUrl(stops, state.mode);
+    return `<div class="day">
+      <div class="day-h">
+        <div class="sw" style="background:${color}"></div>
+        <div class="t">${esc(dayLabel(i))}</div>
+        <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}</span>
+        <button class="btn sm ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시">👁️</button>
+      </div>
+      <div class="day-b">
+        ${rows || `<div class="empty">장소 탭이나 지도 핀에서 "+ 일정에 추가"를 눌러주세요.</div>`}
+        <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
+        ${url ? `<div class="row" style="margin-top:6px">
+          <a class="btn sm primary" href="${url}" target="_blank" rel="noopener">🧭 구글맵 길찾기로 열기</a>
+          ${stops.length > 10 ? `<span class="muted">경유지는 최대 9곳까지 반영될 수 있어요.</span>` : ""}
+        </div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  drawRoutes();
+  filter();
+}
+
+function drawRoutes() {
+  routeLayers.forEach(l => l.remove()); routeLayers = [];
+  if (!state.routesOn) return;
+  state.days.forEach((d, i) => {
+    if (state.focusDay !== null && state.focusDay !== i) return;
+    const color = DAY_COLORS[i % DAY_COLORS.length];
+    const stops = d.stops.map(byId).filter(Boolean);
+    if (stops.length > 1) routeLayers.push(M.line(stops, color));
+    stops.forEach((p, j) => {
+      const html = `<div class="num" style="background:${color}">${j+1}</div>`;
+      routeLayers.push(M.num(p, html, () => openPlace(p.id, false), color, j+1));
+    });
+  });
+}
+
+/* ============================== 동작 ============================== */
+function addToDay(id, day) {
+  const d = state.days[day]; if (!d) return;
+  if (!d.stops.includes(id)) d.stops.push(id);
+  save(); renderDays(); M.closePopup();
+  toast(`${byId(id).name} → ${dayLabel(day)}에 추가했어요`);
+}
+function removeCustom(id) {
+  if (!confirm("이 장소를 삭제할까요?")) return;
+  state.custom = state.custom.filter(p => p.id !== id);
+  state.days.forEach(d => d.stops = d.stops.filter(s => s !== id));
+  save(); M.closePopup(); buildMarkers(); renderDays();
+}
+window.addToDay = addToDay; window.removeCustom = removeCustom;
+
+let toastT;
+function toast(msg) {
+  const b = document.getElementById("banner");
+  b.textContent = msg; b.style.display = "block";
+  clearTimeout(toastT);
+  if (!addMode) toastT = setTimeout(() => b.style.display = "none", 2200);
+}
+function setAddMode(v) {
+  addMode = v;
+  document.getElementById("btnAddMode").classList.toggle("active", v);
+  M.cursor(v ? "crosshair" : "");
+  const b = document.getElementById("banner");
+  if (v) { b.textContent = "지도를 클릭해 장소를 추가하세요 (Esc 취소)"; b.style.display = "block"; }
+  else b.style.display = "none";
+}
+
+function bindUI() {
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + b.dataset.tab));
+  });
+  document.getElementById("q").oninput = filter;
+  document.getElementById("chips").onclick = e => {
+    const c = e.target.closest(".chip"); if (!c) return;
+    const k = c.dataset.cat;
+    if (k === "__all") state.cats = state.cats.length === Object.keys(CATS).length ? [] : Object.keys(CATS);
+    else state.cats = state.cats.includes(k) ? state.cats.filter(x => x !== k) : state.cats.concat(k);
+    save(); renderChips(); filter();
+  };
+  document.getElementById("list").onclick = e => {
+    const el = e.target.closest(".place"); if (el) openPlace(el.dataset.id);
+  };
+
+  document.getElementById("startDate").onchange = e => { state.startDate = e.target.value; save(); renderDays(); };
+  document.getElementById("mode").onchange = e => { state.mode = e.target.value; save(); renderDays(); };
+  document.getElementById("routesOn").onchange = e => { state.routesOn = e.target.checked; save(); drawRoutes(); };
+  document.getElementById("dayPlus").onclick = () => { if (state.days.length < 21) { state.days.push({ stops:[], note:"" }); save(); renderDays(); } };
+  document.getElementById("dayMinus").onclick = () => {
+    if (state.days.length <= 1) return;
+    const last = state.days[state.days.length-1];
+    if ((last.stops.length || last.note) && !confirm("마지막 날의 일정이 삭제됩니다. 계속할까요?")) return;
+    state.days.pop();
+    if (state.focusDay !== null && state.focusDay >= state.days.length) state.focusDay = null;
+    save(); renderDays();
+  };
+
+  const daysEl = document.getElementById("days");
+  daysEl.onclick = e => {
+    const t = e.target.closest("[data-open],[data-mv],[data-rm],[data-shift],[data-focus]"); if (!t) return;
+    if (t.dataset.open) return openPlace(t.dataset.open);
+    if (t.dataset.focus !== undefined) {
+      const i = +t.dataset.focus;
+      state.focusDay = state.focusDay === i ? null : i;
+      save(); renderDays();
+      if (state.focusDay !== null) M.fit(state.days[i].stops.map(byId).filter(Boolean));
+      return;
+    }
+    if (t.dataset.mv) {
+      const [i,j,dir] = t.dataset.mv.split(",").map(Number); const s = state.days[i].stops;
+      [s[j], s[j+dir]] = [s[j+dir], s[j]];
+    } else if (t.dataset.rm) {
+      const [i,j] = t.dataset.rm.split(",").map(Number); state.days[i].stops.splice(j,1);
+    } else if (t.dataset.shift) {
+      const [i,j] = t.dataset.shift.split(",").map(Number);
+      const to = prompt(`몇 일차로 옮길까요? (1~${state.days.length})`, String(i+2 > state.days.length ? 1 : i+2));
+      const k = parseInt(to, 10) - 1;
+      if (!(k >= 0 && k < state.days.length) || k === i) return;
+      const [id] = state.days[i].stops.splice(j,1);
+      if (!state.days[k].stops.includes(id)) state.days[k].stops.push(id);
+    }
+    save(); renderDays();
+  };
+  daysEl.oninput = e => {
+    if (e.target.dataset.note !== undefined) { state.days[+e.target.dataset.note].note = e.target.value; save(); }
+  };
+
+  document.getElementById("btnSample").onclick = () => {
+    if (state.days.some(d => d.stops.length) && !confirm("현재 일정을 추천 일정으로 바꿀까요?")) return;
+    state.days = SAMPLE.map(d => ({ stops:[...d.stops], note:d.note }));
+    state.focusDay = null; save(); renderDays();
+    M.fit(state.days.flatMap(d => d.stops).map(byId).filter(p => p && p.id !== "blueview"));
+  };
+  document.getElementById("btnReset").onclick = () => {
+    if (!confirm("일정과 내 장소를 모두 초기화할까요?")) return;
+    state = defaultState(); save(); buildMarkers(); renderChips(); renderDays();
+  };
+  document.getElementById("btnExport").onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "sydney-honeymoon-plan.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const s = JSON.parse(await f.text());
+      if (!Array.isArray(s.days)) throw 0;
+      state = Object.assign(defaultState(), s); save(); buildMarkers(); renderChips(); renderDays();
+      toast("일정을 불러왔어요");
+    } catch (err) { alert("올바른 일정 파일이 아닙니다."); }
+    e.target.value = "";
+  };
+
+  document.getElementById("btnAddMode").onclick = () => setAddMode(!addMode);
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && addMode) setAddMode(false); });
+  M.onClick(pos => {
+    if (!addMode) return;
+    const name = prompt("장소 이름을 입력하세요 (예: 우리 숙소, 웨딩 촬영지)");
+    setAddMode(false);
+    if (!name) return;
+    const desc = prompt("메모 (선택)") || "";
+    const p = { id:"c" + Date.now().toString(36), cat:"mine", name:name.trim(), desc, lat:+pos.lat.toFixed(6), lng:+pos.lng.toFixed(6), area:"" };
+    state.custom.push(p);
+    if (!state.cats.includes("mine")) state.cats.push("mine");
+    save(); buildMarkers(); renderChips(); filter(); openPlace(p.id, false);
+  });
+
+  const dlg = document.getElementById("settings");
+  document.getElementById("btnSettings").onclick = () => { document.getElementById("apiKey").value = API_KEY; dlg.showModal(); };
+  document.getElementById("setCancel").onclick = () => dlg.close();
+  document.getElementById("setSave").onclick = () => {
+    const k = document.getElementById("apiKey").value.trim();
+    try { k ? localStorage.setItem("gmaps-key", k) : localStorage.removeItem("gmaps-key"); } catch (e) {}
+    const u = new URL(location.href); u.searchParams.delete("key"); location.href = u.toString();
+  };
+}
+
+function start(adapter) {
+  M = adapter;
+  buildMarkers(); renderChips(); renderDays(); bindUI();
+}
+
+if (API_KEY) {
+  let done = false;
+  window.__gmInit = () => { done = true; start(googleAdapter()); };
+  window.gm_authFailure = () => {
+    alert("Google Maps API 키 인증에 실패했습니다. 기본 지도로 표시합니다. (⚙️에서 키를 확인하세요)");
+    try { localStorage.removeItem("gmaps-key"); } catch (e) {}
+    const u = new URL(location.href); u.searchParams.delete("key"); location.href = u.toString();
+  };
+  const s = document.createElement("script");
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&language=ko&region=AU&callback=__gmInit`;
+  s.async = true;
+  s.onerror = () => { if (!done) { done = true; start(leafletAdapter()); } };
+  document.head.appendChild(s);
+} else {
+  start(leafletAdapter());
+}
+</script>
+</body>
+</html>
