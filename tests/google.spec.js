@@ -55,8 +55,13 @@ test.describe("API 거부", () => {
     await open(page, "?key=TEST");
     await tab(page, "plan");
     await page.click("#btnSample");
-    await expect(page.locator("#apiNotice")).toContainText("Routes API");
+    await expect(page.locator("#apiNotice")).toContainText("실제 이동 경로를 불러올 수 없어서 직선 거리로");
+    await expect(page.locator("#apiNotice")).not.toContainText("Routes API");   // 영문 오류는 사용자에게 안 보여줌
     await expect(page.locator(".leg").first()).toContainText("직선");
+    await page.click("#apiNotice [data-x]");
+    await expect(page.locator("#apiNotice")).toBeHidden();
+    await page.click("#btnSettings");
+    await expect(page.locator("#keyStatus")).toContainText("Routes API: Routes API has not been used");
   });
 });
 
@@ -66,7 +71,10 @@ test.describe("잘못된 키", () => {
     await open(page, "?key=BAD");
     await tab(page, "plan");
     await page.click("#btnSample");
-    await expect(page.locator("#apiNotice")).toContainText("API key not valid");
+    await expect(page.locator("#apiNotice")).toBeVisible();
+    await page.click("#btnSettings");
+    await expect(page.locator("#keyStatus")).toContainText("API key not valid");
+    await page.click("#setCancel");
     await expect(page.locator(".leg").first()).toContainText("직선");
     await expect(page.locator(".mk-pin").first()).toBeVisible();
   });

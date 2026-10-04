@@ -26,11 +26,19 @@ export async function gApi(service, url, body, fieldMask) {
   }
   return data;
 }
+// 사용자에게는 무엇이 대신 보이는지만 짧게 알리고(닫기 가능), 원인(영문 오류)은 ⚙️ 설정에서 확인
+let noticeClosed = false;
+export function apiProblemText() {
+  return Object.entries(apiErrors).map(([k, m]) => `${API_NAMES[k]}: ${m}`).join("\n");
+}
 export function showApiNotice() {
   const el = document.getElementById("apiNotice");
-  const items = Object.entries(apiErrors).map(([k, m]) => `<b>${API_NAMES[k]}</b>: ${esc(m)}`);
-  el.hidden = !items.length;
-  el.innerHTML = `⚠️ 구글 API 호출이 거부됐어요.<br>${items.join("<br>")}<br>⚙️ 설정의 안내대로 <b>결제 계정 연결</b>과 <b>API 사용 설정</b>을 확인해 주세요.`;
+  const what = [apiErrors.routes && "실제 이동 경로", apiErrors.places && "구글 장소 정보·검색"].filter(Boolean);
+  el.hidden = !what.length || noticeClosed;
+  el.innerHTML = `<span>지금은 ${what.join("·")}를 불러올 수 없어서 ${apiErrors.routes ? "직선 거리로 " : "기본 정보로 "}보여드리고 있어요.</span>
+    <button class="btn sm" data-x aria-label="알림 닫기">닫기</button>`;
+  el.querySelector("[data-x]").onclick = () => { noticeClosed = true; el.hidden = true; };
+  console.warn("Google API 거부:\n" + apiProblemText());
   scheduleRender();
 }
 

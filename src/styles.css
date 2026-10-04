@@ -482,3 +482,8 @@ body.gmode .g-only { display: revert !important; }
 .form .seg-opt { display: grid; margin: 0; }
 .form select { width: 100%; margin-top: 4px; }
 .form .seg.who { margin-bottom: 4px; }
+#apiNotice { display: flex; align-items: center; gap: 10px; }
+#apiNotice[hidden] { display: none; }
+#apiNotice > span { flex: 1; }
+#apiNotice .btn { flex: none; background: transparent; border-color: currentColor; color: inherit; }
+#keyStatus { white-space: pre-line; word-break: break-word; }
