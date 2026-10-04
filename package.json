@@ -4,12 +4,17 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "serve": "http-server -p 4173 -c-1 -s .",
-    "test": "playwright test"
+    "serve": "vite build && vite preview",
+    "test": "playwright test",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
-    "http-server": "^14.1.1",
-    "leaflet": "1.9.4"
+    "vite": "^6.4.3"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }

@@ -31,3 +31,26 @@
 - 현지에서 길안내가 필요할 땐 "휴대폰 구글맵 앱으로 길안내" 버튼
 
 API 키 없이도 기본 무료 지도로 동작합니다 (이때는 경로가 직선으로 표시됨).
+
+## 개발
+```bash
+npm install
+npm run dev        # 개발 서버 (http://localhost:5173)
+npm test           # 빌드 후 Playwright 회귀 테스트
+VITE_GOOGLE_MAPS_API_KEY=... npm run dev   # 내 키로 구글 기능 테스트
+```
+
+| 경로 | 내용 |
+| --- | --- |
+| `src/data.js` | 도시·추천 장소·카테고리 |
+| `src/store.js` | 도시별 저장 상태(localStorage), 장소 조회 |
+| `src/google.js` | Places·Routes API 호출과 캐시 |
+| `src/map.js` | 지도 어댑터(Leaflet / Google) |
+| `src/render.js` | 지도 핀·목록·일정 화면 |
+| `src/stays.js` | 에어비앤비 숙소 후보 |
+| `src/cities.js` | 도시 전환·추가 |
+| `src/actions.js` | 버튼·입력 이벤트 |
+| `src/main.js` | 앱 시작 |
+| `public/` | 매니페스트·서비스 워커·아이콘 |
+
+`main` 또는 작업 브랜치에 푸시하면 테스트가 통과한 경우에만 GitHub Pages로 배포돼요.

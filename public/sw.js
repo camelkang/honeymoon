@@ -1,12 +1,10 @@
 // 신혼여행 지도 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도 타일은 캐시해 둠
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const TILES = "tiles-v1";
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png",
-  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
-  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
-];
+];  // 빌드된 JS·CSS(assets/)는 처음 받을 때 캐시됨
 const TILE_HOSTS = /basemaps\.cartocdn\.com|arcgisonline\.com/;
 const MAX_TILES = 1500;
 
@@ -36,11 +34,6 @@ self.addEventListener("fetch", e => {
       if (res.ok) { const copy = res.clone(); caches.open(SHELL).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match("./index.html"))));
-    return;
-  }
-  // 라이브러리: 캐시 우선
-  if (url.hostname === "cdnjs.cloudflare.com") {
-    e.respondWith(caches.match(req).then(r => r || fetch(req)));
     return;
   }
   // 기본 지도 타일: 캐시 우선 + 백그라운드 저장 (본 적 있는 지역은 오프라인에서도 보임)
