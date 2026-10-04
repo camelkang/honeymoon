@@ -130,6 +130,27 @@
   dialog input { width: 100%; }
   dialog h2 { margin-top: 0; font-size: 16px; }
   dialog ol { padding-left: 18px; line-height: 1.6; }
+  .stay-hero { background: var(--chip); border-radius: 10px; padding: 10px 12px; }
+  .stay-hero ol { margin: 6px 0 8px; padding-left: 18px; line-height: 1.6; }
+  .btn.abnb, .pop a.abnb { background: #ff385c; color: #fff; border-color: #ff385c; }
+  .pop a.abnb { padding: 4px 8px; border-radius: 6px; text-decoration: none; }
+  .stay-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+  .stay-card.on { border: 2px solid #ff385c; }
+  .stay-card .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .stay-card .nm { font-weight: 700; cursor: pointer; }
+  .stay-card .price { font-weight: 800; white-space: nowrap; }
+  .stay-card .price small { font-weight: 400; color: var(--muted); }
+  .stay-card .note { font-size: 12.5px; margin: 6px 0; white-space: pre-wrap; }
+  .commute { font-size: 12px; margin-top: 4px; line-height: 1.6; }
+  .badge { background: #ff385c; color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+  .stay-pin {
+    background: #fff; color: #222; border: 2px solid #ff385c; border-radius: 999px; font-weight: 800; font-size: 12px;
+    padding: 2px 8px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.3); display: inline-block;
+    transform: translate(-50%, -100%); position: absolute; left: 0; top: 0;
+  }
+  .stay-pin.on { background: #ff385c; color: #fff; }
+  .form label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+  .form input, .form textarea { width: 100%; margin-top: 3px; }
   .g-only { display: none !important; }
   body.gmode .g-only { display: revert !important; }
   .notice { background: #fff4e6; color: #7a3e00; border-radius: 8px; padding: 8px 10px; margin: 10px 0; font-size: 12.5px; line-height: 1.5; }
@@ -168,6 +189,7 @@
     <div class="tabs">
       <button data-tab="places" class="on">🗺️ 장소</button>
       <button data-tab="plan">🗓️ 일정</button>
+      <button data-tab="stays">🏠 숙소</button>
     </div>
 
     <div class="pane on" id="pane-places">
@@ -179,6 +201,33 @@
       <div id="gResults"></div>
       <div class="chips" id="chips"></div>
       <div id="list"></div>
+    </div>
+
+    <div class="pane" id="pane-stays">
+      <div class="stay-hero">
+        <b>에어비앤비 숙소 비교</b>
+        <ol class="muted">
+          <li>지도를 원하는 동네로 옮기고 확대해요</li>
+          <li><b>에어비앤비에서 찾기</b>를 누르면 지금 보이는 지도 영역 + 여행 날짜로 검색돼요</li>
+          <li>마음에 드는 숙소를 <b>+ 후보 추가</b>하면 지도에 가격 핀으로 표시돼요</li>
+        </ol>
+        <div class="row">
+          <label class="muted">인원</label>
+          <select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+          <button class="btn abnb" id="btnAirbnb">🔎 이 지도 영역으로 에어비앤비 찾기</button>
+        </div>
+        <div class="muted" id="stayDates" style="margin-top:6px"></div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin:12px 0 4px">
+        <button class="btn primary" id="btnAddStay">+ 숙소 후보 추가</button>
+        <select id="staySort">
+          <option value="price">💰 가격 낮은 순</option>
+          <option value="commute">🚆 서큘러 키 가까운 순</option>
+          <option value="rating">★ 평점 높은 순</option>
+          <option value="added">🕒 추가한 순</option>
+        </select>
+      </div>
+      <div id="stayList"></div>
     </div>
 
     <div class="pane" id="pane-plan">
@@ -218,6 +267,27 @@
   </div>
 </div>
 
+<dialog id="stayDlg">
+  <h2 id="stayDlgTitle">🏠 숙소 후보 추가</h2>
+  <form id="stayForm" method="dialog" class="form">
+    <label>에어비앤비 링크<input type="text" name="url" placeholder="https://www.airbnb.co.kr/rooms/..."></label>
+    <label>숙소 이름 *<input type="text" name="name" required placeholder="예: 하버뷰 아파트 (서큘러 키)"></label>
+    <div class="row" style="flex-wrap:nowrap">
+      <label style="flex:1">1박 가격 (AUD)<input type="number" name="price" min="0" step="1" placeholder="350"></label>
+      <label style="flex:1">평점<input type="number" name="rating" min="0" max="5" step="0.01" placeholder="4.9"></label>
+      <label style="flex:1">박수<input type="number" name="nights" min="1" step="1" placeholder="전체"></label>
+    </div>
+    <label>동네 / 주소<input type="text" name="area" placeholder="예: Surry Hills, 또는 상세 주소"></label>
+    <label>메모<textarea name="note" placeholder="장점·단점, 체크인 방법, 호스트 답변 등"></textarea></label>
+    <label class="muted" id="stayRepickRow"><input type="checkbox" name="repick" style="width:auto"> 지도에서 위치 다시 찍기</label>
+    <p class="muted" id="stayLocHint">저장하면 지도에서 숙소 위치를 클릭해 주세요. 에어비앤비는 예약 전엔 대략적인 위치만 보여줘요.</p>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" type="button" id="stayCancel">취소</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="settings">
   <h2>⚙️ 지도 설정</h2>
   <p class="muted"><b>Google Maps API 키</b>를 넣으면 이 페이지 안에서 구글 지도, 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색을 모두 쓸 수 있어요.</p>
@@ -251,6 +321,7 @@ const CATS = {
   hotel: { label: "숙소",      emoji: "🏨", color: "#495057" },
   trans: { label: "교통",      emoji: "⛴️", color: "#0b7285" },
   mine:  { label: "내 장소",   emoji: "⭐", color: "#e03131" },
+  stay:  { label: "에어비앤비 후보", emoji: "🏠", color: "#ff385c" },
 };
 
 // 좌표는 대략적인 위치입니다. 정확한 위치·영업시간은 구글맵 버튼으로 확인하세요.
@@ -392,18 +463,23 @@ const LS_KEY = "sydney-honeymoon-v1";
 const defaultState = () => ({
   startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"", times:{} })),
   mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
+  stays: [], stayChosen: null, guests: 2, staySort: "price",
 });
 let state = load();
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
-    if (s && Array.isArray(s.days)) return Object.assign(defaultState(), s);
+    if (s && Array.isArray(s.days)) {
+      // 숙소 기능이 생기기 전에 저장된 일정이면 숙소 카테고리를 켜 둠
+      if (!s.stays && Array.isArray(s.cats) && !s.cats.includes("stay")) s.cats.push("stay");
+      return Object.assign(defaultState(), s);
+    }
   } catch (e) {}
   return defaultState();
 }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
 
-const allPlaces = () => PLACES.concat(state.custom);
+const allPlaces = () => PLACES.concat(state.custom, state.stays);
 const tempPlaces = {};   // 구글 검색/클릭으로 열어본, 아직 저장 안 한 장소
 const byId = id => allPlaces().find(p => p.id === id) || tempPlaces[id];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -595,8 +671,10 @@ function leafletAdapter() {
   const popup = L.popup({ maxWidth: 300 });
   return {
     pin(p, html, onClick) {
-      const icon = L.divIcon({ className:"", html, iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-28] });
-      const m = L.marker([p.lat,p.lng], { icon, title:p.name }).on("click", onClick);
+      const icon = p.cat === "stay"
+        ? L.divIcon({ className:"", html, iconSize:[0,0], iconAnchor:[0,0], popupAnchor:[0,-26] })
+        : L.divIcon({ className:"", html, iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-28] });
+      const m = L.marker([p.lat,p.lng], { icon, title:p.name, zIndexOffset: p.cat === "stay" ? 500 : 0 }).on("click", onClick);
       return { show(v){ v ? m.addTo(map) : m.remove(); }, z(v){ m.setZIndexOffset(v); } };
     },
     num(p, html, onClick) {
@@ -617,6 +695,10 @@ function leafletAdapter() {
       map.fitBounds(pts.map(p => [p.lat,p.lng]), { padding:[50,50] });
     },
     onClick(fn) { map.on("click", e => fn({ lat:e.latlng.lat, lng:e.latlng.lng })); },
+    bounds() {
+      const b = map.getBounds();
+      return { n:b.getNorth(), s:b.getSouth(), e:b.getEast(), w:b.getWest(), z:map.getZoom() };
+    },
     cursor(c) { map.getContainer().style.cursor = c; },
   };
 }
@@ -629,9 +711,21 @@ function googleAdapter() {
   });
   const info = new g.InfoWindow({ maxWidth: 300 });
   const circleIcon = (color, scale) => ({ path:g.SymbolPath.CIRCLE, fillColor:color, fillOpacity:1, strokeColor:"#fff", strokeWeight:2, scale });
+  // 에어비앤비 후보: 가격이 적힌 말풍선 핀
+  const stayIcon = p => {
+    const on = state.stayChosen === p.id, text = stayLabel(p);
+    const w = 18 + [...text].length * 8;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="30">
+      <rect x="1" y="1" width="${w-2}" height="22" rx="11" fill="${on ? "#ff385c" : "#fff"}" stroke="#ff385c" stroke-width="2"/>
+      <path d="M${w/2-5} 22.5 L${w/2} 29 L${w/2+5} 22.5 Z" fill="#ff385c"/>
+      <text x="${w/2}" y="16.5" font-family="Arial,sans-serif" font-size="12" font-weight="700" text-anchor="middle" fill="${on ? "#fff" : "#222"}">${esc(text)}</text></svg>`;
+    return { url:"data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg), anchor:new g.Point(w/2, 29) };
+  };
   return {
     pin(p, html, onClick, color, emoji) {
-      const m = new g.Marker({ position:{ lat:p.lat, lng:p.lng }, title:p.name, icon:circleIcon(color, 14), label:{ text:emoji, fontSize:"15px" } });
+      const m = p.cat === "stay"
+        ? new g.Marker({ position:{ lat:p.lat, lng:p.lng }, title:p.name, icon:stayIcon(p), zIndex:500 })
+        : new g.Marker({ position:{ lat:p.lat, lng:p.lng }, title:p.name, icon:circleIcon(color, 14), label:{ text:emoji, fontSize:"15px" } });
       m.addListener("click", onClick);
       return { show(v){ m.setMap(v ? map : null); }, z(v){ m.setZIndex(v); } };
     },
@@ -663,6 +757,11 @@ function googleAdapter() {
       });
     },
     cursor(c) { map.setOptions({ draggableCursor: c === "" ? null : c }); },
+    bounds() {
+      const b = map.getBounds(); if (!b) return null;
+      const ne = b.getNorthEast(), sw = b.getSouthWest();
+      return { n:ne.lat(), s:sw.lat(), e:ne.lng(), w:sw.lng(), z:map.getZoom() };
+    },
   };
 }
 
@@ -671,7 +770,9 @@ const markers = {};      // placeId -> marker
 let routeLayers = [];    // 동선 레이어
 let addMode = false;
 
+function stayLabel(p) { return p.price ? "A$" + Math.round(p.price) : "🏠"; }
 function pinHtml(p) {
+  if (p.cat === "stay") return `<div class="stay-pin ${state.stayChosen === p.id ? "on" : ""}">${esc(stayLabel(p))}</div>`;
   const c = CATS[p.cat];
   return `<div class="pin" style="background:${c.color}"><span>${c.emoji}</span></div>`;
 }
@@ -697,6 +798,7 @@ function popupHtml(p) {
   const c = CATS[p.cat];
   const inDays = state.days.map((d,i) => d.stops.includes(p.id) ? i+1 : null).filter(Boolean);
   const opts = state.days.map((_,i) => `<option value="${i}">${esc(dayLabel(i))}</option>`).join("");
+  if (p.cat === "stay") return stayPopupHtml(p, opts);
   return `<div class="pop">
     <h3>${c.emoji} ${esc(p.name)}</h3>
     <div class="muted">${esc(c.label)}${p.area ? " · " + esc(p.area) : ""}${p.en ? " · " + esc(p.en) : ""}</div>
@@ -721,7 +823,7 @@ function openPlace(id, fly = true) {
   const node = document.createElement("div");
   node.innerHTML = popupHtml(p);
   M.popup(p, node);
-  if (!GMODE) return;
+  if (!GMODE || p.cat === "stay") return;
   const seq = ++popSeq;
   getDetails(p).then(d => {
     if (seq !== popSeq) return;
@@ -854,6 +956,7 @@ function renderDays() {
   }).join("");
   drawRoutes();
   filter();
+  renderStays();
 }
 
 function drawRoutes() {
@@ -873,6 +976,174 @@ function drawRoutes() {
     });
   });
 }
+
+/* ============================== 에어비앤비 숙소 후보 ============================== */
+// 에어비앤비는 공개 API가 없어 매물을 자동으로 가져올 수 없음 → 지도 영역으로 검색을 열고, 고른 숙소를 후보로 저장해 비교
+const KEY_SPOTS = [["cquay", "서큘러 키"], ["qvb", "시티(QVB)"], ["darling", "달링 하버"], ["bondi", "본다이"]];
+const tripNights = () => Math.max(1, state.days.length - 1);
+const stayNights = p => p.nights || tripNights();
+const fmtMoney = n => Math.round(n).toLocaleString();
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
+let pickFn = null;   // 지도 클릭으로 위치를 받을 콜백
+let editingStay = null;
+
+function isoAdd(iso, n) {
+  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function stayDates() {
+  return state.startDate ? { checkin: state.startDate, checkout: isoAdd(state.startDate, tripNights()) } : null;
+}
+function airbnbSearchUrl() {
+  const q = new URLSearchParams({ adults: state.guests, search_type: "user_map_move", search_by_map: "true" });
+  const d = stayDates();
+  if (d) { q.set("checkin", d.checkin); q.set("checkout", d.checkout); }
+  const b = M.bounds();
+  if (b) {
+    q.set("ne_lat", b.n.toFixed(5)); q.set("ne_lng", b.e.toFixed(5));
+    q.set("sw_lat", b.s.toFixed(5)); q.set("sw_lng", b.w.toFixed(5)); q.set("zoom", Math.round(b.z));
+  }
+  return "https://www.airbnb.co.kr/s/Sydney--NSW--Australia/homes?" + q;
+}
+
+// 숙소 → 주요 장소 이동시간 (구글 모드: 대중교통 실제 소요시간, 아니면 직선거리)
+function commute(p, spotId) {
+  const t = byId(spotId);
+  if (GMODE) {
+    const r = getLeg(p, t, "transit");
+    if (r && !r.none) return { text: `${MODE_ICON[r.mode]} ${fmtDur(r.sec)}`, sec: r.sec };
+    if (!r && !apiErrors.routes) return { text: "계산 중…", sec: 1e9 };
+  }
+  const k = km(p, t);
+  return { text: `직선 ${fmtDist(k * 1000)}`, sec: k * 1.3 / 4.5 * 3600 };
+}
+const commuteHtml = p => KEY_SPOTS.map(([id, label]) => `${label} <b>${commute(p, id).text}</b>`).join(" · ");
+
+function stayPriceHtml(p) {
+  if (!p.price) return "";
+  return `<b>A$${fmtMoney(p.price)}</b> / 박 · ${stayNights(p)}박 총 <b>A$${fmtMoney(p.price * stayNights(p))}</b>`;
+}
+function stayPopupHtml(p, opts) {
+  const on = state.stayChosen === p.id, url = safeUrl(p.url);
+  return `<div class="pop">
+    <h3>🏠 ${esc(p.name)} ${on ? `<span class="badge">확정</span>` : ""}</h3>
+    <div class="muted">에어비앤비 후보${p.area ? " · " + esc(p.area) : ""}${p.rating ? ` · ★ ${p.rating}` : ""}</div>
+    ${p.price ? `<p>${stayPriceHtml(p)}</p>` : ""}
+    ${p.note ? `<p>${esc(p.note)}</p>` : ""}
+    <div class="commute">${commuteHtml(p)}</div>
+    <div class="acts">
+      ${url ? `<a class="abnb" href="${esc(url)}" target="_blank" rel="noopener">에어비앤비에서 보기</a>` : ""}
+      <button class="btn sm" onclick="chooseStay('${p.id}')">${on ? "확정 취소" : "💍 이 숙소로 확정"}</button>
+      <button class="btn sm" onclick="openStayDlg('${p.id}')">수정</button>
+    </div>
+    <div class="acts">
+      <select id="popDay">${opts}</select>
+      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">+ 일정에 추가</button>
+    </div>
+  </div>`;
+}
+
+function renderStays() {
+  document.getElementById("guests").value = state.guests;
+  document.getElementById("staySort").value = state.staySort;
+  const d = stayDates();
+  document.getElementById("stayDates").innerHTML = d
+    ? `📅 체크인 ${d.checkin} → 체크아웃 ${d.checkout} (${tripNights()}박) · 일정 탭의 출발일·일수 기준`
+    : `📅 일정 탭에서 출발일을 정하면 날짜까지 넣어서 검색해요`;
+  const sorters = {
+    price: (a, b) => (a.price || 1e9) - (b.price || 1e9),
+    commute: (a, b) => commute(a, "cquay").sec - commute(b, "cquay").sec,
+    rating: (a, b) => (b.rating || 0) - (a.rating || 0),
+    added: () => 0,
+  };
+  const list = [...state.stays].sort(sorters[state.staySort] || sorters.added)
+    .sort((a, b) => (b.id === state.stayChosen) - (a.id === state.stayChosen));
+  document.getElementById("stayList").innerHTML = list.length ? list.map(p => {
+    const on = state.stayChosen === p.id, url = safeUrl(p.url);
+    return `<div class="stay-card ${on ? "on" : ""}">
+      <div class="top">
+        <span class="nm" data-act="open" data-id="${p.id}">🏠 ${esc(p.name)} ${on ? `<span class="badge">💍 확정</span>` : ""}</span>
+        ${p.price ? `<span class="price">A$${fmtMoney(p.price)}<small>/박</small></span>` : ""}
+      </div>
+      <div class="muted">${[p.area && esc(p.area), p.rating && `★ ${p.rating}`, p.price && `${stayNights(p)}박 총 A$${fmtMoney(p.price * stayNights(p))}`].filter(Boolean).join(" · ")}</div>
+      <div class="commute">${commuteHtml(p)}</div>
+      ${p.note ? `<div class="note">${esc(p.note)}</div>` : ""}
+      <div class="row" style="margin-top:6px">
+        <button class="btn sm" data-act="open" data-id="${p.id}">🗺️ 지도</button>
+        ${url ? `<a class="btn sm abnb" href="${esc(url)}" target="_blank" rel="noopener">에어비앤비</a>` : ""}
+        <button class="btn sm" data-act="choose" data-id="${p.id}">${on ? "확정 취소" : "💍 확정"}</button>
+        <button class="btn sm" data-act="edit" data-id="${p.id}">수정</button>
+        <button class="btn sm" data-act="del" data-id="${p.id}">삭제</button>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty">아직 후보가 없어요. 에어비앤비에서 마음에 드는 숙소를 찾은 뒤 "+ 숙소 후보 추가"를 눌러주세요.</div>`;
+}
+
+function openStayDlg(id) {
+  M.closePopup();
+  editingStay = id || null;
+  const p = (id && byId(id)) || {};
+  const f = document.getElementById("stayForm");
+  f.reset();
+  for (const k of ["url", "name", "price", "rating", "nights", "area", "note"]) f.elements[k].value = p[k] ?? "";
+  document.getElementById("stayDlgTitle").textContent = id ? "🏠 숙소 후보 수정" : "🏠 숙소 후보 추가";
+  document.getElementById("stayRepickRow").hidden = !id;
+  document.getElementById("stayLocHint").hidden = !!id;
+  document.getElementById("stayDlg").showModal();
+}
+function submitStay(e) {
+  e.preventDefault();
+  const f = e.target, v = k => f.elements[k].value.trim(), num = k => v(k) === "" ? null : +v(k);
+  const data = { url: v("url"), name: v("name"), price: num("price"), rating: num("rating"), nights: num("nights"), area: v("area"), note: v("note") };
+  if (!data.name) return;
+  document.getElementById("stayDlg").close();
+  if (editingStay) {
+    const p = byId(editingStay);
+    Object.assign(p, data);
+    save(); buildMarkers(); renderStays();
+    if (f.elements.repick.checked) pickStayLocation(p);
+    return;
+  }
+  locateNewStay({ id: "s" + Date.now().toString(36), cat: "stay", ...data });
+}
+async function locateNewStay(p) {
+  if (GMODE && p.area) {   // 주소/동네를 적었으면 구글로 위치를 찾아봄
+    try {
+      const r = (await gTextSearch(p.area + ", Sydney NSW", CENTER, 30000))[0];
+      if (r && r.lat != null) {
+        p.lat = r.lat; p.lng = r.lng;
+        commitStay(p);
+        return toast("주소로 위치를 찾았어요. 다르면 수정 → '위치 다시 찍기'");
+      }
+    } catch (e) {}
+  }
+  pickStayLocation(p);
+}
+function pickStayLocation(p) {
+  if (window.innerWidth <= 800) window.scrollTo(0, 0);
+  setAddMode(true, `📍 "${p.name}" 위치를 지도에서 클릭하세요 (Esc 취소)`);
+  pickFn = pos => { p.lat = +pos.lat.toFixed(6); p.lng = +pos.lng.toFixed(6); commitStay(p); };
+}
+function commitStay(p) {
+  if (!state.stays.includes(p)) state.stays.push(p);
+  if (!state.cats.includes("stay")) state.cats.push("stay");
+  save(); buildMarkers(); renderChips(); renderStays();
+  openPlace(p.id, true);
+}
+function chooseStay(id) {
+  state.stayChosen = state.stayChosen === id ? null : id;
+  save(); M.closePopup(); buildMarkers(); renderStays();
+  if (state.stayChosen) toast(`💍 ${byId(id).name} 확정!`);
+}
+function removeStay(id) {
+  const p = byId(id);
+  if (!p || !confirm(`"${p.name}" 후보를 삭제할까요?`)) return;
+  state.stays = state.stays.filter(x => x.id !== id);
+  state.days.forEach(d => d.stops = d.stops.filter(s => s !== id));
+  if (state.stayChosen === id) state.stayChosen = null;
+  save(); M.closePopup(); buildMarkers(); renderDays();
+}
+window.chooseStay = chooseStay; window.openStayDlg = openStayDlg;
 
 /* ============================== 동작 ============================== */
 function saveTemp(id, quiet) {
@@ -905,13 +1176,17 @@ function toast(msg) {
   clearTimeout(toastT);
   if (!addMode) toastT = setTimeout(() => b.style.display = "none", 2200);
 }
-function setAddMode(v) {
+function setAddMode(v, msg) {
   addMode = v;
+  const cancelled = !v && pickFn;
+  if (!v) pickFn = null;
   document.getElementById("btnAddMode").classList.toggle("active", v);
   M.cursor(v ? "crosshair" : "");
   const b = document.getElementById("banner");
-  if (v) { b.textContent = "지도를 클릭해 장소를 추가하세요 (Esc 취소)"; b.style.display = "block"; }
+  clearTimeout(toastT);
+  if (v) { b.textContent = msg || "지도를 클릭해 장소를 추가하세요 (Esc 취소)"; b.style.display = "block"; }
   else b.style.display = "none";
+  if (cancelled) toast("위치를 찍지 않아 취소했어요");
 }
 
 function bindUI() {
@@ -920,6 +1195,17 @@ function bindUI() {
     document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + b.dataset.tab));
   });
   document.getElementById("q").oninput = filter;
+  document.getElementById("btnAirbnb").onclick = () => window.open(airbnbSearchUrl(), "_blank", "noopener");
+  document.getElementById("guests").onchange = e => { state.guests = +e.target.value; save(); };
+  document.getElementById("staySort").onchange = e => { state.staySort = e.target.value; save(); renderStays(); };
+  document.getElementById("btnAddStay").onclick = () => openStayDlg();
+  document.getElementById("stayCancel").onclick = () => document.getElementById("stayDlg").close();
+  document.getElementById("stayForm").onsubmit = submitStay;
+  document.getElementById("stayList").onclick = e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const id = b.dataset.id;
+    ({ open: () => openPlace(id), choose: () => chooseStay(id), edit: () => openStayDlg(id), del: () => removeStay(id) })[b.dataset.act]();
+  };
   document.getElementById("q").onkeydown = e => { if (e.key === "Enter" && GMODE) googleSearch(); };
   document.getElementById("btnGSearch").onclick = googleSearch;
   document.getElementById("gResults").onclick = e => {
@@ -1017,6 +1303,7 @@ function bindUI() {
   document.getElementById("btnAddMode").onclick = () => setAddMode(!addMode);
   document.addEventListener("keydown", e => { if (e.key === "Escape" && addMode) setAddMode(false); });
   M.onClick(pos => {
+    if (pickFn) { const f = pickFn; pickFn = null; setAddMode(false); f(pos); return; }
     if (!addMode) { if (pos.placeId) showGooglePlace(pos.placeId, pos); return; }
     const name = prompt("장소 이름을 입력하세요 (예: 우리 숙소, 웨딩 촬영지)");
     setAddMode(false);
