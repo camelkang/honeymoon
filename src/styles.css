@@ -560,3 +560,11 @@ dialog.onboard { padding: 0; max-width: 520px; }
 .pcard-cm svg { color: var(--love); flex: none; margin-top: 2px; }
 /* 휴대폰: 장소 창 높이는 핀 위 남은 공간에 맞춤(map.js), 넘치면 안에서 스크롤 */
 .maplibregl-popup-content .pop.fit { overflow-y: auto; overscroll-behavior: contain; }
+
+/* ===== 날씨 ===== */
+.day-h .t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wx-slot:empty { display: none; }
+.wx { font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.wx.past { color: var(--ink-3); font-weight: 500; }
+.wx-rain { color: #1c7ed6; font-weight: 700; }
+.today-h .wx { margin-left: auto; font-size: 13.5px; }

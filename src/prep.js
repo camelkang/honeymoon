@@ -5,6 +5,7 @@ import { icon } from "./icons.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
 import { dayLabel, renderDays } from "./render.js";
 import { CITY, byId, esc, gQuery, save, state } from "./store.js";
+import { weatherChip } from "./weather.js";
 
 // 준비 탭: D-day, 함께 쓰는 예산·지출(누가 냈는지, 반반 정산), 출발 전 체크리스트
 // 그리고 여행 중 "오늘" 카드(일정 탭 맨 위)
@@ -43,7 +44,37 @@ export function money(n, cur = state.currency || "AUD") {
   try { return new Intl.NumberFormat("ko-KR", { style: "currency", currency: cur, minimumFractionDigits: frac, maximumFractionDigits: frac }).format(n || 0); }
   catch (e) { return `${Math.round(n || 0).toLocaleString()} ${cur}`; }
 }
-const won = n => state.fx > 0 && state.currency !== "KRW" ? `≈ ${Math.round(n * state.fx).toLocaleString("ko-KR")}원` : "";
+/* ---------- 환율: 직접 넣은 값이 없으면 오늘 환율을 자동으로 (무료 API, 반나절 캐시) ---------- */
+const FX_KEY = "fx-cache-v1";
+let fxCache = {};
+try { fxCache = JSON.parse(localStorage.getItem(FX_KEY)) || {}; } catch (e) {}
+const fxLoading = new Set(), fxFailed = {};
+export async function loadFx(cur) {
+  if (!cur || cur === "KRW" || fxLoading.has(cur) || Date.now() - (fxFailed[cur] || 0) < 10 * 60e3) return;
+  const c = fxCache[cur];
+  if (c && Date.now() - c.at < 12 * 3600e3) return;
+  fxLoading.add(cur);
+  try {
+    let rate = null, date = "";
+    try {
+      const j = await (await fetch(`https://open.er-api.com/v6/latest/${cur}`)).json();
+      if (j.result === "success" && j.rates && j.rates.KRW) { rate = j.rates.KRW; date = (j.time_last_update_utc || "").slice(5, 16); }
+    } catch (e) {}
+    if (!rate) {   // 예비: 유럽중앙은행 기준 (동·루피야 등 일부 통화는 없음)
+      const j = await (await fetch(`https://api.frankfurter.app/latest?from=${cur}&to=KRW`)).json();
+      if (j.rates && j.rates.KRW) { rate = j.rates.KRW; date = j.date || ""; }
+    }
+    if (rate) {
+      fxCache[cur] = { rate, date, at: Date.now() };
+      try { localStorage.setItem(FX_KEY, JSON.stringify(fxCache)); } catch (e) {}
+      if ((state.currency || "AUD") === cur) renderPrep();
+    } else fxFailed[cur] = Date.now();
+  } catch (e) { fxFailed[cur] = Date.now(); } finally { fxLoading.delete(cur); }
+}
+export const autoFx = cur => (fxCache[cur] || {}).rate || 0;
+export const fxRate = () => state.fx > 0 ? state.fx : autoFx(state.currency || "AUD");
+const fmtRate = r => r >= 100 ? Math.round(r).toLocaleString("ko-KR") : r >= 1 ? r.toFixed(1) : r.toFixed(3);
+const won = n => fxRate() > 0 && state.currency !== "KRW" ? `≈ ${Math.round(n * fxRate()).toLocaleString("ko-KR")}원` : "";
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 export function totals() {
@@ -84,6 +115,7 @@ const groupOf = due => GROUPS.find(([d]) => (due ?? -1) >= d) || GROUPS[GROUPS.l
 /* ---------- 그리기 ---------- */
 export function renderPrep() {
   const el = document.getElementById("pane-prep"); if (!el) return;
+  loadFx(state.currency || "AUD");
   const setOpen = !!el.querySelector(".budget-set[open]");   // 다시 그려도 펼친 설정은 그대로
   const left = daysLeft(), today = tripDay();
   const t = totals(), budget = +state.budget || 0, cur = state.currency || "AUD";
@@ -136,7 +168,7 @@ export function renderPrep() {
         <div class="budget-n"><b>${money(t.sum)}</b><span>${budget ? `/ ${money(budget)}` : "썼어요"}</span></div>
         ${budget ? `<div class="budget-left ${t.sum > budget ? "over" : ""}">${t.sum > budget ? `${money(t.sum - budget)} 초과` : `${money(budget - t.sum)} 남음`}</div>` : ""}
       </div>
-      ${won(t.sum) ? `<p class="hint">${won(t.sum)}</p>` : ""}
+      ${won(t.sum) ? `<p class="hint">${won(t.sum)} <small class="fx-src">${state.fx > 0 ? `직접 넣은 환율 1 ${cur} = ${fmtRate(state.fx)}원` : `오늘 환율 1 ${cur} = ${fmtRate(autoFx(cur))}원`}</small></p>` : ""}
       ${budget ? `<div class="meter" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>` : ""}
       ${bars ? `<div class="stack">${bars}</div><div class="legend">${legend}</div>` : ""}
       ${PARTNER ? `<div class="settle">${icon("users", 16)} ${s ? (s.from === ME ? `내가 <b>${esc(nameOf(s.to))}</b>에게` : `<b>${esc(nameOf(s.from))}</b>이(가) 나에게`) + ` <b>${money(s.amount)}</b> 보내면 반반이에요` : "지금은 반반이 맞아요"}
@@ -145,8 +177,9 @@ export function renderPrep() {
         <div class="row">
           <label class="field inline"><span>총예산</span><input type="number" min="0" step="1" data-prep="budget" value="${budget || ""}" placeholder="0"></label>
           <label class="field inline"><span>통화</span><select data-prep="currency">${Object.entries(CURRENCIES).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${k} ${v}</option>`).join("")}</select></label>
-          ${cur !== "KRW" ? `<label class="field inline"><span>1 ${cur} =</span><input type="number" min="0" step="0.01" data-prep="fx" value="${state.fx || ""}" placeholder="900"> 원</label>` : ""}
+          ${cur !== "KRW" ? `<label class="field inline"><span>1 ${cur} =</span><input type="number" min="0" step="any" data-prep="fx" value="${state.fx || ""}" placeholder="${autoFx(cur) ? fmtRate(autoFx(cur)) : "자동"}"> 원</label>` : ""}
         </div>
+        ${cur !== "KRW" ? `<p class="hint">${autoFx(cur) ? `비워두면 오늘 환율(${fxCache[cur].date ? esc(fxCache[cur].date) + " 기준" : "자동"})을 써요. 환전한 환율로 계산하고 싶으면 직접 넣어 주세요.` : "비워두면 오늘 환율을 자동으로 불러와요."} <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">환율 출처</a></p>` : ""}
       </details>
       <div class="exp-list">${rows || `<p class="muted">아직 기록한 지출이 없어요. 항공·숙소처럼 미리 낸 돈부터 넣어 보세요.</p>`}</div>
     </section>
@@ -176,7 +209,7 @@ export function todayCardHtml() {
   // 출발지를 비우면 구글맵이 현재 위치에서 길을 찾음
   const url = next ? "https://www.google.com/maps/dir/?" + new URLSearchParams({ api: "1", destination: gQuery(next), travelmode: state.mode || "transit" }) : null;
   return `<div class="today">
-    <div class="today-h"><span class="pill">오늘</span><b>${esc(dayLabel(i))}</b></div>
+    <div class="today-h"><span class="pill">오늘</span><b>${esc(dayLabel(i))}</b><span data-wx="${dateOfDay(i)}">${weatherChip(dateOfDay(i))}</span></div>
     ${next ? `<div class="today-next">다음 장소 <b>${esc(next.name)}</b>${times[next.id] ? ` · ${esc(times[next.id])}` : ""}</div>`
       : stops.length ? `<div class="today-next">오늘 일정을 다 돌았어요</div>` : `<div class="today-next">오늘은 아직 일정이 없어요</div>`}
     ${bookingChips(dateOfDay(i))}

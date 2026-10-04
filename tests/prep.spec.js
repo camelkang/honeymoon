@@ -59,9 +59,14 @@ test("예산·지출 기록, 고치기, 삭제, 원화 환산", async ({ page })
   await page.fill('[data-prep="budget"]', "2000");
   await page.press('[data-prep="budget"]', "Tab");
   await expect(page.locator(".budget-left")).toContainText("73.5");
+  // 환율을 안 넣으면 오늘 환율(가짜 API: 905원)로 자동 환산
+  await expect(page.locator("#pane-prep")).toContainText("≈ 1,743,483원");
+  await expect(page.locator(".fx-src")).toHaveText("오늘 환율 1 AUD = 905원");
+  await expect(page.locator('[data-prep="fx"]')).toHaveAttribute("placeholder", "905");
   await page.fill('[data-prep="fx"]', "900");
   await page.press('[data-prep="fx"]', "Tab");
   await expect(page.locator("#pane-prep")).toContainText("≈ 1,733,850원");
+  await expect(page.locator(".fx-src")).toHaveText("직접 넣은 환율 1 AUD = 900원");
 
   // 고치기: 줄을 누르면 같은 창이 열림
   await page.click(".exp >> text=오페라 바");

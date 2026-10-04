@@ -10,6 +10,7 @@ import { todayCardHtml, tripDay } from "./prep.js";
 import { peekSheet } from "./sheet.js";
 import { renderStays, stayPopupHtml } from "./stays.js";
 import { CENTER, CITY, PLACES, SAMPLE, allPlaces, byId, esc, gDirUrl, gPlaceUrl, km, state, tempPlaces } from "./store.js";
+import { loadWeather, weatherChip } from "./weather.js";
 
 /* ============================== 렌더링 ============================== */
 export const markers = {};      // placeId -> marker
@@ -186,6 +187,10 @@ export function filter() {
       : `<div class="empty">검색 결과가 없습니다.</div>`;
 }
 
+// 날씨를 새로 받으면 날씨 칸만 바꿈 (메모를 쓰는 중이어도 방해하지 않게)
+export function refreshWeather() {
+  document.querySelectorAll("[data-wx]").forEach(el => { el.innerHTML = weatherChip(el.dataset.wx); });
+}
 export function renderDays() {
   document.getElementById("dayCount").textContent = state.days.length;
   document.getElementById("btnSample").hidden = !SAMPLE;
@@ -226,7 +231,7 @@ export function renderDays() {
     return `<div class="day ${today === i ? "is-today" : ""}">
       <div class="day-h">
         <div class="sw" style="background:${color}"></div>
-        <div class="t">${esc(dayLabel(i))}</div>${today === i ? `<span class="pill">오늘</span>` : ""}
+        <div class="t">${esc(dayLabel(i))}${dateOfDay(i) ? `<span class="wx-slot" data-wx="${dateOfDay(i)}">${weatherChip(dateOfDay(i))}</span>` : ""}</div>${today === i ? `<span class="pill">오늘</span>` : ""}
         <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}${totalSec ? ` · 이동 ${fmtDur(totalSec)}` : ""}</span>
         <button class="btn icon ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시" aria-label="이 날만 지도에 표시">${icon("eye", 16)}</button>
       </div>
@@ -245,6 +250,7 @@ export function renderDays() {
   filter();
   renderStays();
   renderSuggest();
+  loadWeather(refreshWeather);
 }
 
 export function drawRoutes() {

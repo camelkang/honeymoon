@@ -42,6 +42,19 @@ export async function mockNetwork(context, { googleMode = "ok", calls = { places
     return json(r, ROUTE);
   });
   await context.route("**/airbnb.co.kr/**", r => r.fulfill({ body: "ok" }));
+  // 환율·날씨 (무료 공개 API)
+  await context.route("**/open.er-api.com/**", r => json(r, { result: "success", time_last_update_utc: "Sun, 04 Oct 2026 00:00:01 +0000", rates: { KRW: 905, USD: 0.65 } }));
+  await context.route("**/api.frankfurter.app/**", r => r.abort());
+  // 날씨: 요청한 날짜마다 같은 값 (예보는 맑음 24°/17° 비 40%, 작년 자료는 비 21°/15°)
+  const weather = (r, past) => {
+    const u = new URL(r.request().url()), out = [];
+    for (let d = new Date(u.searchParams.get("start_date") + "T00:00:00Z"); d <= new Date(u.searchParams.get("end_date") + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + 1)) out.push(d.toISOString().slice(0, 10));
+    calls.weather = (calls.weather || 0) + 1;
+    return json(r, { daily: { time: out, weather_code: out.map(() => past ? 61 : 0), temperature_2m_max: out.map(() => past ? 21 : 24.4),
+      temperature_2m_min: out.map(() => past ? 15 : 16.6), ...(past ? {} : { precipitation_probability_max: out.map(() => 40) }) } });
+  };
+  await context.route("**/api.open-meteo.com/**", r => weather(r, false));
+  await context.route("**/archive-api.open-meteo.com/**", r => weather(r, true));
 }
 
 export const test = base.extend({
