@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>시드니 신혼여행 지도</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>신혼여행 지도</title>
+<meta name="description" content="도시별 신혼여행 일정·동선·숙소를 한 지도에서">
+<meta name="theme-color" content="#0b7285">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="신혼여행">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root {
@@ -25,6 +34,7 @@
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--bg); color: var(--ink);
@@ -32,10 +42,13 @@
     font-size: 14px; display: flex; flex-direction: column;
   }
   header {
-    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right));
     background: var(--panel); border-bottom: 1px solid var(--line);
   }
-  header h1 { font-size: 17px; margin: 0; white-space: nowrap; }
+  header h1 { font-size: 18px; margin: 0; white-space: nowrap; }
+  #citySel { font-weight: 800; font-size: 15px; padding: 6px 8px; max-width: 46vw; }
   header .sub { color: var(--muted); font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .app { flex: 1; display: flex; min-height: 0; }
   aside {
@@ -168,7 +181,9 @@
   .gres:hover { background: var(--chip); }
   .gres .nm { font-weight: 600; }
   @media (max-width: 800px) {
-    header .sub { display: none; }
+    header .sub, header .lbl, header h1 { display: none; }
+    header { gap: 6px; }
+    #citySel { flex: 1; min-width: 0; max-width: none; }
     .app { flex-direction: column-reverse; }
     aside { width: 100%; height: 48vh; border-right: 0; border-top: 1px solid var(--line); }
     .mapwrap { flex: 1; }
@@ -177,9 +192,12 @@
 </head>
 <body>
 <header>
-  <h1>💍 시드니 신혼여행 지도</h1>
-  <div class="sub">장소를 눌러 일정에 담고, 날짜별 동선을 구글맵 길찾기로 바로 열어보세요.</div>
-  <button class="btn sm" id="btnAddMode" title="지도를 클릭해 나만의 장소 추가">📍 장소 추가</button>
+  <h1>💍</h1>
+  <select id="citySel" title="도시 선택"></select>
+  <button class="btn sm icon" id="btnCityDel" title="이 도시 삭제" hidden>🗑️</button>
+  <div class="sub">도시를 고르고, 장소를 눌러 일정에 담아보세요.</div>
+  <button class="btn sm" id="btnInstall" hidden>📲<span class="lbl"> 앱 설치</span></button>
+  <button class="btn sm" id="btnAddMode" title="지도를 클릭해 나만의 장소 추가">📍<span class="lbl"> 장소 추가</span></button>
   <button class="btn sm" id="btnSettings" title="지도 설정">⚙️</button>
 </header>
 
@@ -288,6 +306,22 @@
   </form>
 </dialog>
 
+<dialog id="installDlg">
+  <h2>📲 홈 화면에 앱으로 설치하기</h2>
+  <p><b>아이폰 (Safari)</b></p>
+  <ol class="muted">
+    <li>Safari로 이 페이지를 열고 아래쪽 <b>공유 버튼</b>(□↑)을 눌러요</li>
+    <li><b>"홈 화면에 추가"</b>를 선택해요</li>
+    <li>홈 화면의 💍 아이콘으로 열면 앱처럼 전체 화면으로 열려요</li>
+  </ol>
+  <p><b>안드로이드 (Chrome)</b></p>
+  <ol class="muted">
+    <li>오른쪽 위 <b>⋮ 메뉴</b> → <b>"앱 설치"</b> 또는 <b>"홈 화면에 추가"</b></li>
+  </ol>
+  <p class="muted">⚠️ 아이폰은 설치한 앱과 Safari가 저장 공간을 따로 써요. 앱에서 ⚙️ API 키를 다시 넣고, 일정은 Safari에서 <b>내보내기</b> → 앱에서 <b>가져오기</b>로 옮겨주세요.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="this.closest('dialog').close()">확인</button></div>
+</dialog>
+
 <dialog id="settings">
   <h2>⚙️ 지도 설정</h2>
   <p class="muted"><b>Google Maps API 키</b>를 넣으면 이 페이지 안에서 구글 지도, 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색을 모두 쓸 수 있어요.</p>
@@ -325,7 +359,7 @@ const CATS = {
 };
 
 // 좌표는 대략적인 위치입니다. 정확한 위치·영업시간은 구글맵 버튼으로 확인하세요.
-const PLACES = [
+const SYDNEY_PLACES = [
   // 명소
   { id:"opera", cat:"sight", name:"시드니 오페라 하우스", en:"Sydney Opera House", lat:-33.8568, lng:151.2153, area:"서큘러 키",
     desc:"시드니의 상징. 내부 가이드 투어나 공연 관람을 추천.", tip:"공연 티켓은 미리 예매. 저녁 조명이 켜진 모습도 꼭 보기." },
@@ -449,7 +483,7 @@ const PLACES = [
 
 const DAY_COLORS = ["#e8590c","#1c7ed6","#2f9e44","#ae3ec9","#f08c00","#0c8599","#c2255c","#5c940d","#3b5bdb","#862e9c"];
 
-const SAMPLE = [
+const SYDNEY_SAMPLE = [
   { stops:["syd","parkhyatt","cquay","opera","botanic","mrsmac","operabar","bennelong"], note:"도착 → 체크인 → 하버 산책 → 오페라 바 선셋 → 디너" },
   { stops:["rocks","mca","climb","obshill","barangaroo","darling","glenmore"], note:"더 록스 골목 → 브리지클라임 → 바랑가루 노을" },
   { stops:["bondi","icebergs","b2c","coogee","bourke"], note:"본다이 브런치 → 해안 산책로 → 쿠지" },
@@ -458,33 +492,205 @@ const SAMPLE = [
   { stops:["central","blueview"], note:"(선택) 블루 마운틴 당일치기" },
 ];
 
-/* ============================== 상태 ============================== */
+// ---------- 멜버른 ----------
+const MELBOURNE_PLACES = [
+  { id:"m_fed", cat:"sight", name:"페더레이션 스퀘어", en:"Federation Square", lat:-37.8180, lng:144.9691, area:"CBD",
+    desc:"멜버른 도심의 광장. 주변 미술관·강변 산책의 출발점.", tip:"" },
+  { id:"m_flinders", cat:"sight", name:"플린더스 스트리트역", en:"Flinders Street Station", lat:-37.8183, lng:144.9671, area:"CBD",
+    desc:"노란 외관의 멜버른 상징 기차역.", tip:"CBD 안 트램은 무료(Free Tram Zone)." },
+  { id:"m_hosier", cat:"sight", name:"호시어 레인", en:"Hosier Lane", lat:-37.8165, lng:144.9690, area:"CBD",
+    desc:"그래피티로 가득한 골목. 커플 사진 명소.", tip:"" },
+  { id:"m_ngv", cat:"sight", name:"빅토리아 국립미술관 (NGV)", en:"NGV International", lat:-37.8226, lng:144.9689, area:"사우스뱅크",
+    desc:"무료 상설전. 스테인드글라스 천장의 그레이트 홀.", tip:"" },
+  { id:"m_reb", cat:"sight", name:"왕립 전시관", en:"Royal Exhibition Building", lat:-37.8047, lng:144.9717, area:"칼턴",
+    desc:"유네스코 세계유산. 칼턴 가든과 함께 산책.", tip:"" },
+  { id:"m_eureka", cat:"view", name:"멜버른 스카이덱", en:"Melbourne Skydeck", lat:-37.8214, lng:144.9646, area:"사우스뱅크",
+    desc:"유레카 타워 88층 전망대.", tip:"해 질 무렵 추천." },
+  { id:"m_shrine", cat:"view", name:"전쟁기념관 (슈라인)", en:"Shrine of Remembrance", lat:-37.8305, lng:144.9734, area:"사우스 야라",
+    desc:"테라스에서 도심 스카이라인이 한눈에.", tip:"" },
+  { id:"m_rbg", cat:"nature", name:"왕립 식물원", en:"Royal Botanic Gardens Victoria", lat:-37.8304, lng:144.9796, area:"사우스 야라",
+    desc:"호수와 잔디밭이 아름다운 정원. 피크닉 추천.", tip:"" },
+  { id:"m_gor", cat:"view", name:"그레이트 오션 로드 (12사도)", en:"The Twelve Apostles", lat:-38.6662, lng:143.1050, area:"근교 (차로 3~4시간)",
+    desc:"해안 절벽 드라이브의 하이라이트. 투어 또는 렌터카 당일치기.", tip:"일몰 시간대가 가장 아름다워요." },
+  { id:"m_phillip", cat:"nature", name:"필립 아일랜드 펭귄 퍼레이드", en:"Penguin Parade Phillip Island", lat:-38.5106, lng:145.1506, area:"근교 (차로 2시간)",
+    desc:"해 질 녘 해변으로 돌아오는 꼬마펭귄 관람.", tip:"" },
+  { id:"m_yarra", cat:"nature", name:"야라 밸리 와이너리", en:"Domaine Chandon Yarra Valley", lat:-37.7015, lng:145.4285, area:"근교 (차로 1시간)",
+    desc:"와이너리 투어·열기구로 유명한 와인 산지.", tip:"" },
+  { id:"m_stkilda", cat:"beach", name:"세인트킬다 비치", en:"St Kilda Beach", lat:-37.8679, lng:144.9740, area:"세인트킬다",
+    desc:"트램으로 가는 해변. 피어 끝에서 꼬마펭귄을 볼 수도.", tip:"" },
+  { id:"m_brighton", cat:"beach", name:"브라이턴 비치 박스", en:"Brighton Bathing Boxes", lat:-37.9175, lng:144.9867, area:"브라이턴",
+    desc:"알록달록한 비치 박스가 늘어선 포토 스팟.", tip:"" },
+  { id:"m_chin", cat:"food", name:"Chin Chin (친친)", en:"Chin Chin Melbourne", lat:-37.8155, lng:144.9708, area:"CBD",
+    desc:"줄 서서 먹는 모던 타이 레스토랑.", tip:"" },
+  { id:"m_vue", cat:"food", name:"Vue de monde", en:"Vue de monde", lat:-37.8189, lng:144.9577, area:"CBD",
+    desc:"리알토 55층 파인다이닝. 기념일 디너로.", tip:"예약 필수." },
+  { id:"m_lygon", cat:"food", name:"라이곤 스트리트", en:"Lygon Street Carlton", lat:-37.7980, lng:144.9670, area:"칼턴",
+    desc:"이탈리안 레스토랑·젤라토 거리.", tip:"" },
+  { id:"m_degraves", cat:"cafe", name:"디그레이브스 스트리트", en:"Degraves Street", lat:-37.8170, lng:144.9656, area:"CBD",
+    desc:"골목 카페가 모인 멜버른 커피 문화의 상징.", tip:"" },
+  { id:"m_patricia", cat:"cafe", name:"Patricia Coffee Brewers", en:"Patricia Coffee Brewers", lat:-37.8146, lng:144.9585, area:"CBD",
+    desc:"스탠딩 전용 스페셜티 커피 명소.", tip:"" },
+  { id:"m_lune", cat:"cafe", name:"Lune 크루아상", en:"Lune Croissanterie Fitzroy", lat:-37.7985, lng:144.9790, area:"피츠로이",
+    desc:"세계 최고라는 평을 듣는 크루아상.", tip:"오전에 매진되기 쉬워요." },
+  { id:"m_rooftop", cat:"bar", name:"루프탑 바 (커틴 하우스)", en:"Rooftop Bar Curtin House", lat:-37.8114, lng:144.9658, area:"CBD",
+    desc:"도심 루프탑 바. 여름엔 루프탑 시네마도.", tip:"" },
+  { id:"m_qvm", cat:"shop", name:"퀸 빅토리아 마켓", en:"Queen Victoria Market", lat:-37.8076, lng:144.9568, area:"CBD",
+    desc:"먹거리·기념품 가득한 재래시장.", tip:"월·금요일은 휴무가 많아요." },
+  { id:"m_langham", cat:"hotel", name:"랭햄 멜버른", en:"The Langham Melbourne", lat:-37.8207, lng:144.9633, area:"사우스뱅크",
+    desc:"야라 강변 럭셔리 호텔.", tip:"" },
+  { id:"m_sxs", cat:"trans", name:"서던크로스역", en:"Southern Cross Station", lat:-37.8183, lng:144.9525, area:"CBD",
+    desc:"공항 스카이버스·지방 열차 출발역.", tip:"" },
+  { id:"m_mel", cat:"trans", name:"멜버른 공항", en:"Melbourne Airport", lat:-37.6690, lng:144.8410, area:"툴라마린",
+    desc:"스카이버스로 서던크로스역까지 약 30분.", tip:"" },
+];
+const MELBOURNE_SAMPLE = [
+  { stops:["m_mel","m_langham","m_fed","m_hosier","m_degraves","m_eureka","m_chin"], note:"도착 → 골목 카페 → 스카이덱 야경" },
+  { stops:["m_qvm","m_reb","m_lygon","m_lune","m_ngv","m_rooftop"], note:"마켓 → 칼턴 → 미술관 → 루프탑" },
+  { stops:["m_rbg","m_shrine","m_stkilda","m_brighton","m_vue"], note:"정원 → 해변 → 기념일 디너" },
+  { stops:["m_gor"], note:"(선택) 그레이트 오션 로드 당일 투어" },
+];
+
+// ---------- 골드코스트 ----------
+const GOLDCOAST_PLACES = [
+  { id:"gc_surfers", cat:"beach", name:"서퍼스 파라다이스 비치", en:"Surfers Paradise Beach", lat:-28.0000, lng:153.4310, area:"서퍼스 파라다이스",
+    desc:"골드코스트 대표 해변. 고층 빌딩과 백사장.", tip:"" },
+  { id:"gc_burleigh", cat:"nature", name:"벌리 헤즈", en:"Burleigh Head National Park", lat:-28.0890, lng:153.4560, area:"벌리 헤즈",
+    desc:"해안 산책로와 서퍼스 파라다이스 스카이라인 뷰.", tip:"일몰 피크닉 명소." },
+  { id:"gc_kirra", cat:"beach", name:"커라 비치", en:"Kirra Beach", lat:-28.1650, lng:153.5300, area:"쿨랑가타",
+    desc:"한적하고 맑은 남쪽 해변.", tip:"" },
+  { id:"gc_q1", cat:"view", name:"스카이포인트 전망대 (Q1)", en:"SkyPoint Observation Deck", lat:-28.0062, lng:153.4294, area:"서퍼스 파라다이스",
+    desc:"Q1 빌딩 77층 전망대.", tip:"" },
+  { id:"gc_springbrook", cat:"nature", name:"스프링브룩 내추럴 브리지", en:"Natural Bridge Springbrook National Park", lat:-28.2339, lng:153.2745, area:"근교 (차로 1시간)",
+    desc:"밤이면 반딧불이(글로웜)가 빛나는 동굴 폭포.", tip:"글로웜 투어는 야간." },
+  { id:"gc_tamborine", cat:"nature", name:"탬버린 마운틴", en:"Tamborine Rainforest Skywalk", lat:-27.9180, lng:153.1800, area:"근교 (차로 50분)",
+    desc:"열대우림 스카이워크와 와이너리.", tip:"" },
+  { id:"gc_currumbin", cat:"sight", name:"커럼빈 야생동물 보호구역", en:"Currumbin Wildlife Sanctuary", lat:-28.1373, lng:153.4880, area:"커럼빈",
+    desc:"코알라 안기, 캥거루 먹이주기.", tip:"" },
+  { id:"gc_seaworld", cat:"sight", name:"씨월드", en:"Sea World Gold Coast", lat:-27.9570, lng:153.4256, area:"메인 비치",
+    desc:"돌고래 쇼와 놀이기구.", tip:"" },
+  { id:"gc_movieworld", cat:"sight", name:"무비월드", en:"Warner Bros. Movie World", lat:-27.9073, lng:153.3127, area:"옥슨포드",
+    desc:"영화 테마파크.", tip:"" },
+  { id:"gc_hota", cat:"sight", name:"HOTA 아트센터", en:"HOTA Home of the Arts", lat:-28.0080, lng:153.4170, area:"서퍼스 파라다이스",
+    desc:"미술관과 공원, 주말 마켓.", tip:"" },
+  { id:"gc_rick", cat:"food", name:"Rick Shores", en:"Rick Shores Burleigh Heads", lat:-28.0866, lng:153.4545, area:"벌리 헤즈",
+    desc:"파도 바로 앞 아시안 퓨전 레스토랑.", tip:"예약 추천." },
+  { id:"gc_paddock", cat:"cafe", name:"Paddock Bakery", en:"Paddock Bakery Miami", lat:-28.0700, lng:153.4400, area:"마이애미",
+    desc:"오두막 감성의 인기 베이커리 카페.", tip:"" },
+  { id:"gc_justin", cat:"bar", name:"Justin Lane", en:"Justin Lane Burleigh", lat:-28.0867, lng:153.4513, area:"벌리 헤즈",
+    desc:"루프탑 피자 & 칵테일 바.", tip:"" },
+  { id:"gc_pacific", cat:"shop", name:"퍼시픽 페어", en:"Pacific Fair Shopping Centre", lat:-28.0360, lng:153.4310, area:"브로드비치",
+    desc:"골드코스트 최대 쇼핑몰.", tip:"" },
+  { id:"gc_star", cat:"hotel", name:"더 스타 골드코스트", en:"The Star Gold Coast", lat:-28.0310, lng:153.4300, area:"브로드비치",
+    desc:"브로드비치 리조트 호텔.", tip:"" },
+  { id:"gc_ool", cat:"trans", name:"골드코스트 공항", en:"Gold Coast Airport", lat:-28.1644, lng:153.5047, area:"쿨랑가타",
+    desc:"서퍼스 파라다이스까지 버스·택시 약 30~40분.", tip:"" },
+];
+const GOLDCOAST_SAMPLE = [
+  { stops:["gc_ool","gc_star","gc_surfers","gc_q1"], note:"도착 → 해변 → 전망대 야경" },
+  { stops:["gc_paddock","gc_burleigh","gc_rick","gc_justin"], note:"벌리 헤즈 데이" },
+  { stops:["gc_tamborine","gc_springbrook"], note:"열대우림 & 글로웜 투어" },
+];
+
+// ---------- 케언즈 ----------
+const CAIRNS_PLACES = [
+  { id:"c_lagoon", cat:"sight", name:"에스플러네이드 라군", en:"Cairns Esplanade Lagoon", lat:-16.9196, lng:145.7790, area:"케언즈 시티",
+    desc:"바다 옆 무료 야외 수영장.", tip:"" },
+  { id:"c_gbr", cat:"nature", name:"그레이트 배리어 리프 (그린 아일랜드)", en:"Green Island Great Barrier Reef", lat:-16.7590, lng:145.9710, area:"페리 50분",
+    desc:"산호초 스노클링·글라스 보텀 보트.", tip:"리프 플릿 터미널에서 출발." },
+  { id:"c_kuranda", cat:"sight", name:"쿠란다 마을", en:"Kuranda Village", lat:-16.8190, lng:145.6380, area:"쿠란다",
+    desc:"열대우림 속 예술가 마을. 시닉 레일웨이로 가요.", tip:"갈 땐 기차, 올 땐 스카이레일 조합 추천." },
+  { id:"c_skyrail", cat:"view", name:"스카이레일 열대우림 케이블웨이", en:"Skyrail Rainforest Cableway", lat:-16.8410, lng:145.6920, area:"스미스필드",
+    desc:"열대우림 위를 지나는 7.5km 케이블카.", tip:"" },
+  { id:"c_mossman", cat:"nature", name:"모스만 협곡 (데인트리)", en:"Mossman Gorge Centre", lat:-16.4720, lng:145.3330, area:"근교 (차로 1시간 20분)",
+    desc:"세계에서 가장 오래된 열대우림 데인트리.", tip:"" },
+  { id:"c_palm", cat:"beach", name:"팜 코브", en:"Palm Cove Beach", lat:-16.7470, lng:145.6720, area:"팜 코브",
+    desc:"야자수 가로수의 조용한 리조트 해변.", tip:"" },
+  { id:"c_port", cat:"beach", name:"포트 더글러스 포 마일 비치", en:"Four Mile Beach Port Douglas", lat:-16.4900, lng:145.4650, area:"포트 더글러스",
+    desc:"허니무너가 사랑하는 해변 마을.", tip:"" },
+  { id:"c_night", cat:"shop", name:"케언즈 나이트 마켓", en:"Cairns Night Markets", lat:-16.9213, lng:145.7785, area:"케언즈 시티",
+    desc:"기념품·푸드코트가 있는 야시장.", tip:"" },
+  { id:"c_ochre", cat:"food", name:"Ochre Restaurant", en:"Ochre Restaurant Cairns", lat:-16.9235, lng:145.7785, area:"케언즈 시티",
+    desc:"캥거루·악어 등 호주 식재료 요리.", tip:"" },
+  { id:"c_salt", cat:"bar", name:"Salt House", en:"Salt House Cairns", lat:-16.9215, lng:145.7820, area:"마리나",
+    desc:"마리나 뷰 레스토랑 & 바.", tip:"선셋 추천." },
+  { id:"c_riley", cat:"hotel", name:"크리스탈브룩 라일리", en:"Crystalbrook Riley", lat:-16.9150, lng:145.7770, area:"케언즈 시티",
+    desc:"라군 수영장이 있는 에스플러네이드 호텔.", tip:"" },
+  { id:"c_reef", cat:"trans", name:"리프 플릿 터미널", en:"Reef Fleet Terminal", lat:-16.9230, lng:145.7810, area:"마리나",
+    desc:"그레이트 배리어 리프 투어 보트 출발지.", tip:"" },
+  { id:"c_cns", cat:"trans", name:"케언즈 공항", en:"Cairns Airport", lat:-16.8858, lng:145.7553, area:"케언즈",
+    desc:"시내까지 차로 약 10분.", tip:"" },
+];
+const CAIRNS_SAMPLE = [
+  { stops:["c_cns","c_riley","c_lagoon","c_night","c_ochre"], note:"도착 → 라군 → 야시장" },
+  { stops:["c_reef","c_gbr","c_salt"], note:"그레이트 배리어 리프 데이" },
+  { stops:["c_kuranda","c_skyrail","c_palm"], note:"쿠란다 → 스카이레일 → 팜 코브" },
+];
+
+const CITIES = {
+  sydney:    { id:"sydney", name:"시드니", flag:"🇦🇺", center:{ lat:-33.8650, lng:151.2094 }, zoom:14, suffix:"Sydney NSW",
+               airbnb:"Sydney--NSW--Australia", places:SYDNEY_PLACES, sample:SYDNEY_SAMPLE,
+               keySpots:[["cquay","서큘러 키"], ["qvb","시티(QVB)"], ["darling","달링 하버"], ["bondi","본다이"]] },
+  melbourne: { id:"melbourne", name:"멜버른", flag:"🇦🇺", center:{ lat:-37.8136, lng:144.9631 }, zoom:14, suffix:"Melbourne VIC",
+               airbnb:"Melbourne--VIC--Australia", places:MELBOURNE_PLACES, sample:MELBOURNE_SAMPLE,
+               keySpots:[["m_flinders","플린더스역"], ["m_qvm","퀸 빅토리아 마켓"], ["m_stkilda","세인트킬다"]] },
+  goldcoast: { id:"goldcoast", name:"골드코스트", flag:"🇦🇺", center:{ lat:-28.0167, lng:153.4000 }, zoom:12, suffix:"Gold Coast QLD",
+               airbnb:"Gold-Coast--QLD--Australia", places:GOLDCOAST_PLACES, sample:GOLDCOAST_SAMPLE,
+               keySpots:[["gc_surfers","서퍼스 파라다이스"], ["gc_burleigh","벌리 헤즈"], ["gc_ool","공항"]] },
+  cairns:    { id:"cairns", name:"케언즈", flag:"🇦🇺", center:{ lat:-16.9186, lng:145.7781 }, zoom:13, suffix:"Cairns QLD",
+               airbnb:"Cairns--QLD--Australia", places:CAIRNS_PLACES, sample:CAIRNS_SAMPLE,
+               keySpots:[["c_lagoon","에스플러네이드"], ["c_reef","리프 터미널"], ["c_cns","공항"]] },
+};
+
+/* ============================== 상태 (도시별) ============================== */
+// 도시마다 일정·내 장소·숙소 후보를 따로 저장. 예전 시드니 전용 저장분(v1)은 시드니로 옮겨옴
 const LS_KEY = "sydney-honeymoon-v1";
+const APP_KEY = "honeymoon-app-v2";
 const defaultState = () => ({
   startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"", times:{} })),
   mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
   stays: [], stayChosen: null, guests: 2, staySort: "price",
 });
-let state = load();
-function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(LS_KEY));
-    if (s && Array.isArray(s.days)) {
-      // 숙소 기능이 생기기 전에 저장된 일정이면 숙소 카테고리를 켜 둠
-      if (!s.stays && Array.isArray(s.cats) && !s.cats.includes("stay")) s.cats.push("stay");
-      return Object.assign(defaultState(), s);
-    }
-  } catch (e) {}
-  return defaultState();
+function normalizePlan(s) {
+  if (!s || !Array.isArray(s.days)) return defaultState();
+  // 숙소 기능이 생기기 전에 저장된 일정이면 숙소 카테고리를 켜 둠
+  if (!s.stays && Array.isArray(s.cats) && !s.cats.includes("stay")) s.cats.push("stay");
+  return Object.assign(defaultState(), s);
 }
-function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+const emptyApp = () => ({ current: "sydney", plans: {}, myCities: [] });
+function loadApp() {
+  try {
+    const a = JSON.parse(localStorage.getItem(APP_KEY));
+    if (a && a.plans) return Object.assign(emptyApp(), a);
+  } catch (e) {}
+  const a = emptyApp();
+  try {
+    const old = JSON.parse(localStorage.getItem(LS_KEY));
+    if (old && Array.isArray(old.days)) a.plans.sydney = normalizePlan(old);
+  } catch (e) {}
+  return a;
+}
+let app = loadApp();
+let CITY, PLACES, SAMPLE, CENTER, state;
+function allCities() {
+  const mine = app.myCities.map(c => [c.id, Object.assign({ places: [], sample: null, keySpots: [] }, c)]);
+  return Object.assign({}, CITIES, Object.fromEntries(mine));
+}
+function useCity(id) {
+  CITY = allCities()[id] || CITIES.sydney;
+  app.current = CITY.id;
+  PLACES = CITY.places; SAMPLE = CITY.sample; CENTER = CITY.center;
+  state = app.plans[CITY.id] = normalizePlan(app.plans[CITY.id]);
+}
+function save() { try { localStorage.setItem(APP_KEY, JSON.stringify(app)); } catch (e) {} }
+useCity(app.current);
+save();   // v1 → v2 이전 결과를 바로 저장
 
 const allPlaces = () => PLACES.concat(state.custom, state.stays);
 const tempPlaces = {};   // 구글 검색/클릭으로 열어본, 아직 저장 안 한 장소
 const byId = id => allPlaces().find(p => p.id === id) || tempPlaces[id];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-function gQuery(p) { return p.en ? `${p.en}, Sydney NSW` : `${p.lat},${p.lng}`; }
+function gQuery(p) { return p.en ? `${p.en}, ${CITY.suffix}` : `${p.lat},${p.lng}`; }
 function gPlaceUrl(p) {
   if (p.gid) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.name) + "&query_place_id=" + p.gid;
   return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(gQuery(p));
@@ -547,8 +753,8 @@ function toDetail(pl) {
 }
 async function gTextSearch(textQuery, center, radius) {
   const r = await gApi("places", "https://places.googleapis.com/v1/places:searchText", {
-    textQuery, languageCode: "ko", regionCode: "AU",
-    locationBias: { circle: { center: { latitude: center.lat, longitude: center.lng }, radius } },
+    textQuery, languageCode: "ko",
+    ...(center ? { locationBias: { circle: { center: { latitude: center.lat, longitude: center.lng }, radius } } } : {}),
   }, PF.map(f => "places." + f).join(","));
   return (r.places || []).map(toDetail);
 }
@@ -557,7 +763,7 @@ async function getDetails(p) {
   if (c && Date.now() - c.t < 7 * 864e5) return c;
   let d = null;
   if (p.gid) {
-    d = toDetail(await gApi("places", `https://places.googleapis.com/v1/places/${encodeURIComponent(p.gid)}?languageCode=ko&regionCode=AU`, null, PF.join(",")));
+    d = toDetail(await gApi("places", `https://places.googleapis.com/v1/places/${encodeURIComponent(p.gid)}?languageCode=ko`, null, PF.join(",")));
   } else {
     d = (await gTextSearch(gQuery(p), p, 1000))[0] || null;
   }
@@ -654,11 +860,10 @@ const params = new URLSearchParams(location.search);
 let API_KEY = params.get("key") || "";
 try { API_KEY = API_KEY || localStorage.getItem("gmaps-key") || ""; } catch (e) {}
 
-const CENTER = { lat:-33.8650, lng:151.2094 };
 let M; // 어댑터
 
 function leafletAdapter() {
-  const map = L.map("map", { zoomControl:true }).setView([CENTER.lat, CENTER.lng], 14);
+  const map = L.map("map", { zoomControl:true }).setView([CENTER.lat, CENTER.lng], CITY.zoom);
   const base = {
     "기본 지도": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       maxZoom: 20, subdomains:"abcd",
@@ -695,6 +900,7 @@ function leafletAdapter() {
       map.fitBounds(pts.map(p => [p.lat,p.lng]), { padding:[50,50] });
     },
     onClick(fn) { map.on("click", e => fn({ lat:e.latlng.lat, lng:e.latlng.lng })); },
+    view(c, z) { map.setView([c.lat, c.lng], z); },
     bounds() {
       const b = map.getBounds();
       return { n:b.getNorth(), s:b.getSouth(), e:b.getEast(), w:b.getWest(), z:map.getZoom() };
@@ -706,7 +912,7 @@ function leafletAdapter() {
 function googleAdapter() {
   const g = google.maps;
   const map = new g.Map(document.getElementById("map"), {
-    center: CENTER, zoom: 14, mapTypeControl: true, streetViewControl: true, fullscreenControl: false,
+    center: CENTER, zoom: CITY.zoom, mapTypeControl: true, streetViewControl: true, fullscreenControl: false,
     clickableIcons: true,
   });
   const info = new g.InfoWindow({ maxWidth: 300 });
@@ -757,6 +963,7 @@ function googleAdapter() {
       });
     },
     cursor(c) { map.setOptions({ draggableCursor: c === "" ? null : c }); },
+    view(c, z) { map.setCenter(c); map.setZoom(z); },
     bounds() {
       const b = map.getBounds(); if (!b) return null;
       const ne = b.getNorthEast(), sw = b.getSouthWest();
@@ -902,11 +1109,14 @@ function filter() {
       <div><div class="nm">${esc(p.name)}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
       <div class="ds">${esc(p.area || c.label)} — ${esc(p.desc || "")}</div></div>
     </div>`;
-  }).join("") : `<div class="empty">검색 결과가 없습니다.</div>`;
+  }).join("") : !PLACES.length && !q
+    ? `<div class="empty">${esc(CITY.name)}은(는) 추천 장소가 아직 없어요.<br>${GMODE ? "🔎 구글 검색이나 지도 위 장소 클릭," : "📍 장소 추가로"} 가고 싶은 곳을 담아보세요.</div>`
+    : `<div class="empty">검색 결과가 없습니다.</div>`;
 }
 
 function renderDays() {
   document.getElementById("dayCount").textContent = state.days.length;
+  document.getElementById("btnSample").hidden = !SAMPLE;
   document.getElementById("startDate").value = state.startDate;
   document.getElementById("mode").value = state.mode;
   document.getElementById("routesOn").checked = state.routesOn;
@@ -979,7 +1189,6 @@ function drawRoutes() {
 
 /* ============================== 에어비앤비 숙소 후보 ============================== */
 // 에어비앤비는 공개 API가 없어 매물을 자동으로 가져올 수 없음 → 지도 영역으로 검색을 열고, 고른 숙소를 후보로 저장해 비교
-const KEY_SPOTS = [["cquay", "서큘러 키"], ["qvb", "시티(QVB)"], ["darling", "달링 하버"], ["bondi", "본다이"]];
 const tripNights = () => Math.max(1, state.days.length - 1);
 const stayNights = p => p.nights || tripNights();
 const fmtMoney = n => Math.round(n).toLocaleString();
@@ -1003,7 +1212,7 @@ function airbnbSearchUrl() {
     q.set("ne_lat", b.n.toFixed(5)); q.set("ne_lng", b.e.toFixed(5));
     q.set("sw_lat", b.s.toFixed(5)); q.set("sw_lng", b.w.toFixed(5)); q.set("zoom", Math.round(b.z));
   }
-  return "https://www.airbnb.co.kr/s/Sydney--NSW--Australia/homes?" + q;
+  return `https://www.airbnb.co.kr/s/${encodeURIComponent(CITY.airbnb)}/homes?` + q;
 }
 
 // 숙소 → 주요 장소 이동시간 (구글 모드: 대중교통 실제 소요시간, 아니면 직선거리)
@@ -1017,7 +1226,7 @@ function commute(p, spotId) {
   const k = km(p, t);
   return { text: `직선 ${fmtDist(k * 1000)}`, sec: k * 1.3 / 4.5 * 3600 };
 }
-const commuteHtml = p => KEY_SPOTS.map(([id, label]) => `${label} <b>${commute(p, id).text}</b>`).join(" · ");
+const commuteHtml = p => (CITY.keySpots || []).map(([id, label]) => `${label} <b>${commute(p, id).text}</b>`).join(" · ");
 
 function stayPriceHtml(p) {
   if (!p.price) return "";
@@ -1030,7 +1239,7 @@ function stayPopupHtml(p, opts) {
     <div class="muted">에어비앤비 후보${p.area ? " · " + esc(p.area) : ""}${p.rating ? ` · ★ ${p.rating}` : ""}</div>
     ${p.price ? `<p>${stayPriceHtml(p)}</p>` : ""}
     ${p.note ? `<p>${esc(p.note)}</p>` : ""}
-    <div class="commute">${commuteHtml(p)}</div>
+    ${CITY.keySpots.length ? `<div class="commute">${commuteHtml(p)}</div>` : ""}
     <div class="acts">
       ${url ? `<a class="abnb" href="${esc(url)}" target="_blank" rel="noopener">에어비앤비에서 보기</a>` : ""}
       <button class="btn sm" onclick="chooseStay('${p.id}')">${on ? "확정 취소" : "💍 이 숙소로 확정"}</button>
@@ -1050,9 +1259,13 @@ function renderStays() {
   document.getElementById("stayDates").innerHTML = d
     ? `📅 체크인 ${d.checkin} → 체크아웃 ${d.checkout} (${tripNights()}박) · 일정 탭의 출발일·일수 기준`
     : `📅 일정 탭에서 출발일을 정하면 날짜까지 넣어서 검색해요`;
+  const k0 = (CITY.keySpots || [])[0];
+  const sortOpt = document.querySelector('#staySort option[value="commute"]');
+  sortOpt.hidden = !k0;
+  if (k0) sortOpt.textContent = `🚆 ${k0[1]} 가까운 순`;
   const sorters = {
     price: (a, b) => (a.price || 1e9) - (b.price || 1e9),
-    commute: (a, b) => commute(a, "cquay").sec - commute(b, "cquay").sec,
+    commute: (a, b) => k0 ? commute(a, k0[0]).sec - commute(b, k0[0]).sec : 0,
     rating: (a, b) => (b.rating || 0) - (a.rating || 0),
     added: () => 0,
   };
@@ -1066,7 +1279,7 @@ function renderStays() {
         ${p.price ? `<span class="price">A$${fmtMoney(p.price)}<small>/박</small></span>` : ""}
       </div>
       <div class="muted">${[p.area && esc(p.area), p.rating && `★ ${p.rating}`, p.price && `${stayNights(p)}박 총 A$${fmtMoney(p.price * stayNights(p))}`].filter(Boolean).join(" · ")}</div>
-      <div class="commute">${commuteHtml(p)}</div>
+      ${CITY.keySpots.length ? `<div class="commute">${commuteHtml(p)}</div>` : ""}
       ${p.note ? `<div class="note">${esc(p.note)}</div>` : ""}
       <div class="row" style="margin-top:6px">
         <button class="btn sm" data-act="open" data-id="${p.id}">🗺️ 지도</button>
@@ -1109,7 +1322,7 @@ function submitStay(e) {
 async function locateNewStay(p) {
   if (GMODE && p.area) {   // 주소/동네를 적었으면 구글로 위치를 찾아봄
     try {
-      const r = (await gTextSearch(p.area + ", Sydney NSW", CENTER, 30000))[0];
+      const r = (await gTextSearch(p.area + ", " + CITY.suffix, CENTER, 30000))[0];
       if (r && r.lat != null) {
         p.lat = r.lat; p.lng = r.lng;
         commitStay(p);
@@ -1144,6 +1357,81 @@ function removeStay(id) {
   save(); M.closePopup(); buildMarkers(); renderDays();
 }
 window.chooseStay = chooseStay; window.openStayDlg = openStayDlg;
+
+/* ============================== 도시 전환 ============================== */
+function cityOptionLabel(c) {
+  const plan = app.plans[c.id];
+  const n = plan ? plan.days.reduce((a, d) => a + d.stops.length, 0) : 0;
+  let extra = "";
+  if (plan && plan.startDate) { const [, m, d] = plan.startDate.split("-"); extra = ` · ${+m}/${+d}~`; }
+  else if (n) extra = ` · ${n}곳`;
+  return `${c.flag || "📍"} ${c.name}${extra}`;
+}
+function renderCityBar() {
+  const sel = document.getElementById("citySel");
+  sel.innerHTML = Object.values(allCities()).map(c => `<option value="${c.id}">${esc(cityOptionLabel(c))}</option>`).join("")
+    + `<option value="__add">➕ 다른 도시 추가…</option>`;
+  sel.value = CITY.id;
+  document.getElementById("btnCityDel").hidden = !CITY.custom;
+  document.title = `${CITY.name} 신혼여행 지도`;
+}
+function refreshCity(move) {
+  if (move) M.view(CENTER, CITY.zoom);
+  document.getElementById("gResults").innerHTML = "";
+  document.getElementById("q").value = "";
+  buildMarkers(); renderChips(); renderDays(); renderCityBar();
+}
+function switchCity(id) {
+  if (addMode) setAddMode(false);
+  M.closePopup();
+  useCity(id); save(); refreshCity(true);
+}
+async function geocodeCity(name) {
+  try {   // OpenStreetMap 지오코딩 (키 불필요)
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q=" + encodeURIComponent(name));
+    const j = await r.json();
+    if (j[0]) return { lat: +j[0].lat, lng: +j[0].lon };
+  } catch (e) {}
+  if (GMODE) {
+    try { const d = (await gTextSearch(name, null))[0]; if (d && d.lat != null) return { lat: d.lat, lng: d.lng }; } catch (e) {}
+  }
+  return null;
+}
+async function addCity() {
+  const name = (prompt("추가할 도시 이름을 입력하세요 (예: 퍼스, 호바트, 오클랜드, 발리)") || "").trim();
+  if (!name) return renderCityBar();
+  toast(`"${name}" 위치 찾는 중…`);
+  const c = await geocodeCity(name);
+  if (!c) { renderCityBar(); return alert("도시 위치를 찾지 못했어요. 영문 이름으로도 시도해 보세요."); }
+  const city = { id: "u" + Date.now().toString(36), name, flag: "📍", center: c, zoom: 13, suffix: name,
+                 airbnb: name.replace(/[\s,]+/g, "-"), custom: true };
+  app.myCities.push(city);
+  switchCity(city.id);
+  toast(`${name} 추가! ${GMODE ? "🔎 구글 검색이나 " : ""}📍 장소 추가로 장소를 채워보세요`);
+}
+function deleteCity() {
+  if (!CITY.custom || !confirm(`${CITY.name}와(과) 이 도시의 일정을 모두 삭제할까요?`)) return;
+  app.myCities = app.myCities.filter(c => c.id !== CITY.id);
+  delete app.plans[CITY.id];
+  switchCity("sydney");
+}
+
+/* ============================== 앱 (PWA) ============================== */
+let installEvt = null;
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function setupPWA() {
+  const btn = document.getElementById("btnInstall");
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (isStandalone()) return;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; btn.hidden = false; });
+  window.addEventListener("appinstalled", () => { btn.hidden = true; toast("📲 앱으로 설치됐어요!"); });
+  if (isIOS()) btn.hidden = false;   // iOS는 설치 프롬프트가 없어 안내창으로 대체
+  btn.onclick = async () => {
+    if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; btn.hidden = true; }
+    else document.getElementById("installDlg").showModal();
+  };
+}
 
 /* ============================== 동작 ============================== */
 function saveTemp(id, quiet) {
@@ -1194,6 +1482,8 @@ function bindUI() {
     document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
     document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + b.dataset.tab));
   });
+  document.getElementById("citySel").onchange = e => e.target.value === "__add" ? addCity() : switchCity(e.target.value);
+  document.getElementById("btnCityDel").onclick = deleteCity;
   document.getElementById("q").oninput = filter;
   document.getElementById("btnAirbnb").onclick = () => window.open(airbnbSearchUrl(), "_blank", "noopener");
   document.getElementById("guests").onchange = e => { state.guests = +e.target.value; save(); };
@@ -1223,7 +1513,7 @@ function bindUI() {
     const el = e.target.closest(".place"); if (el) openPlace(el.dataset.id);
   };
 
-  document.getElementById("startDate").onchange = e => { state.startDate = e.target.value; save(); renderDays(); };
+  document.getElementById("startDate").onchange = e => { state.startDate = e.target.value; save(); renderDays(); renderCityBar(); };
   document.getElementById("mode").onchange = e => { state.mode = e.target.value; save(); renderDays(); };
   document.getElementById("routesOn").onchange = e => { state.routesOn = e.target.checked; save(); drawRoutes(); };
   document.getElementById("dayPlus").onclick = () => { if (state.days.length < 21) { state.days.push({ stops:[], note:"" }); save(); renderDays(); } };
@@ -1274,18 +1564,21 @@ function bindUI() {
 
   document.getElementById("btnSample").onclick = () => {
     if (state.days.some(d => d.stops.length) && !confirm("현재 일정을 추천 일정으로 바꿀까요?")) return;
+    if (!SAMPLE) return;
     state.days = SAMPLE.map(d => ({ stops:[...d.stops], note:d.note }));
     state.focusDay = null; save(); renderDays();
-    M.fit(state.days.flatMap(d => d.stops).map(byId).filter(p => p && p.id !== "blueview"));
+    const far = new Set(["blueview", "m_gor", "m_phillip", "m_yarra", "c_mossman"]);
+    M.fit(state.days.flatMap(d => d.stops).map(byId).filter(p => p && !far.has(p.id)));
   };
   document.getElementById("btnReset").onclick = () => {
-    if (!confirm("일정과 내 장소를 모두 초기화할까요?")) return;
-    state = defaultState(); save(); buildMarkers(); renderChips(); renderDays();
+    if (!confirm(`${CITY.name}의 일정·내 장소·숙소 후보를 모두 초기화할까요?`)) return;
+    state = app.plans[CITY.id] = defaultState(); save(); refreshCity(false);
   };
   document.getElementById("btnExport").onclick = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    // 모든 도시의 일정을 한 파일로
+    const blob = new Blob([JSON.stringify(app, null, 2)], { type:"application/json" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "sydney-honeymoon-plan.json"; a.click();
+    a.href = URL.createObjectURL(blob); a.download = "honeymoon-plan.json"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
@@ -1293,8 +1586,10 @@ function bindUI() {
     const f = e.target.files[0]; if (!f) return;
     try {
       const s = JSON.parse(await f.text());
-      if (!Array.isArray(s.days)) throw 0;
-      state = Object.assign(defaultState(), s); save(); buildMarkers(); renderChips(); renderDays();
+      if (s && s.plans) { app = Object.assign(emptyApp(), s); useCity(app.current); }   // 전체 (v2)
+      else if (s && Array.isArray(s.days)) state = app.plans[CITY.id] = normalizePlan(s); // 한 도시 (v1)
+      else throw 0;
+      save(); refreshCity(true);
       toast("일정을 불러왔어요");
     } catch (err) { alert("올바른 일정 파일이 아닙니다."); }
     e.target.value = "";
@@ -1327,7 +1622,7 @@ function bindUI() {
 
 function start(adapter) {
   M = adapter;
-  buildMarkers(); renderChips(); renderDays(); bindUI();
+  buildMarkers(); renderChips(); renderDays(); renderCityBar(); bindUI(); setupPWA();
 }
 
 if (API_KEY) {
