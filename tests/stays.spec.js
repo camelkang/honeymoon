@@ -55,3 +55,14 @@ test("에어비앤비 검색 링크에 지도 영역·날짜·인원이 들어�
   expect(u.searchParams.get("adults")).toBe("2");
   expect(Number(u.searchParams.get("ne_lat"))).toBeGreaterThan(Number(u.searchParams.get("sw_lat")));
 });
+
+test("위치를 찍을 때 기존 핀을 눌러도 그 자리로 저장됨", async ({ page }) => {
+  await open(page);
+  await tab(page, "stays");
+  await addStay(page, { name: "오페라 옆 숙소", price: 500, rating: 5 });
+  // 핀이 촘촘해 다른 핀에 가릴 수 있어, 그 핀에 직접 클릭 이벤트를 보냄
+  await page.getByRole("button", { name: "시드니 오페라 하우스", exact: true }).dispatchEvent("click");
+  await expect(page.locator(".stay-card")).toHaveCount(1);
+  const s = (await savedPlan(page)).stays[0];
+  expect([s.lat, s.lng]).toEqual([-33.8568, 151.2153]);
+});

@@ -18,12 +18,18 @@ export function pinHtml(p) {
   return `<div class="pin" style="background:${c.color}"><span>${c.emoji}</span></div>`;
 }
 
+// 핀을 누르면 장소 팝업. 단, 위치를 찍는 중(장소 추가·숙소 위치)이면 그 핀 자리를 찍은 것으로 처리
+function tapPlace(p) {
+  if (addMode) return M.tapAt({ lat: p.lat, lng: p.lng });
+  openPlace(p.id, false);
+}
+
 export function buildMarkers() {
   Object.values(markers).forEach(m => m.show(false));
   for (const k in markers) delete markers[k];
   allPlaces().forEach(p => {
     const c = CATS[p.cat];
-    markers[p.id] = M.pin(p, pinHtml(p), () => openPlace(p.id, false), c.color, c.emoji);
+    markers[p.id] = M.pin(p, pinHtml(p), () => tapPlace(p), c.color, c.emoji);
   });
   filter();
 }
@@ -216,7 +222,7 @@ export function drawRoutes() {
     }
     stops.forEach((p, j) => {
       const html = `<div class="num" style="background:${color}">${j+1}</div>`;
-      routeLayers.push(M.num(p, html, () => openPlace(p.id, false), color, j+1));
+      routeLayers.push(M.num(p, html, () => tapPlace(p), color, j+1));
     });
   });
 }

@@ -68,9 +68,18 @@ export const open = async (page, query = "") => {
 export const tab = (page, name) => page.click(`.tabs [data-tab=${name}]`);
 export const savedPlan = page => page.evaluate(() => { const a = JSON.parse(localStorage.getItem("honeymoon-app-v2")); return a.plans[a.current]; });
 export const savedApp = page => page.evaluate(() => JSON.parse(localStorage.getItem("honeymoon-app-v2")));
+// 지도의 빈 곳(핀·버튼이 없는 곳)을 클릭. fx, fy 근처부터 찾아봄
 export const clickMap = async (page, fx = 0.5, fy = 0.5) => {
   const b = await page.locator("#map").boundingBox();
-  await page.mouse.click(b.x + b.width * fx, b.y + b.height * fy);
+  const pt = await page.evaluate(({ b, fx, fy }) => {
+    for (let r = 0; r < 0.4; r += 0.03) for (let a = 0; a < 6.28; a += 0.7) {
+      const x = b.x + b.width * (fx + r * Math.cos(a)), y = b.y + b.height * (fy + r * Math.sin(a));
+      const el = document.elementFromPoint(x, y);
+      if (el && el.classList.contains("maplibregl-canvas")) return { x, y };
+    }
+    return { x: b.x + b.width * fx, y: b.y + b.height * fy };
+  }, { b, fx, fy });
+  await page.mouse.click(pt.x, pt.y);
 };
 // 지도 위 가게·명소(POI) 아이콘 클릭 흉내: 해당 지점에 POI 하나가 그려져 있다고 가정
 export const clickPoi = (page, poi) => page.evaluate(({ name, lat, lng }) => {

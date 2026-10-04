@@ -40,12 +40,13 @@ export function createMap() {
 
   // 선(동선)은 지도 스타일이 준비된 뒤에만 추가할 수 있음
   const ready = new Promise(res => map.once("load", res));
-  let lineSeq = 0, popup = null;
+  let lineSeq = 0, popup = null, clickFn = null;
 
   return {
     pin(p, html, onClick) {
       const el = markerEl(html, p.cat === "stay" ? "mk-stay" : "mk-pin");
       el.title = p.name;
+      el.setAttribute("aria-label", p.name);   // 화면 낭독기가 "Map marker" 대신 장소 이름을 읽도록
       el.addEventListener("click", e => { e.stopPropagation(); onClick(); });
       const m = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat([p.lng, p.lat]);
       return { show(v) { v ? m.addTo(map) : m.remove(); }, z(v) { el.style.zIndex = v; } };
@@ -88,7 +89,9 @@ export function createMap() {
       map.fitBounds(b, { padding: 50, maxZoom: toML(16), duration: 600 });
     },
     // 지도 클릭: 빈 곳이면 좌표만, 가게·명소 아이콘이면 그 이름(poi)도 함께 넘김
+    tapAt(pos) { if (clickFn) clickFn({ ...pos, poi: null }); },
     onClick(fn) {
+      clickFn = fn;
       map.on("click", e => {
         const f = map.queryRenderedFeatures(e.point)
           .find(x => x.sourceLayer === "poi" || (x.layer && x.layer["source-layer"] === "poi"));
