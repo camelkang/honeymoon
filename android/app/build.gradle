@@ -58,8 +58,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         // 스토어에 새로 올릴 때마다 versionCode를 1씩 올려야 함 (CI에서 -PversionCode로 덮어씀)
-        versionCode (project.findProperty("versionCode") ?: "1").toInteger()
-        versionName (project.findProperty("versionName") ?: "1.0.0")
+        versionCode Integer.parseInt((project.findProperty("versionCode") ?: "1").toString())
+        versionName((project.findProperty("versionName") ?: "1.0.0").toString())
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
