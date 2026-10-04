@@ -17,9 +17,10 @@
 ## 구글 지도 기능
 사용자는 키를 넣을 필요가 없어요. 배포할 때 GitHub Actions가 저장소 Secret `GOOGLE_MAPS_API_KEY`를 앱에 넣어요(저장소에는 자리표시자만 있음).
 
-- 구글 지도, 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색
-- Secret이 없거나 키 인증에 실패하면 기본 무료 지도로 자동 전환
-- 키 보호: Google Cloud에서 웹사이트 제한 `https://camelkang.github.io/*`, API 제한(Maps JavaScript·Places (New)·Routes), 일일 할당량 상한
+- 기본 지도는 OpenFreeMap(무료·키 없음). 구글은 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색에만 사용
+- 지도 위 가게·명소 아이콘을 누르면 이름으로 구글 장소 정보를 찾아 보여줌
+- Secret이 없거나 키가 거부되면 경고를 띄우고 직선 거리로 대체 (지도는 그대로)
+- 키 보호: Google Cloud에서 웹사이트 제한 `https://camelkang.github.io/*`, API 제한(Places (New)·Routes), 일일 할당량 상한
 - 개발·테스트용으로 ⚙️에서 다른 키를 넣을 수 있음
 
 ## 공통 기능
@@ -45,7 +46,7 @@ VITE_GOOGLE_MAPS_API_KEY=... npm run dev   # 내 키로 구글 기능 테스트
 | `src/data.js` | 도시·추천 장소·카테고리 |
 | `src/store.js` | 도시별 저장 상태(localStorage), 장소 조회 |
 | `src/google.js` | Places·Routes API 호출과 캐시 |
-| `src/map.js` | 지도 어댑터(Leaflet / Google) |
+| `src/map.js` | 지도(MapLibre + OpenFreeMap), 구글 키 설정 |
 | `src/render.js` | 지도 핀·목록·일정 화면 |
 | `src/stays.js` | 에어비앤비 숙소 후보 |
 | `src/cities.js` | 도시 전환·추가 |

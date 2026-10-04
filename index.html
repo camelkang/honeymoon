@@ -154,10 +154,10 @@
   <input type="text" id="apiKey" placeholder="AIza... (비워두면 앱 기본 키 사용)" style="margin-top:8px">
   <ol class="muted">
     <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 선택</li>
-    <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 지도가 어둡게 <i>"For development purposes only"</i>로 표시되고 경로·장소 정보도 막힙니다. 개인 여행 계획 정도는 월 무료 사용량 안이라 보통 과금되지 않아요.</li>
-    <li><a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener">API 라이브러리</a>에서 3개 사용 설정:
-      <b>Maps JavaScript API</b>, <b>Places API (New)</b>, <b>Routes API</b></li>
-    <li>API 키에 제한을 걸었다면 위 3개 API를 허용 목록에 포함</li>
+    <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 경로·장소 정보 요청이 거부돼요. 월 무료 사용량 안에서는 과금되지 않아요.</li>
+    <li><a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener">API 라이브러리</a>에서 2개 사용 설정:
+      <b>Places API (New)</b>, <b>Routes API</b> (지도 자체는 무료 지도라 Maps JavaScript API는 필요 없음)</li>
+    <li>API 키에 제한을 걸었다면 위 2개 API를 허용 목록에 포함</li>
     <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
   </ol>
   </details>

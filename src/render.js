@@ -69,7 +69,7 @@ export function openPlace(id, fly = true) {
   getDetails(p).then(d => {
     if (seq !== popSeq) return;
     if (d && tempPlaces[p.id]) {   // 구글 장소를 처음 연 경우: 이름·위치를 구글 정보로 채움
-      Object.assign(p, { name: d.name || p.name, desc: d.type || "", lat: d.lat ?? p.lat, lng: d.lng ?? p.lng });
+      Object.assign(p, { name: d.name || p.name, gid: d.gid || p.gid, desc: d.type || "", lat: d.lat ?? p.lat, lng: d.lng ?? p.lng });
       node.innerHTML = popupHtml(p);
     }
     node.querySelector(".gd").innerHTML = detailsHtml(d);
@@ -78,12 +78,12 @@ export function openPlace(id, fly = true) {
   });
 }
 
-// 구글 지도 위 장소 아이콘 클릭 → 우리 팝업으로 열기
-export function showGooglePlace(gid, pos) {
-  const saved = allPlaces().find(p => p.gid === gid);
-  if (saved) return openPlace(saved.id, false);
-  const id = "g_" + gid.replace(/[^\w-]/g, "");
-  tempPlaces[id] = tempPlaces[id] || { id, gid, cat:"mine", name:"구글 장소", lat:pos.lat, lng:pos.lng, area:"", desc:"" };
+// 지도 위 가게·명소 아이콘 클릭 → 우리 팝업으로 열기 (구글 모드면 이름으로 구글 장소 정보를 찾아 붙임)
+export function showPoi(poi) {
+  const near = allPlaces().find(p => km(p, poi) < 0.03);
+  if (near) return openPlace(near.id, false);
+  const id = ("o_" + poi.lat.toFixed(5) + "_" + poi.lng.toFixed(5)).replace(/[^\w]/g, "x");
+  tempPlaces[id] = tempPlaces[id] || { id, cat: "mine", name: poi.name, en: poi.name, lat: poi.lat, lng: poi.lng, area: "", desc: "" };
   openPlace(id, false);
 }
 

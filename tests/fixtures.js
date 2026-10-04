@@ -1,26 +1,8 @@
-// 외부 네트워크 없이 앱을 돌리기 위한 공통 목(mock): 지도 라이브러리·타일·구글 API·지오코딩
+// 외부 네트워크 없이 앱을 돌리기 위한 공통 목(mock): 지도 스타일·타일, 구글 API, 지오코딩
 import { test as base, expect } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
-const leaflet = p => fileURLToPath(new URL(`../node_modules/leaflet/dist/${p}`, import.meta.url));
-
-// Google Maps JS를 흉내 내는 아주 작은 가짜 구현 (마커·선·정보창 기록)
-export const GOOGLE_MOCK = `
-window.__markers = []; window.__lines = [];
-class MVC { constructor(o){ Object.assign(this, o || {}); this.l = {}; } addListener(n, f){ this.l[n] = f; } setMap(m){ this.map = m; } setZIndex(){} setOptions(){} }
-window.google = { maps: {
-  Map: class extends MVC { constructor(el, o){ super(o); window.__map = this; el.innerHTML = '<div style="background:#cde;height:100%">MOCK MAP</div>'; }
-    panTo(){} getZoom(){ return 14; } setZoom(){} setCenter(c){ this.center = c; } fitBounds(){}
-    getBounds(){ return { getNorthEast: () => ({ lat: () => -33.85, lng: () => 151.23 }), getSouthWest: () => ({ lat: () => -33.88, lng: () => 151.19 }) }; } },
-  Marker: class extends MVC { constructor(o){ super(o); window.__markers.push(this); } },
-  Polyline: class extends MVC { constructor(o){ super(o); window.__lines.push(this); } },
-  InfoWindow: class extends MVC { setContent(n){ this.c = n; let d = document.getElementById('pop'); if (!d) { d = document.createElement('div'); d.id = 'pop'; d.style.cssText = 'position:fixed;right:10px;top:70px;width:300px;background:#fff;z-index:9999;padding:8px'; document.body.appendChild(d); } d.replaceChildren(n); } setPosition(){} open(){} close(){ const d = document.getElementById('pop'); if (d) d.replaceChildren(); } },
-  LatLngBounds: class { extend(){} },
-  Point: class { constructor(x, y){ this.x = x; this.y = y; } },
-  SymbolPath: { CIRCLE: 0 },
-}};
-setTimeout(() => window.__gmInit(), 10);`;
+// 지도 스타일 대신 쓰는 빈 배경 스타일 (테스트 환경엔 외부 지도 타일이 없음)
+const BLANK_STYLE = { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e8e6df" } }] };
 
 export const PLACE = {
   id: "ChIJ_test", displayName: { text: "테스트 장소" }, formattedAddress: "Bennelong Point, Sydney NSW 2000",
@@ -32,29 +14,31 @@ export const ROUTE = {
   routes: [{ duration: "840s", distanceMeters: 2300, polyline: { encodedPolyline: "_p~iF~ps|U_ulLnnqC" },
     legs: [{ steps: [{ travelMode: "WALK" }, { travelMode: "TRANSIT", transitDetails: { transitLine: { nameShort: "T2", vehicle: { type: "HEAVY_RAIL" } } } }] }] }],
 };
+const BAD_KEY = { error: { message: "API key not valid. Please pass a valid API key.", status: "INVALID_ARGUMENT" } };
 const json = (route, body, status = 200) =>
   route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 
 export const test = base.extend({
   // 구글 API 응답을 테스트마다 바꿀 수 있게 옵션으로 둠
-  googleMode: ["ok", { option: true }],   // "ok" | "denied" | "authfail"
+  googleMode: ["ok", { option: true }],   // "ok" | "denied" | "badkey"
   calls: async ({}, use) => use({ places: [], routes: 0 }),
   context: async ({ context, googleMode, calls }, use) => {
-    await context.route("**/cdnjs.cloudflare.com/**", r =>
-      r.fulfill({ path: leaflet(r.request().url().endsWith(".css") ? "leaflet.css" : "leaflet.js"), headers: { "access-control-allow-origin": "*" } }));
-    await context.route(/basemaps\.cartocdn\.com|arcgisonline\.com/, r => r.abort());
+    // Playwright는 나중에 등록한 route가 먼저 적용됨 → 전체 차단을 먼저, 스타일 응답을 나중에
+    await context.route("**/tiles.openfreemap.org/**", r => r.abort());
+    await context.route("**/tiles.openfreemap.org/styles/**", r => json(r, BLANK_STYLE));
     await context.route("**/nominatim.openstreetmap.org/**", r => json(r, [{ lat: "-31.9523", lon: "115.8613", display_name: "Perth" }]));
-    await context.route("**/maps.googleapis.com/**", r => r.fulfill({ contentType: "text/javascript",
-      body: googleMode === "authfail" ? "setTimeout(() => window.gm_authFailure(), 10)" : GOOGLE_MOCK }));
+    await context.route("**/maps.googleapis.com/**", r => r.abort());   // 구글 지도 JS는 더 이상 쓰지 않음
     await context.route("**/places.googleapis.com/**", r => {
       const u = r.request().url();
       calls.places.push(u);
+      if (googleMode === "badkey") return json(r, BAD_KEY, 400);
       if (u.includes("/media")) return r.abort();
       if (u.includes("searchText")) return json(r, { places: [PLACE, { ...PLACE, id: "ChIJ_other", displayName: { text: "다른 곳" } }] });
       return json(r, PLACE);
     });
     await context.route("**/routes.googleapis.com/**", r => {
       calls.routes++;
+      if (googleMode === "badkey") return json(r, BAD_KEY, 400);
       if (googleMode === "denied") return json(r, { error: { message: "Routes API has not been used in project 1 before or it is disabled." } }, 403);
       return json(r, ROUTE);
     });
@@ -71,7 +55,11 @@ export const test = base.extend({
 });
 
 // 공통 동작
-export const open = async (page, query = "") => { await page.goto("/index.html" + query); await page.waitForSelector("#list .place, #list .empty"); };
+export const open = async (page, query = "") => {
+  await page.goto("/index.html" + query);
+  await page.waitForSelector("#list .place, #list .empty");
+  await page.waitForFunction(() => window.__map && window.__map.loaded());   // 지도 스타일 로드 완료
+};
 export const tab = (page, name) => page.click(`.tabs [data-tab=${name}]`);
 export const savedPlan = page => page.evaluate(() => { const a = JSON.parse(localStorage.getItem("honeymoon-app-v2")); return a.plans[a.current]; });
 export const savedApp = page => page.evaluate(() => JSON.parse(localStorage.getItem("honeymoon-app-v2")));
@@ -79,4 +67,11 @@ export const clickMap = async (page, fx = 0.5, fy = 0.5) => {
   const b = await page.locator("#map").boundingBox();
   await page.mouse.click(b.x + b.width * fx, b.y + b.height * fy);
 };
+// 지도 위 가게·명소(POI) 아이콘 클릭 흉내: 해당 지점에 POI 하나가 그려져 있다고 가정
+export const clickPoi = (page, poi) => page.evaluate(({ name, lat, lng }) => {
+  const map = window.__map;
+  map.queryRenderedFeatures = () => [{ sourceLayer: "poi", properties: { name }, geometry: { type: "Point", coordinates: [lng, lat] } }];
+  map.fire("click", { lngLat: { lat, lng }, point: map.project([lng, lat]),
+    originalEvent: new MouseEvent("click"), target: map, type: "click" });
+}, poi);
 export { expect };

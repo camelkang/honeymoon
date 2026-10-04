@@ -21,7 +21,7 @@ export async function gApi(service, url, body, fieldMask) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = (data.error && data.error.message) || ("HTTP " + res.status);
-    if (res.status === 401 || res.status === 403) { apiErrors[service] = msg; showApiNotice(); }
+    if (res.status === 401 || res.status === 403 || /API key/i.test(msg)) { apiErrors[service] = msg; showApiNotice(); }
     throw new Error(msg);
   }
   return data;

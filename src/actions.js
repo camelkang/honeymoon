@@ -2,7 +2,7 @@ import { addCity, deleteCity, refreshCity, renderCityBar, switchCity } from "./c
 import { CATS } from "./data.js";
 import { GMODE } from "./google.js";
 import { M, USER_KEY } from "./map.js";
-import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showGooglePlace } from "./render.js";
+import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
 import { airbnbSearchUrl, chooseStay, openStayDlg, pickFn, removeStay, renderStays, setPickFn, submitStay } from "./stays.js";
 import { CITY, SAMPLE, app, byId, replaceApp, resetCityPlan, save, setCityPlan, state, tempPlaces } from "./store.js";
 
@@ -172,7 +172,7 @@ export function bindUI() {
   document.addEventListener("keydown", e => { if (e.key === "Escape" && addMode) setAddMode(false); });
   M.onClick(pos => {
     if (pickFn) { const f = pickFn; setPickFn(null); setAddMode(false); f(pos); return; }
-    if (!addMode) { if (pos.placeId) showGooglePlace(pos.placeId, pos); return; }
+    if (!addMode) { if (pos.poi) showPoi(pos.poi); return; }
     const name = prompt("장소 이름을 입력하세요 (예: 우리 숙소, 웨딩 촬영지)");
     setAddMode(false);
     if (!name) return;

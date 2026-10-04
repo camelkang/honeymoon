@@ -1,4 +1,4 @@
-import { test, expect, open, tab, savedPlan } from "./fixtures.js";
+import { test, expect, open, tab, savedPlan, clickPoi } from "./fixtures.js";
 
 test.describe("구글 모드 (가짜 구글 API)", () => {
   test("장소 정보·구글 검색·지도 장소 클릭", async ({ page, calls }) => {
@@ -15,8 +15,10 @@ test.describe("구글 모드 (가짜 구글 API)", () => {
     await page.click(".pop .btn.primary");
     expect((await savedPlan(page)).custom.map(c => c.gid)).toContain("ChIJ_other");
 
-    await page.evaluate(() => window.__map.l.click({ placeId: "ChIJ_poi", latLng: { lat: () => -33.86, lng: () => 151.2 }, stop() {} }));
+    // 지도 위 가게 아이콘 클릭 → 이름으로 구글 장소를 찾아 팝업에 정보 표시
+    await clickPoi(page, { name: "Opera Bar", lat: -33.8575, lng: 151.2141 + 0.001 });
     await expect(page.locator(".pop")).toContainText("내 장소로 저장");
+    await expect(page.locator(".pop .gd")).toContainText("★ 4.7");
     expect(calls.places.length).toBeGreaterThan(0);
   });
 
@@ -58,12 +60,23 @@ test.describe("API 거부", () => {
   });
 });
 
-test.describe("키 인증 실패", () => {
-  test.use({ googleMode: "authfail" });
-  test("기본 지도로 한 번만 전환(무한 새로고침 없음)", async ({ page }) => {
-    await page.goto("/index.html?key=BAD");
-    await page.waitForURL(/nokey=1/);
-    await page.waitForSelector("#list .place");
-    await expect(page.locator("body")).not.toHaveClass(/gmode/);
+test.describe("잘못된 키", () => {
+  test.use({ googleMode: "badkey" });
+  test("지도는 그대로 쓰고, 경고 후 직선 거리로 대체", async ({ page }) => {
+    await open(page, "?key=BAD");
+    await tab(page, "plan");
+    await page.click("#btnSample");
+    await expect(page.locator("#apiNotice")).toContainText("API key not valid");
+    await expect(page.locator(".leg").first()).toContainText("직선");
+    await expect(page.locator(".mk-pin").first()).toBeVisible();
   });
+});
+
+test("키 없이(?nokey=1) 열면 구글 기능을 숨김", async ({ page, calls }) => {
+  await open(page, "?nokey=1");
+  await expect(page.locator("body")).not.toHaveClass(/gmode/);
+  await expect(page.locator("#btnGSearch")).toBeHidden();
+  await page.click('.place[data-id="opera"]');
+  await expect(page.locator(".pop h3")).toContainText("오페라");
+  expect(calls.places).toHaveLength(0);
 });

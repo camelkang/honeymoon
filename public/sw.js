@@ -1,11 +1,11 @@
-// 신혼여행 지도 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도 타일은 캐시해 둠
-const VERSION = "v2";
+// 신혼여행 지도 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도(OpenFreeMap 스타일·타일·글꼴)는 캐시해 둠
+const VERSION = "v3";
 const SHELL = `shell-${VERSION}`;
-const TILES = "tiles-v1";
+const TILES = "tiles-v2";
 const SHELL_FILES = [
   "./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.png",
 ];  // 빌드된 JS·CSS(assets/)는 처음 받을 때 캐시됨
-const TILE_HOSTS = /basemaps\.cartocdn\.com|arcgisonline\.com/;
+const TILE_HOSTS = /tiles\.openfreemap\.org/;
 const MAX_TILES = 1500;
 
 self.addEventListener("install", e => {

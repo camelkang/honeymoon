@@ -108,6 +108,14 @@
     display: grid; place-items: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35);
   }
   .pin span { transform: rotate(45deg); font-size: 15px; line-height: 1; }
+  /* MapLibre 마커: 바깥 .mk는 MapLibre가 위치를 잡고, 아래쪽 끝이 좌표에 오도록 크기를 맞춤 */
+  .mk { cursor: pointer; }
+  .mk-pin { width: 30px; height: 37px; }
+  .mk-stay { padding-bottom: 2px; }
+  .mk-num { z-index: 2; }
+  .maplibregl-popup { z-index: 5; }   /* 번호 마커보다 위 */
+  .maplibregl-popup-content { padding: 12px 14px; border-radius: 10px; box-shadow: var(--shadow); }
+  .maplibregl-popup-close-button { font-size: 18px; padding: 0 6px; }
   .num {
     width: 24px; height: 24px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px;
     display: grid; place-items: center; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
@@ -142,7 +150,6 @@
   .stay-pin {
     background: #fff; color: #222; border: 2px solid #ff385c; border-radius: 999px; font-weight: 800; font-size: 12px;
     padding: 2px 8px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.3); display: inline-block;
-    transform: translate(-50%, -100%); position: absolute; left: 0; top: 0;
   }
   .stay-pin.on { background: #ff385c; color: #fff; }
   .form label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
