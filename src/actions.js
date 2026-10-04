@@ -3,6 +3,7 @@ import { CATS } from "./data.js";
 import { GMODE } from "./google.js";
 import { M, USER_KEY } from "./map.js";
 import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
+import { peekSheet } from "./sheet.js";
 import { airbnbSearchUrl, chooseStay, openStayDlg, pickFn, removeStay, renderStays, setPickFn, submitStay } from "./stays.js";
 import { CITY, SAMPLE, app, byId, replaceApp, resetCityPlan, save, setCityPlan, state, tempPlaces } from "./store.js";
 
@@ -13,7 +14,7 @@ export function saveTemp(id, quiet) {
   if (!state.custom.some(c => c.id === id)) state.custom.push({ ...p });
   if (!state.cats.includes("mine")) state.cats.push("mine");
   save(); buildMarkers(); renderChips(); filter();
-  if (!quiet) { M.closePopup(); toast(`⭐ ${p.name} 저장했어요`); }
+  if (!quiet) { M.closePopup(); toast(`${p.name} 저장했어요`); }
 }
 export function addToDay(id, day) {
   const d = state.days[day]; if (!d) return;
@@ -45,16 +46,12 @@ export function setAddMode(v, msg) {
   M.cursor(v ? "crosshair" : "");
   const b = document.getElementById("banner");
   clearTimeout(toastT);
-  if (v) { b.textContent = msg || "지도를 클릭해 장소를 추가하세요 (Esc 취소)"; b.style.display = "block"; }
+  if (v) { peekSheet(); b.textContent = msg || "지도를 눌러 장소를 추가하세요 (Esc 취소)"; b.style.display = "block"; }
   else b.style.display = "none";
   if (cancelled) toast("위치를 찍지 않아 취소했어요");
 }
 
 export function bindUI() {
-  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
-    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-    document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + b.dataset.tab));
-  });
   document.getElementById("citySel").onchange = e => e.target.value === "__add" ? addCity() : switchCity(e.target.value);
   document.getElementById("btnCityDel").onclick = deleteCity;
   document.getElementById("q").oninput = filter;
@@ -77,6 +74,10 @@ export function bindUI() {
   };
   document.getElementById("chips").onclick = e => {
     const c = e.target.closest(".chip"); if (!c) return;
+    if (c.dataset.like) {   // 좋아요 필터 (기기별)
+      state.likeFilter = state.likeFilter === c.dataset.like ? "all" : c.dataset.like;
+      save(); renderChips(); filter(); return;
+    }
     const k = c.dataset.cat;
     if (k === "__all") state.cats = state.cats.length === Object.keys(CATS).length ? [] : Object.keys(CATS);
     else state.cats = state.cats.includes(k) ? state.cats.filter(x => x !== k) : state.cats.concat(k);

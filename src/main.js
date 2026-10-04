@@ -1,14 +1,22 @@
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./styles.css";
 import { bindUI } from "./actions.js";
 import { renderCityBar } from "./cities.js";
 import { setGMode } from "./google.js";
+import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
+import { bindPick, renderPick } from "./pick.js";
 import { setupPWA } from "./pwa.js";
 import { buildMarkers, renderChips, renderDays } from "./render.js";
+import { bindSheet, onTabShown } from "./sheet.js";
 
 function start(adapter) {
   setMap(adapter);
+  // 정적 HTML의 아이콘 자리(data-icon)에 아이콘을 채움
+  document.querySelectorAll("[data-icon]").forEach(el => { el.insertAdjacentHTML("afterbegin", icon(el.dataset.icon, 20)); });
   buildMarkers(); renderChips(); renderDays(); renderCityBar(); bindUI(); setupPWA();
+  bindSheet(); bindPick(); renderPick();
+  onTabShown("pick", renderPick);
 }
 
 // 키가 있으면 구글 검색·경로·장소 정보를 켬 (지도 자체는 항상 무료 지도)

@@ -69,7 +69,7 @@ export function detailsHtml(d) {
   if (!d) return `<span class="muted">구글 장소 정보를 찾지 못했어요.</span>`;
   return `${d.photo ? `<img src="${photoUrl(d.photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
     ${d.rating ? `<div><span class="stars">★ ${d.rating.toFixed(1)}</span> <span class="muted">리뷰 ${(d.count || 0).toLocaleString()}개${d.type ? " · " + esc(d.type) : ""}</span></div>` : ""}
-    ${d.addr ? `<div class="muted">📍 ${esc(d.addr)}</div>` : ""}
+    ${d.addr ? `<div class="muted">${esc(d.addr)}</div>` : ""}
     ${d.hours ? `<details><summary>🕒 영업시간</summary><ul>${d.hours.map(h => `<li>${esc(h)}</li>`).join("")}</ul></details>` : ""}
     <div class="row" style="margin-top:4px">
       ${d.web ? `<a href="${esc(d.web)}" target="_blank" rel="noopener">🌐 웹사이트</a>` : ""}

@@ -10,10 +10,12 @@ import {
   serverTimestamp, deleteField, FieldPath, Timestamp, arrayRemove,
 } from "firebase/firestore";
 import { firebaseConfig } from "./firebase-config.js";
-import { app, CITY, normalizePlan, onSave, save, esc } from "./store.js";
+import { app, CITY, normalizePlan, onSave, save, esc, byId as placeById } from "./store.js";
 import { buildMarkers, renderDays, renderChips } from "./render.js";
 import { renderCityBar } from "./cities.js";
 import { toast } from "./actions.js";
+import { icon } from "./icons.js";
+import { setPeople, renderPick, isMatch } from "./pick.js";
 
 const EMULATOR = !!import.meta.env.VITE_FIREBASE_EMULATOR;
 const fb = initializeApp(EMULATOR ? { ...firebaseConfig, projectId: "demo-honeymoon", apiKey: "demo-key" } : firebaseConfig);
@@ -40,6 +42,7 @@ const status = () => !S.user ? "signedout" : !S.loaded ? "loading" : !S.coupleId
 // 내 장소·숙소 후보는 항목별 맵으로 나눠서 — 둘이 다른 날짜·다른 항목을 동시에 고쳐도 서로 덮어쓰지 않음
 const SHARED = ["startDate", "mode", "stayChosen", "guests"];
 const MAPS = ["custom", "stays"];
+const NESTED = ["votes"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
 const clean = v => JSON.parse(JSON.stringify(v ?? null));
 const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]));
 
@@ -48,6 +51,7 @@ function toFields(plan) {
   SHARED.forEach(k => { f[k] = clean(plan[k]); });
   plan.days.forEach((d, i) => { f["d" + i] = clean({ stops: d.stops || [], note: d.note || "", times: d.times || {} }); });
   MAPS.forEach(k => { f[k] = byId(plan[k]); });
+  NESTED.forEach(k => { f[k] = clean(plan[k] || {}); });
   return f;
 }
 function fromFields(f) {
@@ -55,6 +59,7 @@ function fromFields(f) {
   const shared = { days: Array.from({ length: n }, (_, i) => Object.assign({ stops: [], note: "", times: {} }, f["d" + i])) };
   SHARED.forEach(k => { if (k in f) shared[k] = f[k]; });
   MAPS.forEach(k => { shared[k] = Object.values(f[k] || {}); });
+  NESTED.forEach(k => { shared[k] = clean(f[k] || {}); });
   return shared;
 }
 // 마지막으로 서버와 맞춘 값 (필드별 JSON) — 바뀐 필드만 올리기 위해
@@ -63,6 +68,9 @@ function snapshotOf(fields) {
   const out = {};
   for (const [k, v] of Object.entries(fields)) {
     if (MAPS.includes(k)) for (const [id, item] of Object.entries(v || {})) out[k + "\u0000" + id] = JSON.stringify(item);
+    else if (NESTED.includes(k)) {
+      for (const [id, inner] of Object.entries(v || {})) for (const [who, val] of Object.entries(inner || {})) out[[k, id, who].join("\u0000")] = JSON.stringify(val);
+    }
     else if (k !== "updatedAt" && k !== "updatedBy") out[k] = JSON.stringify(v);
   }
   return out;
@@ -118,7 +126,7 @@ document.addEventListener("input", () => { lastInputAt = Date.now(); }, true);
 function refreshView() {
   clearTimeout(refreshT);
   refreshT = setTimeout(() => {
-    buildMarkers(); renderChips(); renderCityBar();
+    buildMarkers(); renderChips(); renderCityBar(); renderPick();
     const a = document.activeElement;
     const inList = a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest("#days");
     if (inList && Date.now() - lastInputAt < 2000) return refreshView();
@@ -150,6 +158,7 @@ function subscribeData(coupleId) {
     if (snap.metadata.hasPendingWrites || snap.metadata.fromCache && first) return;   // 서버 확인 전이면 기다림
     if (!first && flushT) { flush(); return; }                 // 아직 안 올린 내 변경부터 올리고, 다음 스냅샷에서 합침
     let partnerChanged = false, touchedCurrent = false;
+    const matchedBefore = new Set(Object.keys(app.plans[CITY.id] && app.plans[CITY.id].votes || {}).filter(isMatch));
     snap.docChanges().forEach(ch => {
       if (ch.type === "removed") return;
       const cityId = ch.doc.id, data = ch.doc.data();
@@ -165,7 +174,9 @@ function subscribeData(coupleId) {
       if (snap.size) toast("함께 쓰는 일정을 불러왔어요");
     } else if (touchedCurrent) {
       refreshView();
-      if (partnerChanged) toast(`${profile(partnerId()).name || "짝꿍"}이(가) 일정을 바꿨어요`);
+      const newMatches = Object.keys(app.plans[CITY.id].votes || {}).filter(id => isMatch(id) && !matchedBefore.has(id));
+      if (newMatches.length) toast(`둘 다 좋아요! ${newMatches.map(id => (placeById(id) || {}).name).filter(Boolean).join(", ") || "새로 겹친 곳이 생겼어요"}`);
+      else if (partnerChanged) toast(`${profile(partnerId()).name || "짝꿍"}이(가) 바꿨어요`);
     } else if (partnerChanged) renderCityBar();
   }, e => { console.warn(e); S.error = "동기화 권한이 없어요"; renderAccount(); }));
 
@@ -194,6 +205,7 @@ function subscribeCouple(coupleId) {
     if (!c || !c.members.includes(me())) { leaveLocal(); return; }
     const wasConnected = status() === "connected";
     S.couple = c;
+    setPeople(me(), partnerId() || null);
     if (!wasConnected && status() === "connected" && c.joinedAt) toast(`💕 ${profile(partnerId()).name || "짝꿍"}과(와) 연결됐어요!`);
     renderAccount();
   }, () => { leaveLocal(); }));
@@ -202,6 +214,7 @@ function subscribeCouple(coupleId) {
 function leaveLocal() {
   stopSubs();
   S.coupleId = null; S.couple = null;
+  setPeople(null, null);
   renderAccount();
 }
 
@@ -275,6 +288,7 @@ async function signIn() {
 onAuthStateChanged(auth, async user => {
   S.user = user; S.error = ""; S.loaded = false;
   if (!user) { leaveLocal(); return; }
+  setPeople(user.uid);
   renderAccount();
   try {
     const u = await getDoc(doc(db, "users", user.uid));
@@ -318,7 +332,7 @@ function renderAccount() {
   const btn = document.getElementById("btnAccount"), box = document.getElementById("accountBody");
   const st = status();
   const typed = (document.getElementById("joinCode") || {}).value || "";   // 다시 그려도 입력 중인 코드는 유지
-  btn.innerHTML = st === "signedout" || st === "loading" ? `👤<span class="lbl"> ${st === "loading" ? "…" : "로그인"}</span>`
+  btn.innerHTML = st === "signedout" || st === "loading" ? `${icon("user", 20)}<span class="lbl">${st === "loading" ? "…" : "로그인"}</span>`
     : st === "connected" ? `<span class="av-pair">${avatar(me(), 24)}${avatar(partnerId(), 24)}</span>`
     : `${avatar(me(), 24)}<span class="lbl"> 짝꿍 연결</span>`;
   btn.classList.toggle("connected", st === "connected");

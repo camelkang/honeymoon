@@ -1,17 +1,19 @@
+import { icon } from "./icons.js";
+
 /* ============================== 데이터 ============================== */
 export const CATS = {
-  sight: { label: "명소",      emoji: "🏛️", color: "#e8590c" },
-  view:  { label: "뷰포인트",  emoji: "🌅", color: "#f08c00" },
-  nature:{ label: "공원·자연", emoji: "🌿", color: "#2f9e44" },
-  beach: { label: "해변",      emoji: "🏖️", color: "#1c7ed6" },
-  food:  { label: "맛집",      emoji: "🍽️", color: "#c2255c" },
-  cafe:  { label: "카페·브런치",emoji: "☕", color: "#8d5b3e" },
-  bar:   { label: "바·루프탑", emoji: "🍸", color: "#7048e8" },
-  shop:  { label: "쇼핑",      emoji: "🛍️", color: "#d6336c" },
-  hotel: { label: "숙소",      emoji: "🏨", color: "#495057" },
-  trans: { label: "교통",      emoji: "⛴️", color: "#0b7285" },
-  mine:  { label: "내 장소",   emoji: "⭐", color: "#e03131" },
-  stay:  { label: "에어비앤비 후보", emoji: "🏠", color: "#ff385c" },
+  sight: { label: "명소",      emoji: "🏛️", icon: "landmark", color: "#e8590c" },
+  view:  { label: "뷰포인트",  emoji: "🌅", icon: "sunset",   color: "#e67700" },
+  nature:{ label: "공원·자연", emoji: "🌿", icon: "trees",    color: "#2f9e44" },
+  beach: { label: "해변",      emoji: "🏖️", icon: "waves",    color: "#1c7ed6" },
+  food:  { label: "맛집",      emoji: "🍽️", icon: "utensils", color: "#c2255c" },
+  cafe:  { label: "카페·브런치",emoji: "☕", icon: "coffee",   color: "#8d5b3e" },
+  bar:   { label: "바·루프탑", emoji: "🍸", icon: "martini",  color: "#7048e8" },
+  shop:  { label: "쇼핑",      emoji: "🛍️", icon: "bag",      color: "#d6336c" },
+  hotel: { label: "숙소",      emoji: "🏨", icon: "bed",      color: "#495057" },
+  trans: { label: "교통",      emoji: "⛴️", icon: "tram",     color: "#0b7285" },
+  mine:  { label: "내 장소",   emoji: "⭐", icon: "star",     color: "#e03131" },
+  stay:  { label: "에어비앤비 후보", emoji: "🏠", icon: "house", color: "#ff385c" },
 };
 
 // 좌표는 대략적인 위치입니다. 정확한 위치·영업시간은 구글맵 버튼으로 확인하세요.

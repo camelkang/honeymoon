@@ -53,7 +53,7 @@ export async function addCity() {
                  airbnb: name.replace(/[\s,]+/g, "-"), custom: true };
   app.myCities.push(city);
   switchCity(city.id);
-  toast(`${name} 추가! ${GMODE ? "🔎 구글 검색이나 " : ""}📍 장소 추가로 장소를 채워보세요`);
+  toast(`${name} 추가! ${GMODE ? "구글 검색이나 " : ""}오른쪽 위 핀 버튼으로 장소를 채워보세요`);
 }
 export function deleteCity() {
   if (!CITY.custom || !confirm(`${CITY.name}와(과) 이 도시의 일정을 모두 삭제할까요?`)) return;

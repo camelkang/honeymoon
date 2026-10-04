@@ -1,5 +1,6 @@
 import { addToDay, setAddMode, toast } from "./actions.js";
 import { GMODE, MODE_ICON, apiErrors, fmtDist, fmtDur, gTextSearch, getLeg } from "./google.js";
+import { icon } from "./icons.js";
 import { M } from "./map.js";
 import { buildMarkers, openPlace, renderChips, renderDays } from "./render.js";
 import { CENTER, CITY, byId, esc, km, save, state } from "./store.js";
@@ -53,19 +54,19 @@ export function stayPriceHtml(p) {
 export function stayPopupHtml(p, opts) {
   const on = state.stayChosen === p.id, url = safeUrl(p.url);
   return `<div class="pop">
-    <h3>🏠 ${esc(p.name)} ${on ? `<span class="badge">확정</span>` : ""}</h3>
+    <h3>${icon("house", 18)} ${esc(p.name)} ${on ? `<span class="badge">확정</span>` : ""}</h3>
     <div class="muted">에어비앤비 후보${p.area ? " · " + esc(p.area) : ""}${p.rating ? ` · ★ ${p.rating}` : ""}</div>
     ${p.price ? `<p>${stayPriceHtml(p)}</p>` : ""}
     ${p.note ? `<p>${esc(p.note)}</p>` : ""}
     ${CITY.keySpots.length ? `<div class="commute">${commuteHtml(p)}</div>` : ""}
     <div class="acts">
       ${url ? `<a class="abnb" href="${esc(url)}" target="_blank" rel="noopener">에어비앤비에서 보기</a>` : ""}
-      <button class="btn sm" onclick="chooseStay('${p.id}')">${on ? "확정 취소" : "💍 이 숙소로 확정"}</button>
+      <button class="btn sm" onclick="chooseStay('${p.id}')">${on ? "확정 취소" : `${icon("check", 15)} 이 숙소로 확정`}</button>
       <button class="btn sm" onclick="openStayDlg('${p.id}')">수정</button>
     </div>
     <div class="acts">
       <select id="popDay">${opts}</select>
-      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">+ 일정에 추가</button>
+      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">${icon("plus", 15)} 일정에 추가</button>
     </div>
   </div>`;
 }
@@ -75,12 +76,12 @@ export function renderStays() {
   document.getElementById("staySort").value = state.staySort;
   const d = stayDates();
   document.getElementById("stayDates").innerHTML = d
-    ? `📅 체크인 ${d.checkin} → 체크아웃 ${d.checkout} (${tripNights()}박) · 일정 탭의 출발일·일수 기준`
-    : `📅 일정 탭에서 출발일을 정하면 날짜까지 넣어서 검색해요`;
+    ? `체크인 ${d.checkin} → 체크아웃 ${d.checkout} (${tripNights()}박) · 일정 탭의 출발일·일수 기준`
+    : `일정 탭에서 출발일을 정하면 날짜까지 넣어서 검색해요`;
   const k0 = (CITY.keySpots || [])[0];
   const sortOpt = document.querySelector('#staySort option[value="commute"]');
   sortOpt.hidden = !k0;
-  if (k0) sortOpt.textContent = `🚆 ${k0[1]} 가까운 순`;
+  if (k0) sortOpt.textContent = `${k0[1]} 가까운 순`;
   const sorters = {
     price: (a, b) => (a.price || 1e9) - (b.price || 1e9),
     commute: (a, b) => k0 ? commute(a, k0[0]).sec - commute(b, k0[0]).sec : 0,
@@ -93,16 +94,16 @@ export function renderStays() {
     const on = state.stayChosen === p.id, url = safeUrl(p.url);
     return `<div class="stay-card ${on ? "on" : ""}">
       <div class="top">
-        <span class="nm" data-act="open" data-id="${p.id}">🏠 ${esc(p.name)} ${on ? `<span class="badge">💍 확정</span>` : ""}</span>
+        <span class="nm" data-act="open" data-id="${p.id}">${esc(p.name)} ${on ? `<span class="badge">확정</span>` : ""}</span>
         ${p.price ? `<span class="price">A$${fmtMoney(p.price)}<small>/박</small></span>` : ""}
       </div>
       <div class="muted">${[p.area && esc(p.area), p.rating && `★ ${p.rating}`, p.price && `${stayNights(p)}박 총 A$${fmtMoney(p.price * stayNights(p))}`].filter(Boolean).join(" · ")}</div>
       ${CITY.keySpots.length ? `<div class="commute">${commuteHtml(p)}</div>` : ""}
       ${p.note ? `<div class="note">${esc(p.note)}</div>` : ""}
       <div class="row" style="margin-top:6px">
-        <button class="btn sm" data-act="open" data-id="${p.id}">🗺️ 지도</button>
+        <button class="btn sm" data-act="open" data-id="${p.id}">${icon("map", 15)} 지도</button>
         ${url ? `<a class="btn sm abnb" href="${esc(url)}" target="_blank" rel="noopener">에어비앤비</a>` : ""}
-        <button class="btn sm" data-act="choose" data-id="${p.id}">${on ? "확정 취소" : "💍 확정"}</button>
+        <button class="btn sm" data-act="choose" data-id="${p.id}">${on ? "확정 취소" : `${icon("check", 15)} 확정`}</button>
         <button class="btn sm" data-act="edit" data-id="${p.id}">수정</button>
         <button class="btn sm" data-act="del" data-id="${p.id}">삭제</button>
       </div>
@@ -117,7 +118,7 @@ export function openStayDlg(id) {
   const f = document.getElementById("stayForm");
   f.reset();
   for (const k of ["url", "name", "price", "rating", "nights", "area", "note"]) f.elements[k].value = p[k] ?? "";
-  document.getElementById("stayDlgTitle").textContent = id ? "🏠 숙소 후보 수정" : "🏠 숙소 후보 추가";
+  document.getElementById("stayDlgTitle").textContent = id ? "숙소 후보 수정" : "숙소 후보 추가";
   document.getElementById("stayRepickRow").hidden = !id;
   document.getElementById("stayLocHint").hidden = !!id;
   document.getElementById("stayDlg").showModal();
@@ -151,8 +152,7 @@ export async function locateNewStay(p) {
   pickStayLocation(p);
 }
 export function pickStayLocation(p) {
-  if (window.innerWidth <= 800) window.scrollTo(0, 0);
-  setAddMode(true, `📍 "${p.name}" 위치를 지도에서 클릭하세요 (Esc 취소)`);
+  setAddMode(true, `"${p.name}" 위치를 지도에서 눌러 주세요 (Esc 취소)`);
   pickFn = pos => { p.lat = +pos.lat.toFixed(6); p.lng = +pos.lng.toFixed(6); commitStay(p); };
 }
 export function commitStay(p) {
@@ -164,7 +164,7 @@ export function commitStay(p) {
 export function chooseStay(id) {
   state.stayChosen = state.stayChosen === id ? null : id;
   save(); M.closePopup(); buildMarkers(); renderStays();
-  if (state.stayChosen) toast(`💍 ${byId(id).name} 확정!`);
+  if (state.stayChosen) toast(`${byId(id).name} 숙소로 확정!`);
 }
 export function removeStay(id) {
   const p = byId(id);

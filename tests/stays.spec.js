@@ -13,7 +13,7 @@ test("에어비앤비 후보 추가(지도에서 위치 찍기)·확정·정렬�
   await open(page);
   await tab(page, "stays");
   await addStay(page, { name: "하버뷰 아파트", price: 420, rating: 4.92 });
-  await expect(page.locator("#banner")).toContainText("위치를 지도에서 클릭");
+  await expect(page.locator("#banner")).toContainText("위치를 지도에서 눌러");
   await clickMap(page, 0.5, 0.5);
   await addStay(page, { name: "본다이 스튜디오", price: 260, rating: 4.8 });
   await clickMap(page, 0.7, 0.6);

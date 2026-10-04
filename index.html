@@ -3,165 +3,175 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>신혼여행 지도</title>
-<meta name="description" content="도시별 신혼여행 일정·동선·숙소를 한 지도에서">
-<meta name="theme-color" content="#0b7285">
+<title>둘이서 · 커플 여행 지도</title>
+<meta name="description" content="둘이 함께 고르고 함께 짜는 여행 지도">
+<meta name="theme-color" content="#0e7c7b">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="신혼여행">
+<meta name="apple-mobile-web-app-title" content="둘이서">
 </head>
 <body>
-<header>
-  <h1>💍</h1>
-  <select id="citySel" title="도시 선택"></select>
-  <button class="btn sm icon" id="btnCityDel" title="이 도시 삭제" hidden>🗑️</button>
-  <div class="sub">도시를 고르고, 장소를 눌러 일정에 담아보세요.</div>
-  <button class="btn sm" id="btnInstall" hidden>📲<span class="lbl"> 앱 설치</span></button>
-  <button class="btn sm" id="btnAddMode" title="지도를 클릭해 나만의 장소 추가">📍<span class="lbl"> 장소 추가</span></button>
-  <button class="btn sm" id="btnAccount" title="로그인 · 짝꿍 연결">👤<span class="lbl"> 로그인</span></button>
-  <button class="btn sm" id="btnSettings" title="지도 설정">⚙️</button>
-</header>
-
 <div class="app">
-  <aside>
-    <div class="notice" id="apiNotice" hidden style="margin:10px 12px 0"></div>
-    <div class="tabs">
-      <button data-tab="places" class="on">🗺️ 장소</button>
-      <button data-tab="plan">🗓️ 일정</button>
-      <button data-tab="stays">🏠 숙소</button>
-    </div>
+  <div class="mapwrap">
+    <div id="map"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand"><span data-icon="heart" class="brand-mark"></span><span class="brand-name">둘이서</span></div>
+    <label class="city-chip">
+      <span class="sr-only">도시 선택</span>
+      <select id="citySel"></select>
+      <span data-icon="chevronDown" class="chev"></span>
+    </label>
+    <button class="icon-btn" id="btnCityDel" title="이 도시 삭제" aria-label="이 도시 삭제" hidden><span data-icon="trash"></span></button>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btnInstall" title="앱 설치" aria-label="앱 설치" hidden><span data-icon="phone"></span></button>
+    <button class="icon-btn" id="btnAddMode" title="지도를 눌러 내 장소 추가" aria-label="내 장소 추가"><span data-icon="pin"></span></button>
+    <button class="account-btn" id="btnAccount" title="로그인 · 짝꿍 연결"></button>
+    <button class="icon-btn" id="btnSettings" title="설정" aria-label="설정"><span data-icon="settings"></span></button>
+  </header>
+
+  <nav class="tabs" aria-label="주요 메뉴">
+    <button data-tab="places" class="on"><span data-icon="map"></span><span>둘러보기</span></button>
+    <button data-tab="pick"><span data-icon="heart"></span><span>함께 고르기</span><b class="badge-dot" id="pickBadge" hidden></b></button>
+    <button data-tab="plan"><span data-icon="calendar"></span><span>일정</span></button>
+    <button data-tab="stays"><span data-icon="house"></span><span>숙소</span></button>
+  </nav>
+
+  <section class="sheet" id="sheet" aria-label="패널">
+    <div class="sheet-handle" id="sheetHandle" role="button" tabindex="0" aria-label="패널 크기 바꾸기"><span></span></div>
+    <div class="notice" id="apiNotice" hidden></div>
 
     <div class="pane on" id="pane-places">
-      <div class="row" style="flex-wrap:nowrap">
-        <input type="search" id="q" placeholder="장소 검색 (예: 오페라, 해변, 브런치)" style="flex:1;min-width:0">
-        <button class="btn primary g-only" id="btnGSearch" title="구글 지도에서 검색">🔎 구글 검색</button>
+      <div class="search">
+        <span data-icon="search"></span>
+        <input type="search" id="q" placeholder="장소 검색 (예: 오페라, 해변, 브런치)" aria-label="장소 검색">
+        <button class="btn primary sm g-only" id="btnGSearch" title="구글에서 검색">구글 검색</button>
       </div>
-      <div class="muted g-only" style="margin-top:6px">💡 지도 위 구글 장소(가게·명소 아이콘)를 클릭해도 바로 일정에 담을 수 있어요.</div>
+      <p class="hint g-only">지도 위 가게·명소 아이콘을 눌러도 바로 담을 수 있어요.</p>
       <div id="gResults"></div>
       <div class="chips" id="chips"></div>
-      <div id="list"></div>
+      <div id="list" class="list"></div>
+    </div>
+
+    <div class="pane" id="pane-pick">
+      <div class="seg" id="pickSeg" role="tablist">
+        <button data-pick="deck" class="on" role="tab">고르기</button>
+        <button data-pick="matches" role="tab">둘 다 좋아요 <b id="matchCount"></b></button>
+      </div>
+      <div id="pickDeck"></div>
+      <div id="pickMatches" hidden></div>
+    </div>
+
+    <div class="pane" id="pane-plan">
+      <div class="plan-controls">
+        <label class="field"><span>출발일</span><input type="date" id="startDate"></label>
+        <div class="field"><span>일수</span>
+          <div class="stepper"><button class="icon-btn sm" id="dayMinus" aria-label="하루 빼기">−</button><b id="dayCount">5</b><button class="icon-btn sm" id="dayPlus" aria-label="하루 더하기">+</button></div>
+        </div>
+        <label class="field"><span>이동</span>
+          <select id="mode"><option value="transit">대중교통</option><option value="walking">도보</option><option value="driving">자동차</option></select>
+        </label>
+        <label class="toggle"><input type="checkbox" id="routesOn" checked><span>지도에 동선</span></label>
+      </div>
+      <div class="suggest" id="planSuggest" hidden></div>
+      <div id="days"></div>
+      <div class="plan-tools">
+        <button class="btn" id="btnSample"><span data-icon="sparkles"></span>추천 일정</button>
+        <button class="btn" id="btnExport"><span data-icon="download"></span>내보내기</button>
+        <button class="btn" id="btnImport"><span data-icon="upload"></span>가져오기</button>
+        <button class="btn" id="btnReset"><span data-icon="reset"></span>초기화</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <p class="hint">로그인하지 않아도 이 기기에 자동 저장돼요. 짝꿍과 함께 쓰려면 오른쪽 위에서 로그인하세요.</p>
     </div>
 
     <div class="pane" id="pane-stays">
       <div class="stay-hero">
         <b>에어비앤비 숙소 비교</b>
-        <ol class="muted">
-          <li>지도를 원하는 동네로 옮기고 확대해요</li>
-          <li><b>에어비앤비에서 찾기</b>를 누르면 지금 보이는 지도 영역 + 여행 날짜로 검색돼요</li>
-          <li>마음에 드는 숙소를 <b>+ 후보 추가</b>하면 지도에 가격 핀으로 표시돼요</li>
+        <ol>
+          <li>지도를 원하는 동네로 옮겨요</li>
+          <li><b>이 지역 에어비앤비 찾기</b>로 지도 영역·여행 날짜 그대로 검색해요</li>
+          <li>마음에 드는 숙소를 <b>후보 추가</b>하면 가격 핀으로 비교돼요</li>
         </ol>
         <div class="row">
-          <label class="muted">인원</label>
-          <select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
-          <button class="btn abnb" id="btnAirbnb">🔎 이 지도 영역으로 에어비앤비 찾기</button>
+          <label class="field inline"><span>인원</span><select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+          <button class="btn abnb" id="btnAirbnb"><span data-icon="search"></span>이 지역 에어비앤비 찾기</button>
         </div>
-        <div class="muted" id="stayDates" style="margin-top:6px"></div>
+        <p class="hint" id="stayDates"></p>
       </div>
-      <div class="row" style="justify-content:space-between;margin:12px 0 4px">
-        <button class="btn primary" id="btnAddStay">+ 숙소 후보 추가</button>
-        <select id="staySort">
-          <option value="price">💰 가격 낮은 순</option>
-          <option value="commute">🚆 서큘러 키 가까운 순</option>
-          <option value="rating">★ 평점 높은 순</option>
-          <option value="added">🕒 추가한 순</option>
+      <div class="row between">
+        <button class="btn primary" id="btnAddStay"><span data-icon="plus"></span>숙소 후보 추가</button>
+        <select id="staySort" aria-label="정렬">
+          <option value="price">가격 낮은 순</option>
+          <option value="commute">가까운 순</option>
+          <option value="rating">평점 높은 순</option>
+          <option value="added">추가한 순</option>
         </select>
       </div>
       <div id="stayList"></div>
     </div>
+  </section>
 
-    <div class="pane" id="pane-plan">
-      <div class="row">
-        <label class="muted">출발일</label>
-        <input type="date" id="startDate">
-        <label class="muted">일수</label>
-        <button class="btn icon" id="dayMinus">−</button>
-        <b id="dayCount">5</b>
-        <button class="btn icon" id="dayPlus">+</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <label class="muted">이동수단</label>
-        <select id="mode">
-          <option value="transit">🚆 대중교통</option>
-          <option value="walking">🚶 도보</option>
-          <option value="driving">🚗 자동차</option>
-        </select>
-        <label class="muted"><input type="checkbox" id="routesOn" checked> 지도에 동선 표시</label>
-      </div>
-      <div id="days"></div>
-      <hr>
-      <div class="row">
-        <button class="btn" id="btnSample">✨ 추천 일정 불러오기</button>
-        <button class="btn" id="btnExport">⬇️ 내보내기</button>
-        <button class="btn" id="btnImport">⬆️ 가져오기</button>
-        <button class="btn" id="btnReset">🗑️ 초기화</button>
-        <input type="file" id="importFile" accept="application/json" hidden>
-      </div>
-      <p class="muted">일정은 이 브라우저에 자동 저장됩니다. 다른 기기로 옮길 땐 내보내기/가져오기를 이용하세요.</p>
-    </div>
-  </aside>
-
-  <div class="mapwrap">
-    <div id="map"></div>
-    <div class="banner" id="banner">지도를 클릭해 장소를 추가하세요 (Esc 취소)</div>
-  </div>
+  <div class="banner" id="banner" role="status" aria-live="polite"></div>
 </div>
 
-<dialog id="accountDlg" aria-labelledby="accountTitle">
-  <div class="row" style="justify-content:space-between;flex-wrap:nowrap">
-    <h2 id="accountTitle" style="margin:0">💑 함께 쓰기</h2>
-    <button class="btn sm" data-acc="close" aria-label="닫기">✕</button>
-  </div>
-  <div id="accountBody" style="margin-top:12px"></div>
+<dialog id="dayDlg" aria-labelledby="dayDlgTitle">
+  <div class="dlg-head"><h2 id="dayDlgTitle">며칠째에 갈까요?</h2><button class="icon-btn" data-close aria-label="닫기"><span data-icon="x"></span></button></div>
+  <div id="dayDlgBody" class="day-opts"></div>
 </dialog>
 
-<dialog id="stayDlg">
-  <h2 id="stayDlgTitle">🏠 숙소 후보 추가</h2>
+<dialog id="accountDlg" aria-labelledby="accountTitle">
+  <div class="dlg-head"><h2 id="accountTitle">함께 쓰기</h2><button class="icon-btn" data-acc="close" aria-label="닫기"><span data-icon="x"></span></button></div>
+  <div id="accountBody"></div>
+</dialog>
+
+<dialog id="stayDlg" aria-labelledby="stayDlgTitle">
+  <div class="dlg-head"><h2 id="stayDlgTitle">숙소 후보 추가</h2></div>
   <form id="stayForm" method="dialog" class="form">
     <label>에어비앤비 링크<input type="text" name="url" placeholder="https://www.airbnb.co.kr/rooms/..."></label>
     <label>숙소 이름 *<input type="text" name="name" required placeholder="예: 하버뷰 아파트 (서큘러 키)"></label>
-    <div class="row" style="flex-wrap:nowrap">
+    <div class="row nowrap">
       <label style="flex:1">1박 가격 (AUD)<input type="number" name="price" min="0" step="1" placeholder="350"></label>
       <label style="flex:1">평점<input type="number" name="rating" min="0" max="5" step="0.01" placeholder="4.9"></label>
       <label style="flex:1">박수<input type="number" name="nights" min="1" step="1" placeholder="전체"></label>
     </div>
     <label>동네 / 주소<input type="text" name="area" placeholder="예: Surry Hills, 또는 상세 주소"></label>
     <label>메모<textarea name="note" placeholder="장점·단점, 체크인 방법, 호스트 답변 등"></textarea></label>
-    <label class="muted" id="stayRepickRow"><input type="checkbox" name="repick" style="width:auto"> 지도에서 위치 다시 찍기</label>
-    <p class="muted" id="stayLocHint">저장하면 지도에서 숙소 위치를 클릭해 주세요. 에어비앤비는 예약 전엔 대략적인 위치만 보여줘요.</p>
-    <div class="row" style="justify-content:flex-end">
+    <label class="check" id="stayRepickRow"><input type="checkbox" name="repick"> 지도에서 위치 다시 찍기</label>
+    <p class="hint" id="stayLocHint">저장하면 지도에서 숙소 위치를 눌러 주세요. 에어비앤비는 예약 전엔 대략적인 위치만 보여줘요.</p>
+    <div class="row end">
       <button class="btn" type="button" id="stayCancel">취소</button>
       <button class="btn primary" type="submit">저장</button>
     </div>
   </form>
 </dialog>
 
-<dialog id="installDlg">
-  <h2>📲 홈 화면에 앱으로 설치하기</h2>
+<dialog id="installDlg" aria-labelledby="installTitle">
+  <div class="dlg-head"><h2 id="installTitle">홈 화면에 앱으로 설치하기</h2></div>
   <p><b>아이폰 (Safari)</b></p>
-  <ol class="muted">
-    <li>Safari로 이 페이지를 열고 아래쪽 <b>공유 버튼</b>(□↑)을 눌러요</li>
+  <ol class="hint">
+    <li>Safari로 이 페이지를 열고 아래쪽 <b>공유 버튼</b>을 눌러요</li>
     <li><b>"홈 화면에 추가"</b>를 선택해요</li>
-    <li>홈 화면의 💍 아이콘으로 열면 앱처럼 전체 화면으로 열려요</li>
+    <li>홈 화면 아이콘으로 열면 앱처럼 전체 화면으로 열려요</li>
   </ol>
   <p><b>안드로이드 (Chrome)</b></p>
-  <ol class="muted">
-    <li>오른쪽 위 <b>⋮ 메뉴</b> → <b>"앱 설치"</b> 또는 <b>"홈 화면에 추가"</b></li>
-  </ol>
-  <p class="muted">⚠️ 아이폰은 설치한 앱과 Safari가 저장 공간을 따로 써요. 일정은 Safari에서 <b>내보내기</b> → 앱에서 <b>가져오기</b>로 옮겨주세요.</p>
-  <div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="this.closest('dialog').close()">확인</button></div>
+  <ol class="hint"><li>오른쪽 위 <b>⋮ 메뉴</b> → <b>"앱 설치"</b> 또는 <b>"홈 화면에 추가"</b></li></ol>
+  <p class="hint">아이폰은 설치한 앱과 Safari가 저장 공간을 따로 써요. 로그인하면 일정이 자동으로 이어져요.</p>
+  <div class="row end"><button class="btn primary" onclick="this.closest('dialog').close()">확인</button></div>
 </dialog>
 
-<dialog id="settings">
-  <h2>⚙️ 지도 설정</h2>
-  <p class="muted" id="keyStatus"></p>
+<dialog id="settings" aria-labelledby="settingsTitle">
+  <div class="dlg-head"><h2 id="settingsTitle">설정</h2></div>
+  <p class="hint" id="keyStatus"></p>
   <details>
-  <summary class="muted">개발자용: 내 Google Maps API 키로 테스트하기</summary>
-  <input type="text" id="apiKey" placeholder="AIza... (비워두면 앱 기본 키 사용)" style="margin-top:8px">
-  <ol class="muted">
+  <summary class="hint">개발자용: 내 Google Maps API 키로 테스트하기</summary>
+  <input type="text" id="apiKey" placeholder="AIza... (비워두면 앱 기본 키 사용)" style="margin-top:8px;width:100%">
+  <ol class="hint">
     <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 선택</li>
     <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 경로·장소 정보 요청이 거부돼요. 월 무료 사용량 안에서는 과금되지 않아요.</li>
     <li><a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener">API 라이브러리</a>에서 2개 사용 설정:
@@ -170,7 +180,7 @@
     <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
   </ol>
   </details>
-  <div class="row" style="justify-content:flex-end">
+  <div class="row end">
     <button class="btn" id="setCancel">닫기</button>
     <button class="btn primary" id="setSave">저장 후 새로고침</button>
   </div>

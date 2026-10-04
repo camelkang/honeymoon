@@ -1,7 +1,10 @@
 import { addToDay, removeCustom, saveTemp } from "./actions.js";
 import { CATS, DAY_COLORS } from "./data.js";
-import { GMODE, MODE_ICON, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
+import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
+import { icon } from "./icons.js";
 import { M } from "./map.js";
+import { isMatch, myVote, partnerVote, renderSuggest, toggleLike } from "./pick.js";
+import { peekSheet } from "./sheet.js";
 import { renderStays, stayPopupHtml } from "./stays.js";
 import { CENTER, CITY, PLACES, SAMPLE, allPlaces, byId, esc, gDirUrl, gPlaceUrl, km, state, tempPlaces } from "./store.js";
 
@@ -11,11 +14,23 @@ export let routeLayers = [];    // 동선 레이어
 export let addMode = false;
 export function setAddModeFlag(v) { addMode = v; }
 
-export function stayLabel(p) { return p.price ? "A$" + Math.round(p.price) : "🏠"; }
+export function stayLabel(p) { return p.price ? "A$" + Math.round(p.price) : "숙소"; }
+// 하트 표시: 둘 다 좋아요 / 나만 / 짝꿍만
+function heartBadge(id) {
+  const mine = myVote(id) === 1, theirs = partnerVote(id) === 1;
+  if (!mine && !theirs) return "";
+  const cls = mine && theirs ? "both" : mine ? "mine" : "partner";
+  return `<span class="pin-heart ${cls}" title="${mine && theirs ? "둘 다 좋아요" : mine ? "내가 좋아요" : "짝꿍이 좋아요"}">${icon("heart", 11, 'fill="currentColor"')}</span>`;
+}
 export function pinHtml(p) {
   if (p.cat === "stay") return `<div class="stay-pin ${state.stayChosen === p.id ? "on" : ""}">${esc(stayLabel(p))}</div>`;
-  const c = CATS[p.cat];
-  return `<div class="pin" style="background:${c.color}"><span>${c.emoji}</span></div>`;
+  const c = CATS[p.cat] || CATS.mine;
+  return `<div class="pin" style="--c:${c.color}">${icon(c.icon, 16)}${heartBadge(p.id)}</div>`;
+}
+function heartsInline(id) {
+  const mine = myVote(id) === 1, theirs = partnerVote(id) === 1;
+  if (!mine && !theirs) return "";
+  return `<span class="hearts" title="${mine && theirs ? "둘 다 좋아요" : mine ? "내가 좋아요" : "짝꿍이 좋아요"}">${mine ? `<span class="${theirs ? "" : "mine"}">${icon("heart", 14, 'fill="currentColor"')}</span>` : ""}${theirs ? icon("heart", 14, mine ? 'fill="currentColor"' : "") : ""}</span>`;
 }
 
 // 핀을 누르면 장소 팝업. 단, 위치를 찍는 중(장소 추가·숙소 위치)이면 그 핀 자리를 찍은 것으로 처리
@@ -46,18 +61,23 @@ export function popupHtml(p) {
   const inDays = state.days.map((d,i) => d.stops.includes(p.id) ? i+1 : null).filter(Boolean);
   const opts = state.days.map((_,i) => `<option value="${i}">${esc(dayLabel(i))}</option>`).join("");
   if (p.cat === "stay") return stayPopupHtml(p, opts);
-  return `<div class="pop">
-    <h3>${c.emoji} ${esc(p.name)}</h3>
+  const liked = myVote(p.id) === 1;
+  return `<div class="pop" style="--c:${c.color}">
+    <h3>${icon(c.icon, 18)} ${esc(p.name)}</h3>
     <div class="muted">${esc(c.label)}${p.area ? " · " + esc(p.area) : ""}${p.en ? " · " + esc(p.en) : ""}</div>
     ${p.desc ? `<p>${esc(p.desc)}</p>` : ""}
-    ${p.tip ? `<p class="tip">💡 ${esc(p.tip)}</p>` : ""}
-    ${inDays.length ? `<p class="muted">📌 일정 포함: ${inDays.map(n => "Day " + n).join(", ")}</p>` : ""}
+    ${p.tip ? `<p class="tip">${esc(p.tip)}</p>` : ""}
+    ${partnerVote(p.id) === 1 ? `<p class="partner-like">${icon("heart", 14, 'fill="currentColor"')} 짝꿍이 좋아요${liked ? " · 둘 다 좋아요!" : ""}</p>` : ""}
+    ${inDays.length ? `<p class="muted">일정 포함: ${inDays.map(n => "Day " + n).join(", ")}</p>` : ""}
+    <div class="acts">
+      ${tempPlaces[p.id] ? "" : `<button class="btn sm heart-btn ${liked ? "on" : ""}" onclick="toggleLike('${p.id}')" aria-pressed="${liked}">${icon("heart", 15, liked ? 'fill="currentColor"' : "")} 좋아요</button>`}
+      <select id="popDay" aria-label="날짜">${opts}</select>
+      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">${icon("plus", 15)} 일정에 추가</button>
+    </div>
     <div class="acts">
       <a class="g" href="${gPlaceUrl(p)}" target="_blank" rel="noopener">구글맵에서 보기</a>
-      <select id="popDay">${opts}</select>
-      <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">+ 일정에 추가</button>
-      ${tempPlaces[p.id] ? `<button class="btn sm" onclick="saveTemp('${p.id}')">⭐ 내 장소로 저장</button>`
-        : p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">삭제</button>` : ""}
+      ${tempPlaces[p.id] ? `<button class="btn sm" onclick="saveTemp('${p.id}')">${icon("star", 15)} 내 장소로 저장</button>`
+        : p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">${icon("trash", 15)} 삭제</button>` : ""}
     </div>
     ${GMODE ? `<div class="gd"><span class="muted">구글 장소 정보 불러오는 중…</span></div>` : ""}
   </div>`;
@@ -66,6 +86,7 @@ export function popupHtml(p) {
 export let popSeq = 0;
 export function openPlace(id, fly = true) {
   const p = byId(id); if (!p) return;
+  peekSheet();   // 휴대폰: 팝업이 보이도록 아래 시트를 내림
   if (fly) M.fly(p, 15);
   const node = document.createElement("div");
   node.innerHTML = popupHtml(p);
@@ -111,7 +132,7 @@ export async function googleSearch() {
         <b>구글 검색 결과 ${list.length}곳</b><button class="btn sm" data-gclose>닫기</button></div>` +
       (list.length ? list.map(p => {
         const d = gcache.det[p.id] || {};
-        return `<div class="gres" data-id="${p.id}"><div class="nm">📍 ${esc(p.name)}
+        return `<div class="gres" data-id="${p.id}"><div class="nm">${esc(p.name)}
           ${d.rating ? `<span class="stars" style="color:#e67700">★ ${d.rating.toFixed(1)}</span>` : ""}</div>
           <div class="muted">${esc(d.addr || p.desc || "")}</div></div>`;
       }).join("") : `<div class="empty">검색 결과가 없어요.</div>`);
@@ -124,13 +145,18 @@ export async function googleSearch() {
 
 export function renderChips() {
   const el = document.getElementById("chips");
-  el.innerHTML = Object.entries(CATS).map(([k,c]) =>
-    `<button class="chip ${state.cats.includes(k) ? "" : "off"}" data-cat="${k}"><span class="dot" style="background:${c.color}"></span>${c.emoji} ${c.label}</button>`
+  const lf = state.likeFilter || "all";
+  el.innerHTML = `<button class="chip ${lf === "match" ? "love-on" : ""}" data-like="match">${icon("heart", 15, 'fill="currentColor"')} 둘 다 좋아요</button>`
+    + `<button class="chip ${lf === "liked" ? "love-on" : ""}" data-like="liked">${icon("heart", 15)} 내가 좋아요</button><span class="chip-sep"></span>`
+    + Object.entries(CATS).map(([k,c]) =>
+    `<button class="chip ${state.cats.includes(k) ? "" : "off"}" data-cat="${k}" style="--c:${c.color}">${icon(c.icon, 15)} ${c.label}</button>`
   ).join("") + `<button class="chip" data-cat="__all">전체</button>`;
 }
 
 export function matches(p, q) {
   if (!state.cats.includes(p.cat)) return false;
+  if (state.likeFilter === "match" && !isMatch(p.id)) return false;
+  if (state.likeFilter === "liked" && myVote(p.id) !== 1) return false;
   if (!q) return true;
   const hay = [p.name, p.en, p.desc, p.area, CATS[p.cat].label].join(" ").toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));
@@ -144,14 +170,16 @@ export function filter() {
   document.getElementById("list").innerHTML = list.length ? list.map(p => {
     const c = CATS[p.cat];
     const days = state.days.map((d,i) => d.stops.includes(p.id) ? "D" + (i+1) : null).filter(Boolean);
-    return `<div class="place" data-id="${p.id}">
-      <div class="emo">${c.emoji}</div>
-      <div><div class="nm">${esc(p.name)}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
-      <div class="ds">${esc(p.area || c.label)} — ${esc(p.desc || "")}</div></div>
+    return `<div class="place" data-id="${p.id}" style="--c:${c.color}">
+      <span class="cat-ico">${icon(c.icon, 20)}</span>
+      <div class="txt"><div class="nm"><span>${esc(p.name)}</span>${heartsInline(p.id)}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
+      <div class="ds">${esc(p.area || c.label)}${p.desc ? " · " + esc(p.desc) : ""}</div></div>
     </div>`;
   }).join("") : !PLACES.length && !q
-    ? `<div class="empty">${esc(CITY.name)}은(는) 추천 장소가 아직 없어요.<br>${GMODE ? "🔎 구글 검색이나 지도 위 장소 클릭," : "📍 장소 추가로"} 가고 싶은 곳을 담아보세요.</div>`
-    : `<div class="empty">검색 결과가 없습니다.</div>`;
+    ? `<div class="empty">${esc(CITY.name)}은(는) 추천 장소가 아직 없어요.<br>${GMODE ? "구글 검색이나 지도 위 장소 클릭," : "오른쪽 위 핀 버튼으로"} 가고 싶은 곳을 담아보세요.</div>`
+    : state.likeFilter && state.likeFilter !== "all"
+      ? `<div class="empty">${state.likeFilter === "match" ? "아직 둘 다 좋아한 곳이 없어요. 함께 고르기 탭에서 골라 보세요." : "아직 좋아요한 곳이 없어요."}</div>`
+      : `<div class="empty">검색 결과가 없습니다.</div>`;
 }
 
 export function renderDays() {
@@ -170,20 +198,22 @@ export function renderDays() {
         const r = getLeg(stops[j-1], p, state.mode);
         if (r && !r.none) {
           total += r.m / 1000; totalSec += r.sec;
-          leg = `<div class="leg real">↓ ${MODE_ICON[r.mode]} ${fmtDur(r.sec)} · ${fmtDist(r.m)}${r.lines.length ? " · " + esc(r.lines.join(" → ")) : ""}</div>`;
+          leg = `<div class="leg real">${icon(r.mode === "walking" ? "walk" : r.mode === "driving" ? "car" : "train", 14)} ${fmtDur(r.sec)} · ${fmtDist(r.m)}${r.lines.length ? " · " + esc(r.lines.join(" → ")) : ""}</div>`;
         } else {
           const k = km(stops[j-1], p); total += k;
-          leg = `<div class="leg">↓ ${GMODE && !r && !apiErrors.routes ? "경로 계산 중… · " : ""}직선 ${fmtDist(k * 1000)}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
+          leg = `<div class="leg">${icon("walk", 14)} ${GMODE && !r && !apiErrors.routes ? "경로 계산 중… · " : ""}직선 ${fmtDist(k * 1000)}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
         }
       }
       return `${leg}<div class="stop">
         <div class="n" style="background:${color}">${j+1}</div>
-        <input type="time" data-time="${i}|${p.id}" value="${esc((d.times || {})[p.id] || "")}" title="방문 시간">
-        <div class="nm" data-open="${p.id}">${CATS[p.cat].emoji} ${esc(p.name)}</div>
-        <button class="btn icon" title="위로" data-mv="${i},${j},-1" ${j===0?"disabled":""}>↑</button>
-        <button class="btn icon" title="아래로" data-mv="${i},${j},1" ${j===stops.length-1?"disabled":""}>↓</button>
-        <button class="btn icon" title="다른 날로" data-shift="${i},${j}">⇄</button>
-        <button class="btn icon" title="삭제" data-rm="${i},${j}">✕</button>
+        <div class="nm" data-open="${p.id}"><span>${esc(p.name)}</span>${heartsInline(p.id)}</div>
+        <input type="time" data-time="${i}|${p.id}" value="${esc((d.times || {})[p.id] || "")}" title="방문 시간" aria-label="방문 시간">
+        <div class="acts">
+        <button class="btn icon" title="위로" aria-label="위로" data-mv="${i},${j},-1" ${j===0?"disabled":""}>${icon("up", 15)}</button>
+        <button class="btn icon" title="아래로" aria-label="아래로" data-mv="${i},${j},1" ${j===stops.length-1?"disabled":""}>${icon("down", 15)}</button>
+        <button class="btn icon" title="다른 날로" aria-label="다른 날로" data-shift="${i},${j}">${icon("swap", 15)}</button>
+        <button class="btn icon" title="삭제" aria-label="삭제" data-rm="${i},${j}">${icon("x", 15)}</button>
+        </div>
       </div>`;
     }).join("");
     const url = gDirUrl(stops, state.mode);
@@ -192,13 +222,13 @@ export function renderDays() {
         <div class="sw" style="background:${color}"></div>
         <div class="t">${esc(dayLabel(i))}</div>
         <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}${totalSec ? ` · 이동 ${fmtDur(totalSec)}` : ""}</span>
-        <button class="btn sm ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시">👁️</button>
+        <button class="btn icon ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시" aria-label="이 날만 지도에 표시">${icon("eye", 16)}</button>
       </div>
       <div class="day-b">
-        ${rows || `<div class="empty">장소 탭이나 지도 핀에서 "+ 일정에 추가"를 눌러주세요.</div>`}
+        ${rows || `<div class="empty">둘러보기·함께 고르기에서 장소를 담아보세요.</div>`}
         <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
         ${url ? `<div class="row" style="margin-top:6px">
-          <a class="btn sm" href="${url}" target="_blank" rel="noopener">🧭 휴대폰 구글맵 앱으로 길안내</a>
+          <a class="btn sm" href="${url}" target="_blank" rel="noopener">${icon("navigation", 15)} 구글맵 앱으로 길안내</a>
           ${stops.length > 10 ? `<span class="muted">경유지는 최대 9곳까지 반영될 수 있어요.</span>` : ""}
         </div>` : ""}
       </div>
@@ -207,6 +237,7 @@ export function renderDays() {
   drawRoutes();
   filter();
   renderStays();
+  renderSuggest();
 }
 
 export function drawRoutes() {

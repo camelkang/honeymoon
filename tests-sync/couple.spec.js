@@ -64,6 +64,23 @@ test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", a
   await expect.poll(async () => (await plan(A)).stays.map(s => s.name), { timeout: 20_000 }).toContain("서리힐스 로프트");
   await expect(A.page.locator(".stay-pin", { hasText: "A$310" })).toBeVisible();
 
+  // 4-2) 함께 고르기: 민지가 좋아한 곳이 준호 카드 맨 앞에 오고, 준호도 좋아하면 둘 다 좋아요
+  await A.page.click(".tabs [data-tab=pick]");
+  const liked = await A.page.locator("#pickDeck .pcard:not(.back)").getAttribute("data-id");
+  await A.page.click(".pbtn.like");
+  await expect(B.page.locator("#pickBadge")).toHaveText("1", { timeout: 20_000 });
+  await B.page.click(".tabs [data-tab=pick]");
+  await expect(B.page.locator("#pickDeck .pcard:not(.back)")).toHaveAttribute("data-id", liked);
+  await expect(B.page.locator("#pickDeck .pcard:not(.back)")).toContainText("짝꿍이 좋아요");
+  await B.page.click(".pbtn.like");
+  for (const p of [A, B]) {
+    await expect(p.page.locator("#matchCount")).toHaveText("1", { timeout: 20_000 });
+    await p.page.click("#pickSeg [data-pick=matches]");
+    await expect(p.page.locator("#pickMatches .mrow").first()).toHaveAttribute("data-id", liked);
+    await expect(p.page.locator("#pickMatches .mrow").first()).toContainText("일정 D1");   // 추천 일정에 이미 있음
+  }
+  expect(Object.values((await plan(A)).votes[liked])).toEqual([1, 1]);   // 두 사람의 표
+
   // 5) 이미 연결된 초대 코드로는 제3자가 들어올 수 없고, 커플 데이터도 읽을 수 없음
   const C = await person(browser);
   await signIn(C, "eve", "제3자");
