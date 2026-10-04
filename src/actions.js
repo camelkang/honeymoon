@@ -5,6 +5,7 @@ import { M, USER_KEY } from "./map.js";
 import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
 import { optimizeDay } from "./route.js";
+import { shareImage } from "./share.js";
 import { peekSheet } from "./sheet.js";
 import { airbnbSearchUrl, chooseStay, openStayDlg, pickFn, removeStay, renderStays, setPickFn, submitStay } from "./stays.js";
 import { CITY, SAMPLE, app, byId, replaceApp, resetCityPlan, save, setCityPlan, state, tempPlaces } from "./store.js";
@@ -118,6 +119,8 @@ export function bindUI() {
 
   const daysEl = document.getElementById("days");
   daysEl.onclick = e => {
+    const sh = e.target.closest("[data-share]");
+    if (sh) return shareImage("day", +sh.dataset.share);
     const opt = e.target.closest("[data-opt]");
     if (opt) return optimizeDay(+opt.dataset.opt, renderDays);
     const t = e.target.closest("[data-open],[data-mv],[data-rm],[data-shift],[data-focus]"); if (!t) return;
@@ -154,6 +157,7 @@ export function bindUI() {
     }
   };
 
+  document.getElementById("btnShareTrip").onclick = () => shareImage("trip");
   document.getElementById("btnSample").onclick = () => {
     if (state.days.some(d => d.stops.length) && !confirm("현재 일정을 추천 일정으로 바꿀까요?")) return;
     if (!SAMPLE) return;
