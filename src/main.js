@@ -5,6 +5,7 @@ import { renderCityBar } from "./cities.js";
 import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
+import { bindOnboard, maybeOnboard } from "./onboard.js";
 import { bindPick, renderPick } from "./pick.js";
 import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
 import { setupPWA } from "./pwa.js";
@@ -20,6 +21,8 @@ function start(adapter) {
   onTabShown("pick", renderPick);
   bindPrep(); renderPrep();
   onTabShown("prep", renderPrep);
+  bindOnboard();
+  if (maybeOnboard()) return;
   // 홈 화면 바로가기(?tab=plan 등)로 열면 그 탭부터
   const want = new URLSearchParams(location.search).get("tab");
   if (["places", "pick", "plan", "stays", "prep"].includes(want)) return showTab(want);

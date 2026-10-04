@@ -20,6 +20,8 @@ const json = (route, body, status = 200) =>
 
 // 외부 서비스(지도 타일·구글·지오코딩)를 가짜로 대체. 여러 브라우저 컨텍스트에서 재사용
 export async function mockNetwork(context, { googleMode = "ok", calls = { places: [], routes: 0 } } = {}) {
+  // 처음 시작 안내는 따로 테스트(?welcome)하고, 다른 테스트에선 건너뜀
+  await context.addInitScript(() => { if (!location.search.includes("welcome")) localStorage.setItem("onboarded", "1"); });
   // Playwright는 나중에 등록한 route가 먼저 적용됨 → 전체 차단을 먼저, 스타일 응답을 나중에
   await context.route("**/tiles.openfreemap.org/**", r => r.abort());
   await context.route("**/tiles.openfreemap.org/styles/**", r => json(r, BLANK_STYLE));

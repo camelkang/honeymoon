@@ -13,6 +13,7 @@ test("store screenshots", async ({ page }) => {
     await page.route("**/tiles.openfreemap.org/styles/**", r => r.fulfill({ contentType: "application/json",
       body: JSON.stringify({ version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e8e6df" } }] }) }));
   }
+  await page.addInitScript(() => localStorage.setItem("onboarded", "1"));
   await page.clock.setFixedTime(new Date("2026-11-20T10:00:00"));
   await page.goto("/index.html?nokey=1");
   await ready(page);

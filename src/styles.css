@@ -493,3 +493,31 @@ body.gmode .g-only { display: revert !important; }
 /* 방문 시간을 안 정한 곳은 시계 아이콘만 (눌러서 입력) */
 .stop input[type=time][value=""]:not(:focus) { width: 34px; color: transparent; }
 .stop input[type=time][value=""]:not(:focus)::-webkit-datetime-edit { opacity: 0; }
+
+/* ===== 처음 시작 안내 ===== */
+dialog.onboard { padding: 0; max-width: 520px; }
+@media (max-width: 899px) { dialog.onboard { margin: 0; height: 100dvh; max-height: 100dvh; border-radius: 0; } }
+.ob { display: flex; flex-direction: column; min-height: min(640px, 100dvh); height: 100%; padding: max(16px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); box-sizing: border-box; }
+.ob-top { display: flex; align-items: center; justify-content: space-between; }
+.ob-dots { display: flex; gap: 6px; }
+.ob-dots span { width: 8px; height: 8px; border-radius: 4px; background: var(--line-strong); transition: width .2s; }
+.ob-dots span.on { width: 22px; background: var(--brand); }
+.ob-body { flex: 1; overflow-y: auto; padding: 18px 0; }
+.ob-body h2 { font-size: 24px; margin: 8px 0 6px; letter-spacing: -.02em; }
+.ob-body .field { margin-top: 18px; }
+.ob-body .field input { font-size: 16px; padding: 10px 12px; }
+.ob-cities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.ob-city { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px; border-radius: var(--r); border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ob-city:hover { border-color: var(--brand); }
+.ob-city.on { border-color: var(--brand); background: var(--brand-soft); }
+.ob-city .flag { font-size: 26px; line-height: 1.2; color: var(--brand); display: inline-flex; min-height: 32px; align-items: center; }
+.ob-city b { font-size: 16px; }
+.ob-city small { color: var(--ink-3); font-size: 12px; }
+.ob-sample { margin-top: 18px; }
+.ob-hero { width: 84px; height: 84px; border-radius: 28px; display: grid; place-items: center; background: var(--love-soft); color: var(--love); margin: 24px 0 8px; }
+.btn.big { width: 100%; justify-content: center; height: 50px; font-size: 16px; margin-top: 10px; }
+.ob-body .btn.big:first-of-type { margin-top: 22px; }
+.ob-nav { display: flex; justify-content: space-between; gap: 10px; }
+.ob-nav .btn { height: 48px; padding: 0 22px; font-size: 15px; }
+.ob-nav .btn.primary { flex: 1; justify-content: center; max-width: 260px; margin-left: auto; }
+.ob-body:focus { outline: none; }
