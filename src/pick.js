@@ -29,6 +29,7 @@ export function setPeople(me, partner, names) {
       // 로그인 전에 기록한 지출·체크도 내 계정으로
       for (const e of plan.expenses || []) if (e.paidBy === old) e.paidBy = me;
       for (const c of plan.checklist || []) if (c.doneBy === old) c.doneBy = me;
+      for (const b of plan.bookings || []) if (b.by === old) b.by = me;
     }
     ME = me;
     try { localStorage.setItem(VOTER_KEY, me); } catch (e) {}

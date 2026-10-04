@@ -42,7 +42,7 @@ const status = () => !S.user ? "signedout" : !S.loaded ? "loading" : !S.coupleId
 // 함께 쓰는 값만 올리고(필터·보고 있는 날짜 같은 화면 설정은 기기별), 일정은 날짜별 필드(d0, d1…),
 // 내 장소·숙소 후보는 항목별 맵으로 나눠서 — 둘이 다른 날짜·다른 항목을 동시에 고쳐도 서로 덮어쓰지 않음
 const SHARED = ["startDate", "mode", "stayChosen", "guests", "budget", "currency", "fx"];
-const MAPS = ["custom", "stays", "expenses", "checklist"];
+const MAPS = ["custom", "stays", "expenses", "checklist", "bookings"];
 const NESTED = ["votes"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
 const clean = v => JSON.parse(JSON.stringify(v ?? null));
 const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]));

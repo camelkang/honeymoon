@@ -1,4 +1,5 @@
 import { addToDay, removeCustom, saveTemp } from "./actions.js";
+import { bookingChips, dateOfDay } from "./bookings.js";
 import { CATS, DAY_COLORS } from "./data.js";
 import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
 import { icon } from "./icons.js";
@@ -228,6 +229,7 @@ export function renderDays() {
         <button class="btn icon ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시" aria-label="이 날만 지도에 표시">${icon("eye", 16)}</button>
       </div>
       <div class="day-b">
+        ${bookingChips(dateOfDay(i))}
         ${rows || `<div class="empty">둘러보기·함께 고르기에서 장소를 담아보세요.</div>`}
         <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
         ${url ? `<div class="row" style="margin-top:6px">

@@ -12,6 +12,7 @@ export const defaultState = () => ({
   likeFilter: "all",  // 장소 목록·지도 필터 (기기별): all | liked | match
   budget: 0, currency: "AUD", fx: 0,   // 총예산(현지 통화), 1단위 = fx원
   expenses: [],       // 지출: { id, title, amount, cat, paidBy(사람|both), day(0부터|null), at }
+  bookings: [],       // 예약: { id, type, title, date, time, endDate, endTime, code, link, note, by, at }
   checklist: [],      // 준비물·할 일: { id, text, due(출발 며칠 전), done, doneBy, at }
 });
 export function normalizePlan(s) {

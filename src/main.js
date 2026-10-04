@@ -1,6 +1,7 @@
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./styles.css";
 import { bindUI } from "./actions.js";
+import { bindBookings } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
@@ -20,6 +21,7 @@ function start(adapter) {
   bindSheet(); bindPick(); renderPick();
   onTabShown("pick", renderPick);
   bindPrep(); renderPrep();
+  bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);
   bindOnboard();
   if (maybeOnboard()) return;

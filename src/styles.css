@@ -521,3 +521,25 @@ dialog.onboard { padding: 0; max-width: 520px; }
 .ob-nav .btn { height: 48px; padding: 0 22px; font-size: 15px; }
 .ob-nav .btn.primary { flex: 1; justify-content: center; max-width: 260px; margin-left: auto; }
 .ob-body:focus { outline: none; }
+
+/* ===== 예약 정보 ===== */
+.bk { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-radius: var(--r-sm); }
+.bk .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; cursor: pointer; }
+.bk .txt b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk .txt span { font-size: 12px; color: var(--ink-3); }
+.bk-code { display: inline-flex; align-items: center; gap: 4px; border: 1px dashed var(--line-strong); background: var(--surface-2); color: var(--ink); border-radius: 8px; padding: 4px 8px; font: 700 12.5px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; letter-spacing: .03em; }
+.bk-code svg { color: var(--ink-3); }
+.bk-chips { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 10px; }
+.bk-chip { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 9%, var(--surface)); color: var(--ink); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+.bk-chip svg { color: var(--c); flex: none; }
+.bk-chip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-chip code { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.today .bk-chips { margin: 0 0 10px; }
+.types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.form .type-opt { display: grid; margin: 0; }
+.type-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.type-opt span { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 40px; border-radius: 12px; border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+.type-opt span svg { color: var(--c); }
+.type-opt input:checked + span { border-color: var(--c); background: color-mix(in srgb, var(--c) 10%, var(--surface)); color: var(--ink); }
+.type-opt input:focus-visible + span { outline: 2px solid var(--brand); }
+#bkEndRow[hidden] { display: none; }

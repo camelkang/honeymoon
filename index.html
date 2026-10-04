@@ -152,6 +152,31 @@
   </form>
 </dialog>
 
+<dialog id="bookDlg" aria-labelledby="bookDlgTitle">
+  <div class="dlg-head"><h2 id="bookDlgTitle">예약 추가</h2></div>
+  <form id="bookForm" class="form">
+    <div class="types" role="radiogroup" aria-label="종류"></div>
+    <label>이름<input type="text" name="title"></label>
+    <div class="row nowrap">
+      <label style="flex:1.4"><span id="bkStart">출발</span> 날짜<input type="date" name="date"></label>
+      <label style="flex:1">시간<input type="time" name="time"></label>
+    </div>
+    <div class="row nowrap" id="bkEndRow">
+      <label style="flex:1.4"><span id="bkEnd">도착</span> 날짜<input type="date" name="endDate"></label>
+      <label style="flex:1">시간<input type="time" name="endTime"></label>
+    </div>
+    <label>예약번호<input type="text" name="code" autocomplete="off" placeholder="예: ABC123"></label>
+    <label>확인 메일·바우처 링크<input type="text" name="link" inputmode="url" autocomplete="off" placeholder="https://"></label>
+    <label>메모<textarea name="note" placeholder="좌석, 수하물, 체크인 방법, 연락처 등"></textarea></label>
+    <div class="row end">
+      <button class="btn danger" type="button" id="bookDel" hidden>삭제</button>
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="bookCancel">취소</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="accountDlg" aria-labelledby="accountTitle">
   <div class="dlg-head"><h2 id="accountTitle">함께 쓰기</h2><button class="icon-btn" data-acc="close" aria-label="닫기"><span data-icon="x"></span></button></div>
   <div id="accountBody"></div>

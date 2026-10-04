@@ -1,4 +1,5 @@
 import { toast } from "./actions.js";
+import { bookingChips, bookingsCardHtml, dateOfDay } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { icon } from "./icons.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
@@ -127,6 +128,7 @@ export function renderPrep() {
   }).join("");
 
   el.innerHTML = `${hero}
+    ${bookingsCardHtml()}
     <section class="card">
       <div class="card-h">${icon("wallet", 18)}<b>예산·지출</b>
         <button class="btn sm primary" data-act="addExp">${icon("plus", 15)}지출</button></div>
@@ -177,6 +179,7 @@ export function todayCardHtml() {
     <div class="today-h"><span class="pill">오늘</span><b>${esc(dayLabel(i))}</b></div>
     ${next ? `<div class="today-next">다음 장소 <b>${esc(next.name)}</b>${times[next.id] ? ` · ${esc(times[next.id])}` : ""}</div>`
       : stops.length ? `<div class="today-next">오늘 일정을 다 돌았어요</div>` : `<div class="today-next">오늘은 아직 일정이 없어요</div>`}
+    ${bookingChips(dateOfDay(i))}
     <div class="row">
       ${url ? `<a class="btn primary sm" href="${esc(url)}" target="_blank" rel="noopener">${icon("navigation", 15)}길안내</a>` : ""}
       <button class="btn sm" data-act="addExpToday">${icon("receipt", 15)}지출 기록</button>
