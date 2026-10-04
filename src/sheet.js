@@ -25,7 +25,9 @@ export function peekSheet() { if (isMobile() && mode !== "peek") setSheet("peek"
 export function showTab(name) {
   document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
   document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + name));
-  if (isMobile()) setSheet(name === "pick" ? "full" : mode === "peek" ? "half" : mode);
+  // 지도를 덜 보는 탭(함께 고르기·준비)은 크게 열고, 나머지는 지도가 보이게
+  if (isMobile()) setSheet(name === "pick" || name === "prep" ? "full" : mode === "peek" ? "half" : mode);
+  const pane = document.getElementById("pane-" + name); if (pane && pane.scrollTop && name === "plan" && document.querySelector("#todayCard .today")) pane.scrollTop = 0;
   if (onShow[name]) onShow[name]();
 }
 export function onTabShown(name, fn) { onShow[name] = fn; }

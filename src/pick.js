@@ -15,7 +15,10 @@ try { stored = localStorage.getItem(VOTER_KEY); } catch (e) {}
 export let ME = stored || "me";
 export let PARTNER = null;
 
-export function setPeople(me, partner) {
+export let NAMES = {};   // { uid: 이름 } — 지출·체크리스트에 누가 했는지 보여줄 때
+export const nameOf = id => id === ME ? "나" : id === PARTNER ? (NAMES[id] || "짝꿍") : id === "both" ? "같이" : "";
+export function setPeople(me, partner, names) {
+  if (names) NAMES = names;
   if (me && me !== ME) {
     const old = ME;
     for (const plan of Object.values(app.plans)) {
@@ -23,6 +26,9 @@ export function setPeople(me, partner) {
         if (old in v && !(me in v)) v[me] = v[old];
         if (old === "me") delete v[old];
       }
+      // 로그인 전에 기록한 지출·체크도 내 계정으로
+      for (const e of plan.expenses || []) if (e.paidBy === old) e.paidBy = me;
+      for (const c of plan.checklist || []) if (c.doneBy === old) c.doneBy = me;
     }
     ME = me;
     try { localStorage.setItem(VOTER_KEY, me); } catch (e) {}

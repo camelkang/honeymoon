@@ -47,10 +47,16 @@ import handshake from "lucide-static/dist/esm/icons/heart-handshake.mjs";
 import plane from "lucide-static/dist/esm/icons/plane.mjs";
 import globe from "lucide-static/dist/esm/icons/globe.mjs";
 import camera from "lucide-static/dist/esm/icons/camera.mjs";
+import listChecks from "lucide-static/dist/esm/icons/list-checks.mjs";
+import wallet from "lucide-static/dist/esm/icons/wallet.mjs";
+import receipt from "lucide-static/dist/esm/icons/receipt.mjs";
+import square from "lucide-static/dist/esm/icons/square.mjs";
+import checkSquare from "lucide-static/dist/esm/icons/square-check-big.mjs";
+import users from "lucide-static/dist/esm/icons/users.mjs";
 
 // 아이콘: Lucide(선 아이콘)에서 쓰는 것만 골라 묶음. icon("heart", 18) → <svg …> 문자열
 
-const SVG = { map, calendar, heart, house, search, plus, x, pin, user, settings, phone, landmark, sunset, trees, waves, utensils, coffee, martini, bag, bed, tram, star, sparkles, chevronDown, up, down, swap, trash, eye, navigation, walk, train, car, clock, upload, download, reset, share, link, logout, check, info, external, calendarPlus, sliders, handshake, plane, globe, camera };
+const SVG = { map, calendar, heart, house, search, plus, x, pin, user, settings, phone, landmark, sunset, trees, waves, utensils, coffee, martini, bag, bed, tram, star, sparkles, chevronDown, up, down, swap, trash, eye, navigation, walk, train, car, clock, upload, download, reset, share, link, logout, check, info, external, calendarPlus, sliders, handshake, plane, globe, camera, listChecks, wallet, receipt, square, checkSquare, users };
 
 export function icon(name, size = 20, extra = "") {
   const svg = SVG[name];

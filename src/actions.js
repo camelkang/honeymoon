@@ -2,6 +2,7 @@ import { addCity, deleteCity, refreshCity, renderCityBar, switchCity } from "./c
 import { CATS } from "./data.js";
 import { GMODE } from "./google.js";
 import { M, USER_KEY } from "./map.js";
+import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
 import { peekSheet } from "./sheet.js";
 import { airbnbSearchUrl, chooseStay, openStayDlg, pickFn, removeStay, renderStays, setPickFn, submitStay } from "./stays.js";
@@ -87,7 +88,7 @@ export function bindUI() {
     const el = e.target.closest(".place"); if (el) openPlace(el.dataset.id);
   };
 
-  document.getElementById("startDate").onchange = e => { state.startDate = e.target.value; save(); renderDays(); renderCityBar(); };
+  document.getElementById("startDate").onchange = e => { state.startDate = e.target.value; save(); renderDays(); renderCityBar(); renderPrep(); };
   document.getElementById("mode").onchange = e => { state.mode = e.target.value; save(); renderDays(); };
   document.getElementById("routesOn").onchange = e => { state.routesOn = e.target.checked; save(); drawRoutes(); };
   document.getElementById("dayPlus").onclick = () => { if (state.days.length < 21) { state.days.push({ stops:[], note:"" }); save(); renderDays(); } };

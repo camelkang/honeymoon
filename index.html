@@ -40,6 +40,7 @@
     <button data-tab="pick"><span data-icon="heart"></span><span>함께 고르기</span><b class="badge-dot" id="pickBadge" hidden></b></button>
     <button data-tab="plan"><span data-icon="calendar"></span><span>일정</span></button>
     <button data-tab="stays"><span data-icon="house"></span><span>숙소</span></button>
+    <button data-tab="prep"><span data-icon="listChecks"></span><span>준비</span></button>
   </nav>
 
   <section class="sheet" id="sheet" aria-label="패널">
@@ -78,6 +79,7 @@
         </label>
         <label class="toggle"><input type="checkbox" id="routesOn" checked><span>지도에 동선</span></label>
       </div>
+      <div id="todayCard"></div>
       <div class="suggest" id="planSuggest" hidden></div>
       <div id="days"></div>
       <div class="plan-tools">
@@ -115,6 +117,8 @@
       </div>
       <div id="stayList"></div>
     </div>
+
+    <div class="pane" id="pane-prep"></div>
   </section>
 
   <div class="banner" id="banner" role="status" aria-live="polite"></div>
@@ -123,6 +127,26 @@
 <dialog id="dayDlg" aria-labelledby="dayDlgTitle">
   <div class="dlg-head"><h2 id="dayDlgTitle">며칠째에 갈까요?</h2><button class="icon-btn" data-close aria-label="닫기"><span data-icon="x"></span></button></div>
   <div id="dayDlgBody" class="day-opts"></div>
+</dialog>
+
+<dialog id="expDlg" aria-labelledby="expDlgTitle">
+  <div class="dlg-head"><h2 id="expDlgTitle">지출 기록</h2></div>
+  <form id="expForm" class="form">
+    <label>금액 (<span id="expCur">AUD</span>)<input type="number" name="amount" min="0" step="0.01" inputmode="decimal" required placeholder="0"></label>
+    <label>내용<input type="text" name="title" placeholder="예: 오페라 바 저녁"></label>
+    <div class="row nowrap">
+      <label style="flex:1">분류<select name="cat"></select></label>
+      <label style="flex:1">날짜<select name="day"></select></label>
+    </div>
+    <div class="field-l">누가 냈나요?</div>
+    <div class="seg who" role="radiogroup" aria-label="누가 냈나요?"></div>
+    <div class="row end">
+      <button class="btn danger" type="button" id="expDel" hidden>삭제</button>
+      <span class="spacer"></span>
+      <button class="btn" type="button" id="expCancel">취소</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog id="accountDlg" aria-labelledby="accountTitle">

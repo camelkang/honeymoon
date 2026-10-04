@@ -16,6 +16,7 @@ import { renderCityBar } from "./cities.js";
 import { toast } from "./actions.js";
 import { icon } from "./icons.js";
 import { setPeople, renderPick, isMatch } from "./pick.js";
+import { renderPrep } from "./prep.js";
 
 const EMULATOR = !!import.meta.env.VITE_FIREBASE_EMULATOR;
 const fb = initializeApp(EMULATOR ? { ...firebaseConfig, projectId: "demo-honeymoon", apiKey: "demo-key" } : firebaseConfig);
@@ -40,8 +41,8 @@ const status = () => !S.user ? "signedout" : !S.loaded ? "loading" : !S.coupleId
 /* ---------- 계획 ↔ Firestore 문서 ---------- */
 // 함께 쓰는 값만 올리고(필터·보고 있는 날짜 같은 화면 설정은 기기별), 일정은 날짜별 필드(d0, d1…),
 // 내 장소·숙소 후보는 항목별 맵으로 나눠서 — 둘이 다른 날짜·다른 항목을 동시에 고쳐도 서로 덮어쓰지 않음
-const SHARED = ["startDate", "mode", "stayChosen", "guests"];
-const MAPS = ["custom", "stays"];
+const SHARED = ["startDate", "mode", "stayChosen", "guests", "budget", "currency", "fx"];
+const MAPS = ["custom", "stays", "expenses", "checklist"];
 const NESTED = ["votes"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
 const clean = v => JSON.parse(JSON.stringify(v ?? null));
 const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]));
@@ -126,7 +127,7 @@ document.addEventListener("input", () => { lastInputAt = Date.now(); }, true);
 function refreshView() {
   clearTimeout(refreshT);
   refreshT = setTimeout(() => {
-    buildMarkers(); renderChips(); renderCityBar(); renderPick();
+    buildMarkers(); renderChips(); renderCityBar(); renderPick(); renderPrep();
     const a = document.activeElement;
     const inList = a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest("#days");
     if (inList && Date.now() - lastInputAt < 2000) return refreshView();
@@ -205,7 +206,7 @@ function subscribeCouple(coupleId) {
     if (!c || !c.members.includes(me())) { leaveLocal(); return; }
     const wasConnected = status() === "connected";
     S.couple = c;
-    setPeople(me(), partnerId() || null);
+    setPeople(me(), partnerId() || null, Object.fromEntries(Object.entries(c.profiles || {}).map(([u, pr]) => [u, pr.name || ""])));
     if (!wasConnected && status() === "connected" && c.joinedAt) toast(`💕 ${profile(partnerId()).name || "짝꿍"}과(와) 연결됐어요!`);
     renderAccount();
   }, () => { leaveLocal(); }));

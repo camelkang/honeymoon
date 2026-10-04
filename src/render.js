@@ -4,6 +4,7 @@ import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSe
 import { icon } from "./icons.js";
 import { M } from "./map.js";
 import { isMatch, myVote, partnerVote, renderSuggest, toggleLike } from "./pick.js";
+import { todayCardHtml, tripDay } from "./prep.js";
 import { peekSheet } from "./sheet.js";
 import { renderStays, stayPopupHtml } from "./stays.js";
 import { CENTER, CITY, PLACES, SAMPLE, allPlaces, byId, esc, gDirUrl, gPlaceUrl, km, state, tempPlaces } from "./store.js";
@@ -188,6 +189,8 @@ export function renderDays() {
   document.getElementById("startDate").value = state.startDate;
   document.getElementById("mode").value = state.mode;
   document.getElementById("routesOn").checked = state.routesOn;
+  const today = tripDay();
+  document.getElementById("todayCard").innerHTML = todayCardHtml();
   document.getElementById("days").innerHTML = state.days.map((d, i) => {
     const color = DAY_COLORS[i % DAY_COLORS.length];
     const stops = d.stops.map(byId).filter(Boolean);
@@ -217,10 +220,10 @@ export function renderDays() {
       </div>`;
     }).join("");
     const url = gDirUrl(stops, state.mode);
-    return `<div class="day">
+    return `<div class="day ${today === i ? "is-today" : ""}">
       <div class="day-h">
         <div class="sw" style="background:${color}"></div>
-        <div class="t">${esc(dayLabel(i))}</div>
+        <div class="t">${esc(dayLabel(i))}</div>${today === i ? `<span class="pill">오늘</span>` : ""}
         <span class="muted">${stops.length}곳${total ? ` · ${total.toFixed(1)}km` : ""}${totalSec ? ` · 이동 ${fmtDur(totalSec)}` : ""}</span>
         <button class="btn icon ${state.focusDay === i ? "active" : ""}" data-focus="${i}" title="이 날만 지도에 표시" aria-label="이 날만 지도에 표시">${icon("eye", 16)}</button>
       </div>

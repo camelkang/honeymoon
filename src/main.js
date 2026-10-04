@@ -6,9 +6,10 @@ import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
 import { bindPick, renderPick } from "./pick.js";
+import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
 import { setupPWA } from "./pwa.js";
 import { buildMarkers, renderChips, renderDays } from "./render.js";
-import { bindSheet, onTabShown } from "./sheet.js";
+import { bindSheet, onTabShown, showTab } from "./sheet.js";
 
 function start(adapter) {
   setMap(adapter);
@@ -17,6 +18,15 @@ function start(adapter) {
   buildMarkers(); renderChips(); renderDays(); renderCityBar(); bindUI(); setupPWA();
   bindSheet(); bindPick(); renderPick();
   onTabShown("pick", renderPick);
+  bindPrep(); renderPrep();
+  onTabShown("prep", renderPrep);
+  // 여행 중이면 하루에 한 번, 앱을 열 때 오늘 일정부터 보여줌
+  try {
+    if (tripDay() !== null && localStorage.getItem("today-opened") !== todayStr()) {
+      localStorage.setItem("today-opened", todayStr());
+      showTab("plan");
+    }
+  } catch (e) {}
 }
 
 // 키가 있으면 구글 검색·경로·장소 정보를 켬 (지도 자체는 항상 무료 지도)
