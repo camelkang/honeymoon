@@ -2,6 +2,27 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { CENTER, CITY } from "./store.js";
 
+// 휴대폰에선 위쪽 바와 아래 시트가 지도를 가리므로, 보이는 부분 안에 맞춰 이동
+function visiblePadding(pad) {
+  const el = document.getElementById("map"), r = el.getBoundingClientRect();
+  const top = document.querySelector(".topbar"), sheet = document.getElementById("sheet"), nav = document.querySelector(".tabs");
+  let t = pad, btm = pad;
+  if (top && getComputedStyle(top).position === "absolute") t = Math.max(pad, top.getBoundingClientRect().bottom - r.top + pad / 2);
+  // 시트는 높이가 바뀌는 중일 수 있어 목표 높이(--sheet-h)로 계산
+  const sh = sheet && parseFloat(sheet.style.getPropertyValue("--sheet-h"));
+  if (sh) btm = Math.max(pad, sh + (nav ? nav.offsetHeight : 0) + pad / 2);
+  if (pad) t += 40;   // 핀은 좌표 위쪽으로 그려지므로 그만큼 더 비움
+  if (r.height - t - btm < 120) btm = Math.max(0, r.height - t - 120);   // 시트를 크게 열었을 땐 최소한의 지도 영역만
+  return { top: t, bottom: btm, left: pad, right: pad };
+}
+// 장소를 열 때: 휴대폰에선 핀을 보이는 영역의 아래쪽에 두어 위로 열리는 팝업이 다 보이게
+function pinOffset() {
+  const p = visiblePadding(0), h = document.getElementById("map").clientHeight;
+  if (!p.bottom || p.bottom === p.top) return [0, 0];
+  const visible = h - p.top - p.bottom, target = p.top + visible * 0.88;
+  return [0, target - h / 2];
+}
+
 /* ============================== 지도 ============================== */
 // 기본 지도는 MapLibre + OpenFreeMap(키 없음, 무료). 구글은 검색·경로·장소 정보(REST)에만 사용.
 export const params = new URLSearchParams(location.search);
@@ -76,17 +97,19 @@ export function createMap() {
     },
     popup(p, node) {
       if (popup) popup.remove();
-      popup = new maplibregl.Popup({ maxWidth: "300px", offset: 30, focusAfterOpen: false })
+      // 휴대폰: 팝업은 항상 핀 위쪽으로 (아래쪽은 시트가 가림)
+      const phone = !matchMedia("(min-width: 900px)").matches;
+      popup = new maplibregl.Popup({ maxWidth: "300px", offset: 30, focusAfterOpen: false, ...(phone ? { anchor: "bottom" } : {}) })
         .setLngLat([p.lng, p.lat]).setDOMContent(node).addTo(map);
     },
     closePopup() { if (popup) { popup.remove(); popup = null; } },
-    fly(p, z) { map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), toML(z || 15)), duration: 600 }); },
+    fly(p, z) { map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), toML(z || 15)), duration: 600, offset: pinOffset() }); },
     fit(pts) {
       if (!pts.length) return;
       if (pts.length === 1) return this.fly(pts[0], 15);
       const b = new maplibregl.LngLatBounds();
       pts.forEach(p => b.extend([p.lng, p.lat]));
-      map.fitBounds(b, { padding: 50, maxZoom: toML(16), duration: 600 });
+      map.fitBounds(b, { padding: visiblePadding(40), maxZoom: toML(16), duration: 600 });
     },
     // 지도 클릭: 빈 곳이면 좌표만, 가게·명소 아이콘이면 그 이름(poi)도 함께 넘김
     tapAt(pos) { if (clickFn) clickFn({ ...pos, poi: null }); },

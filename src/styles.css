@@ -225,7 +225,7 @@ textarea { width: 100%; resize: vertical; min-height: 44px; }
   position: relative; width: 34px; height: 34px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg);
   background: var(--c); border: 2.5px solid #fff; box-shadow: 0 2px 6px rgba(16, 24, 40, .35); display: grid; place-items: center;
 }
-.pin svg { transform: rotate(45deg); color: #fff; }
+.pin > svg { transform: rotate(45deg); color: #fff; }
 .pin-heart {
   position: absolute; top: -8px; right: -10px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff;
   background: var(--love); color: #fff; display: grid; place-items: center; transform: rotate(45deg);
@@ -490,3 +490,6 @@ body.gmode .g-only { display: revert !important; }
 .acc-foot { margin: 14px 0 0; text-align: center; font-size: 12.5px; color: var(--ink-3); }
 .acc-foot a { color: var(--ink-3); }
 .linkish { border: 0; background: none; padding: 0; font: inherit; color: var(--ink-3); text-decoration: underline; cursor: pointer; }
+/* 방문 시간을 안 정한 곳은 시계 아이콘만 (눌러서 입력) */
+.stop input[type=time][value=""]:not(:focus) { width: 34px; color: transparent; }
+.stop input[type=time][value=""]:not(:focus)::-webkit-datetime-edit { opacity: 0; }

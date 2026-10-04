@@ -21,7 +21,7 @@ function heartBadge(id) {
   const mine = myVote(id) === 1, theirs = partnerVote(id) === 1;
   if (!mine && !theirs) return "";
   const cls = mine && theirs ? "both" : mine ? "mine" : "partner";
-  return `<span class="pin-heart ${cls}" title="${mine && theirs ? "둘 다 좋아요" : mine ? "내가 좋아요" : "짝꿍이 좋아요"}">${icon("heart", 11, 'fill="currentColor"')}</span>`;
+  return `<span class="pin-heart ${cls}" title="${mine && theirs ? "둘 다 좋아요" : mine ? "내가 좋아요" : "짝꿍이 좋아요"}">${icon("heart", 12, 'fill="currentColor" stroke-width="0"')}</span>`;
 }
 export function pinHtml(p) {
   if (p.cat === "stay") return `<div class="stay-pin ${state.stayChosen === p.id ? "on" : ""}">${esc(stayLabel(p))}</div>`;
