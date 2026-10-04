@@ -4,6 +4,7 @@ import { bindUI } from "./actions.js";
 import { bindBookings } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { bindComments } from "./comments.js";
+import { bindDrag } from "./drag.js";
 import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
@@ -22,6 +23,7 @@ function start(adapter) {
   bindSheet(); bindPick(); renderPick();
   onTabShown("pick", renderPick);
   bindComments(() => { filter(); renderPick(); });
+  bindDrag(renderDays);
   bindPrep(); renderPrep();
   bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);

@@ -215,8 +215,8 @@ export function renderDays() {
           leg = `<div class="leg">${icon("walk", 14)} ${GMODE && !r && !apiErrors.routes ? "경로 계산 중… · " : ""}직선 ${fmtDist(k * 1000)}${k < 2.5 ? ` · 도보 약 ${Math.max(1, Math.round(k * 1.3 / 4.5 * 60))}분` : ""}</div>`;
         }
       }
-      return `${leg}<div class="stop">
-        <div class="n" style="background:${color}">${j+1}</div>
+      return `${leg}<div class="stop" data-j="${j}">
+        <div class="n" style="background:${color}" data-drag="${i},${j}" tabindex="0" role="button" title="끌어서 순서 바꾸기 (Alt+↑/↓)" aria-label="${j+1}번, 끌어서 순서 바꾸기">${j+1}</div>
         <div class="nm" data-open="${p.id}"><span>${esc(p.name)}</span>${heartsInline(p.id)}</div>
         <input type="time" data-time="${i}|${p.id}" value="${esc((d.times || {})[p.id] || "")}" title="방문 시간" aria-label="방문 시간">
         <div class="acts">

@@ -568,3 +568,15 @@ dialog.onboard { padding: 0; max-width: 520px; }
 .wx.past { color: var(--ink-3); font-weight: 500; }
 .wx-rain { color: #1c7ed6; font-weight: 700; }
 .today-h .wx { margin-left: auto; font-size: 13.5px; }
+
+/* ===== 끌어서 순서 바꾸기 ===== */
+.stop .n[data-drag] { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; box-shadow: 0 0 0 0 transparent; transition: box-shadow .15s; }
+.stop .n[data-drag]:hover { box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 0%, var(--line)); }
+.stop .n[data-drag]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.stop.dragging { opacity: .35; }
+.drag-ghost { position: fixed; z-index: 1000; pointer-events: none; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-2); padding: 6px 8px; transform: rotate(-1.5deg); }
+.drag-ghost .acts, .drag-ghost input { display: none; }
+body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select: none; }
+.stop.drop-before { box-shadow: inset 0 3px 0 var(--brand); }
+.stop.drop-after { box-shadow: inset 0 -3px 0 var(--brand); }
+.day.drop-into { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
