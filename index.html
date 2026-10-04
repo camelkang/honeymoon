@@ -318,14 +318,16 @@
   <ol class="muted">
     <li>오른쪽 위 <b>⋮ 메뉴</b> → <b>"앱 설치"</b> 또는 <b>"홈 화면에 추가"</b></li>
   </ol>
-  <p class="muted">⚠️ 아이폰은 설치한 앱과 Safari가 저장 공간을 따로 써요. 앱에서 ⚙️ API 키를 다시 넣고, 일정은 Safari에서 <b>내보내기</b> → 앱에서 <b>가져오기</b>로 옮겨주세요.</p>
+  <p class="muted">⚠️ 아이폰은 설치한 앱과 Safari가 저장 공간을 따로 써요. 일정은 Safari에서 <b>내보내기</b> → 앱에서 <b>가져오기</b>로 옮겨주세요.</p>
   <div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="this.closest('dialog').close()">확인</button></div>
 </dialog>
 
 <dialog id="settings">
   <h2>⚙️ 지도 설정</h2>
-  <p class="muted"><b>Google Maps API 키</b>를 넣으면 이 페이지 안에서 구글 지도, 실제 이동 경로·소요시간, 장소 정보(사진·평점·영업시간), 구글 장소 검색을 모두 쓸 수 있어요.</p>
-  <input type="text" id="apiKey" placeholder="AIza... (비워두면 기본 무료 지도)">
+  <p class="muted" id="keyStatus"></p>
+  <details>
+  <summary class="muted">개발자용: 내 Google Maps API 키로 테스트하기</summary>
+  <input type="text" id="apiKey" placeholder="AIza... (비워두면 앱 기본 키 사용)" style="margin-top:8px">
   <ol class="muted">
     <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 선택</li>
     <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 지도가 어둡게 <i>"For development purposes only"</i>로 표시되고 경로·장소 정보도 막힙니다. 개인 여행 계획 정도는 월 무료 사용량 안이라 보통 과금되지 않아요.</li>
@@ -334,6 +336,7 @@
     <li>API 키에 제한을 걸었다면 위 3개 API를 허용 목록에 포함</li>
     <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
   </ol>
+  </details>
   <div class="row" style="justify-content:flex-end">
     <button class="btn" id="setCancel">닫기</button>
     <button class="btn primary" id="setSave">저장 후 새로고침</button>
@@ -857,8 +860,13 @@ function scheduleRender() {
 /* ============================== 지도 어댑터 ============================== */
 // Google Maps 키가 있으면 Google Maps, 없으면 Leaflet(무료 타일)로 같은 기능을 제공.
 const params = new URLSearchParams(location.search);
-let API_KEY = params.get("key") || "";
-try { API_KEY = API_KEY || localStorage.getItem("gmaps-key") || ""; } catch (e) {}
+// 앱 기본 키: 배포 때 GitHub Actions가 저장소 Secret(GOOGLE_MAPS_API_KEY)으로 바꿔 넣음. 저장소에는 자리표시자만 둠
+const BUILD_MAPS_KEY = "__GOOGLE_MAPS_API_KEY__";
+const BUILD_KEY = /^__/.test(BUILD_MAPS_KEY) ? "" : BUILD_MAPS_KEY;
+let USER_KEY = params.get("key") || "";   // 개발·테스트용 키 (선택)
+try { USER_KEY = USER_KEY || localStorage.getItem("gmaps-key") || ""; } catch (e) {}
+// ?nokey=1 → 구글 없이 기본 지도 (키 인증 실패 시 무한 새로고침 방지)
+let API_KEY = params.has("nokey") ? "" : (USER_KEY || BUILD_KEY);
 
 let M; // 어댑터
 
@@ -1611,12 +1619,17 @@ function bindUI() {
   });
 
   const dlg = document.getElementById("settings");
-  document.getElementById("btnSettings").onclick = () => { document.getElementById("apiKey").value = API_KEY; dlg.showModal(); };
+  document.getElementById("btnSettings").onclick = () => {
+    document.getElementById("keyStatus").textContent = !GMODE ? "지금은 기본 무료 지도로 표시하고 있어요."
+      : USER_KEY ? "테스트용 키로 구글 지도를 쓰고 있어요." : "구글 지도·실제 경로·장소 정보가 켜져 있어요. 따로 설정할 것은 없어요.";
+    document.getElementById("apiKey").value = USER_KEY;
+    dlg.showModal();
+  };
   document.getElementById("setCancel").onclick = () => dlg.close();
   document.getElementById("setSave").onclick = () => {
     const k = document.getElementById("apiKey").value.trim();
     try { k ? localStorage.setItem("gmaps-key", k) : localStorage.removeItem("gmaps-key"); } catch (e) {}
-    const u = new URL(location.href); u.searchParams.delete("key"); location.href = u.toString();
+    const u = new URL(location.href); u.searchParams.delete("key"); u.searchParams.delete("nokey"); location.href = u.toString();
   };
 }
 
@@ -1632,9 +1645,9 @@ if (API_KEY) {
     start(googleAdapter());
   };
   window.gm_authFailure = () => {
-    alert("Google Maps API 키 인증에 실패했습니다. 기본 지도로 표시합니다. (⚙️에서 키를 확인하세요)");
+    alert("구글 지도 연결에 실패해 기본 지도로 표시합니다.");
     try { localStorage.removeItem("gmaps-key"); } catch (e) {}
-    const u = new URL(location.href); u.searchParams.delete("key"); location.href = u.toString();
+    const u = new URL(location.href); u.searchParams.delete("key"); u.searchParams.set("nokey", "1"); location.replace(u.toString());
   };
   const s = document.createElement("script");
   s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(API_KEY)}&language=ko&region=AU&callback=__gmInit`;

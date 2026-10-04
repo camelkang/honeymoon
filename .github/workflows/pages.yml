@@ -24,6 +24,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build site
         run: mkdir _site && cp -r index.html manifest.webmanifest sw.js icons _site/
+      - name: Inject Google Maps API key
+        env:
+          MAPS_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          if [ -z "$MAPS_KEY" ]; then
+            echo "::warning::GOOGLE_MAPS_API_KEY secret is not set; the site falls back to the free map"
+          else
+            sed -i "s|__GOOGLE_MAPS_API_KEY__|${MAPS_KEY}|" _site/index.html
+            grep -q "__GOOGLE_MAPS_API_KEY__" _site/index.html && { echo "::error::key placeholder was not replaced"; exit 1; } || echo "Maps key injected"
+          fi
       - uses: actions/configure-pages@v5
         with:
           enablement: true
