@@ -44,7 +44,7 @@ const status = () => !S.user ? "signedout" : !S.loaded ? "loading" : !S.coupleId
 // 내 장소·숙소 후보는 항목별 맵으로 나눠서 — 둘이 다른 날짜·다른 항목을 동시에 고쳐도 서로 덮어쓰지 않음
 const SHARED = ["startDate", "mode", "stayChosen", "guests", "budget", "currency", "fx"];
 const MAPS = ["custom", "stays", "expenses", "checklist", "bookings"];
-const NESTED = ["votes", "comments"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
+const NESTED = ["votes", "comments", "diary", "ratings"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
 const clean = v => JSON.parse(JSON.stringify(v ?? null));
 const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]));
 
@@ -133,7 +133,8 @@ function refreshView() {
     const inList = a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest("#days");
     if (inList && Date.now() - lastInputAt < 2000) return refreshView();
     // 다시 그린 뒤에도 입력하던 칸과 커서 위치를 그대로 둠
-    const key = inList && (a.dataset.note !== undefined ? `[data-note="${a.dataset.note}"]` : a.dataset.time ? `[data-time="${a.dataset.time}"]` : null);
+    const key = inList && (a.dataset.note !== undefined ? `[data-note="${a.dataset.note}"]` : a.dataset.time ? `[data-time="${a.dataset.time}"]`
+      : a.dataset.diary !== undefined ? `[data-diary="${a.dataset.diary}"]` : null);
     const sel = key && "selectionStart" in a ? [a.selectionStart, a.selectionEnd] : null;
     renderDays();
     const el = key && document.querySelector("#days " + key);

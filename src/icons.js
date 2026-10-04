@@ -57,11 +57,12 @@ import ticket from "lucide-static/dist/esm/icons/ticket.mjs";
 import bus from "lucide-static/dist/esm/icons/bus.mjs";
 import copy from "lucide-static/dist/esm/icons/copy.mjs";
 import send from "lucide-static/dist/esm/icons/send.mjs";
+import pencil from "lucide-static/dist/esm/icons/pencil.mjs";
 import messageCircle from "lucide-static/dist/esm/icons/message-circle.mjs";
 
 // 아이콘: Lucide(선 아이콘)에서 쓰는 것만 골라 묶음. icon("heart", 18) → <svg …> 문자열
 
-const SVG = { map, calendar, heart, house, search, plus, x, pin, user, settings, phone, landmark, sunset, trees, waves, utensils, coffee, martini, bag, bed, tram, star, sparkles, chevronDown, up, down, swap, trash, eye, navigation, walk, train, car, clock, upload, download, reset, share, link, logout, check, info, external, calendarPlus, sliders, handshake, plane, globe, camera, listChecks, wallet, receipt, square, checkSquare, users, ticket, bus, copy, send, messageCircle };
+const SVG = { map, calendar, heart, house, search, plus, x, pin, user, settings, phone, landmark, sunset, trees, waves, utensils, coffee, martini, bag, bed, tram, star, sparkles, chevronDown, up, down, swap, trash, eye, navigation, walk, train, car, clock, upload, download, reset, share, link, logout, check, info, external, calendarPlus, sliders, handshake, plane, globe, camera, listChecks, wallet, receipt, square, checkSquare, users, ticket, bus, copy, send, messageCircle, pencil };
 
 export function icon(name, size = 20, extra = "") {
   const svg = SVG[name];

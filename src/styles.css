@@ -585,3 +585,28 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .off-ok { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; font-weight: 600; margin: 0 0 8px; }
 .off-ok svg { color: var(--brand); }
 .off-ok small { color: var(--ink-3); font-weight: 500; }
+
+/* ===== 여행 일기 ===== */
+.diary { margin: 10px 0 4px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--love-soft); }
+.diary-h { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--love); margin-bottom: 6px; }
+.diary-row { display: flex; flex-direction: column; gap: 6px; }
+.moods { display: flex; gap: 4px; }
+.mood { border: 0; background: transparent; font-size: 22px; line-height: 1; padding: 4px; border-radius: 10px; cursor: pointer; filter: grayscale(1); opacity: .55; transition: transform .12s; }
+.mood:hover { opacity: .85; filter: none; }
+.mood.on { filter: none; opacity: 1; background: var(--surface); transform: scale(1.12); }
+.diary input { background: var(--surface); }
+.diary-partner { margin: 8px 0 0; font-size: 13.5px; }
+.rate { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; font-size: 12.5px; }
+.stars { display: inline-flex; }
+.star { border: 0; background: transparent; font-size: 20px; line-height: 1; color: #d3d7de; cursor: pointer; padding: 0 1px; }
+.star.on { color: #f59f00; }
+.recap .card-h > svg { color: var(--love); }
+.recap-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; text-align: center; }
+.recap-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; }
+.recap-stats b { font-size: 18px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recap-stats span { font-size: 11.5px; color: var(--ink-3); }
+.recap-top { margin: 4px 0; padding-left: 20px; font-size: 14px; }
+.stars-sm { color: #f59f00; font-size: 12px; }
+.recap-days { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+.recap-days li { display: flex; flex-direction: column; gap: 2px; }
+.recap-days small { color: var(--ink-3); }

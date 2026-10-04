@@ -8,6 +8,8 @@ export const defaultState = () => ({
   startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"", times:{} })),
   mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
   stays: [], stayChosen: null, guests: 2, staySort: "price",
+  diary: {},          // 여행 일기: { 날짜순번: { 사람: { mood, text, at } } }
+  ratings: {},        // 다녀온 곳 별점: { placeId: { 사람: 1~5 } }
   comments: {},       // 장소별 한마디: { placeId: { 메모id: { by, text, at } } }
   votes: {},          // 함께 고르기: { placeId: { 사람: 1(좋아요) | -1(패스) } }
   likeFilter: "all",  // 장소 목록·지도 필터 (기기별): all | liked | match

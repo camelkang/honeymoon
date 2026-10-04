@@ -2,6 +2,7 @@ import { addToDay, removeCustom, saveTemp } from "./actions.js";
 import { bookingChips, dateOfDay } from "./bookings.js";
 import { commentCount, commentsHtml } from "./comments.js";
 import { CATS, DAY_COLORS } from "./data.js";
+import { diaryHtml, ratingHtml } from "./diary.js";
 import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
 import { icon } from "./icons.js";
 import { M } from "./map.js";
@@ -83,7 +84,7 @@ export function popupHtml(p) {
       ${tempPlaces[p.id] ? `<button class="btn sm" onclick="saveTemp('${p.id}')">${icon("star", 15)} 내 장소로 저장</button>`
         : p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">${icon("trash", 15)} 삭제</button>` : ""}
     </div>
-    ${tempPlaces[p.id] ? "" : commentsHtml(p.id)}
+    ${tempPlaces[p.id] ? "" : ratingHtml(p.id) + commentsHtml(p.id)}
     ${GMODE ? `<div class="gd"><span class="muted">구글 장소 정보 불러오는 중…</span></div>` : ""}
   </div>`;
 }
@@ -238,6 +239,7 @@ export function renderDays() {
       <div class="day-b">
         ${bookingChips(dateOfDay(i))}
         ${rows || `<div class="empty">둘러보기·함께 고르기에서 장소를 담아보세요.</div>`}
+        ${diaryHtml(i)}
         <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
         ${url ? `<div class="row" style="margin-top:6px">
           <a class="btn sm" href="${url}" target="_blank" rel="noopener">${icon("navigation", 15)} 구글맵 앱으로 길안내</a>

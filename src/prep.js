@@ -1,6 +1,7 @@
 import { toast } from "./actions.js";
 import { bookingChips, bookingsCardHtml, dateOfDay } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
+import { recapHtml } from "./diary.js";
 import { icon } from "./icons.js";
 import { offlineCardHtml } from "./offline.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
@@ -161,6 +162,7 @@ export function renderPrep() {
   }).join("");
 
   el.innerHTML = `${hero}
+    ${recapHtml()}
     ${bookingsCardHtml()}
     <section class="card">
       <div class="card-h">${icon("wallet", 18)}<b>예산·지출</b>
@@ -169,7 +171,7 @@ export function renderPrep() {
         <div class="budget-n"><b>${money(t.sum)}</b><span>${budget ? `/ ${money(budget)}` : "썼어요"}</span></div>
         ${budget ? `<div class="budget-left ${t.sum > budget ? "over" : ""}">${t.sum > budget ? `${money(t.sum - budget)} 초과` : `${money(budget - t.sum)} 남음`}</div>` : ""}
       </div>
-      ${won(t.sum) ? `<p class="hint">${won(t.sum)} <small class="fx-src">${state.fx > 0 ? `직접 넣은 환율 1 ${cur} = ${fmtRate(state.fx)}원` : `오늘 환율 1 ${cur} = ${fmtRate(autoFx(cur))}원`}</small></p>` : ""}
+      ${t.sum > 0 && won(t.sum) ? `<p class="hint">${won(t.sum)} <small class="fx-src">${state.fx > 0 ? `직접 넣은 환율 1 ${cur} = ${fmtRate(state.fx)}원` : `오늘 환율 1 ${cur} = ${fmtRate(autoFx(cur))}원`}</small></p>` : ""}
       ${budget ? `<div class="meter" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>` : ""}
       ${bars ? `<div class="stack">${bars}</div><div class="legend">${legend}</div>` : ""}
       ${PARTNER ? `<div class="settle">${icon("users", 16)} ${s ? (s.from === ME ? `내가 <b>${esc(nameOf(s.to))}</b>에게` : `<b>${esc(nameOf(s.from))}</b>이(가) 나에게`) + ` <b>${money(s.amount)}</b> 보내면 반반이에요` : "지금은 반반이 맞아요"}
