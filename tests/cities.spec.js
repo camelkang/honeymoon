@@ -57,3 +57,20 @@ test("기본 도시는 삭제 버튼이 숨겨짐", async ({ page }) => {
   await open(page);
   await expect(page.locator("#btnCityDel")).toBeHidden();
 });
+
+test("새 여행지: 그 나라 통화와 맞춤 준비물로 시작", async ({ page }) => {
+  await open(page);
+  await page.selectOption("#citySel", "paris");
+  await expect(page).toHaveTitle(/파리/);
+  await expect(page.locator("#list .place").first()).toBeVisible();
+  await page.click(".tabs [data-tab=prep]");
+  await page.click('[data-act="addExp"]');
+  await expect(page.locator("#expCur")).toHaveText("EUR");
+  await page.click("#expCancel");
+  await page.click('[data-act="ckTemplate"]');
+  await expect(page.locator("#pane-prep .ck", { hasText: "ETIAS" })).toHaveCount(1);
+  await expect(page.locator("#pane-prep .ck", { hasText: "C·E 타입" })).toHaveCount(1);
+  await page.selectOption("#citySel", "tokyo");
+  await page.click('[data-act="ckTemplate"]');
+  await expect(page.locator("#pane-prep .ck", { hasText: "Visit Japan Web" })).toHaveCount(1);
+});

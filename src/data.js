@@ -260,7 +260,7 @@ export const CAIRNS_PLACES = [
     desc:"열대우림 속 예술가 마을. 시닉 레일웨이로 가요.", tip:"갈 땐 기차, 올 땐 스카이레일 조합 추천." },
   { id:"c_skyrail", cat:"view", name:"스카이레일 열대우림 케이블웨이", en:"Skyrail Rainforest Cableway", lat:-16.8410, lng:145.6920, area:"스미스필드",
     desc:"열대우림 위를 지나는 7.5km 케이블카.", tip:"" },
-  { id:"c_mossman", cat:"nature", name:"모스만 협곡 (데인트리)", en:"Mossman Gorge Centre", lat:-16.4720, lng:145.3330, area:"근교 (차로 1시간 20분)",
+  { id:"c_mossman", cat:"nature", name:"모스만 협곡 (데인트리)", en:"Mossman Gorge Centre", lat:-16.4742, lng:145.3483, area:"근교 (차로 1시간 20분)",
     desc:"세계에서 가장 오래된 열대우림 데인트리.", tip:"" },
   { id:"c_palm", cat:"beach", name:"팜 코브", en:"Palm Cove Beach", lat:-16.7470, lng:145.6720, area:"팜 코브",
     desc:"야자수 가로수의 조용한 리조트 해변.", tip:"" },

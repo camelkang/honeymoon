@@ -1,6 +1,8 @@
 import { setAddMode, toast } from "./actions.js";
 import { GMODE, gTextSearch } from "./google.js";
 import { M } from "./map.js";
+import { renderPick } from "./pick.js";
+import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, renderChips, renderDays } from "./render.js";
 import { CENTER, CITY, allCities, app, esc, save, useCity } from "./store.js";
 
@@ -25,7 +27,7 @@ export function refreshCity(move) {
   if (move) M.view(CENTER, CITY.zoom);
   document.getElementById("gResults").innerHTML = "";
   document.getElementById("q").value = "";
-  buildMarkers(); renderChips(); renderDays(); renderCityBar();
+  buildMarkers(); renderChips(); renderDays(); renderCityBar(); renderPick(); renderPrep();
 }
 export function switchCity(id) {
   if (addMode) setAddMode(false);

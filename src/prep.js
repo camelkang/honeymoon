@@ -205,7 +205,7 @@ function openExp(id, preset = {}) {
   f.day.value = v.day ?? "";
   const r = f.querySelector(`[name=paidBy][value="${CSS.escape(v.paidBy || ME)}"]`); if (r) r.checked = true;
   dlg.showModal();
-  setTimeout(() => f.amount.focus(), 50);
+  f.amount.focus();   // showModal 직후 바로 (지연시키면 이미 입력 중인 칸에서 포커스를 빼앗음)
 }
 function submitExp() {
   const dlg = document.getElementById("expDlg"), f = document.getElementById("expForm");

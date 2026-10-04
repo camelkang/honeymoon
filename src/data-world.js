@@ -219,7 +219,7 @@ export const DANANG_PLACES = [
     desc:"줄 서서 먹는 호이안 반미.", tip:"" },
   { id:"dn_anbang", cat:"beach", name:"안방 비치", en:"An Bang Beach", lat:15.9133, lng:108.3400, area:"호이안",
     desc:"한적한 비치 카페와 선베드.", tip:"" },
-  { id:"dn_myson", cat:"sight", name:"미선 유적지", en:"Mỹ Sơn", lat:15.7640, lng:108.1240, area:"근교 (차로 1시간 반)",
+  { id:"dn_myson", cat:"sight", name:"미선 유적지", en:"My Son Sanctuary", lat:15.7640, lng:108.1240, area:"근교 (차로 1시간 반)",
     desc:"참파 왕국의 힌두 사원 유적.", tip:"더위 전 새벽 투어 추천." },
   { id:"dn_sky36", cat:"bar", name:"스카이36", en:"Sky36", lat:16.0716, lng:108.2236, area:"다낭",
     desc:"노보텔 꼭대기 루프탑 바.", tip:"드레스 코드 있어요 (슬리퍼 X)." },
