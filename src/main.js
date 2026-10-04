@@ -14,3 +14,6 @@ function start(adapter) {
 // 키가 있으면 구글 검색·경로·장소 정보를 켬 (지도 자체는 항상 무료 지도)
 if (API_KEY) { setGMode(true); document.body.classList.add("gmode"); }
 start(createMap());
+
+// 로그인·짝꿍 동기화는 첫 화면이 뜬 뒤에 불러옴 (Firebase가 커서 첫 로딩을 늦추지 않게)
+import("./sync.js").then(m => m.initSync()).catch(e => console.warn("sync unavailable", e));

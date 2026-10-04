@@ -8,13 +8,16 @@
     "test": "playwright test",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:sync": "firebase emulators:exec --only auth,firestore --project demo-honeymoon 'playwright test -c playwright.sync.config.js'"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
+    "firebase-tools": "^15.32.1",
     "vite": "^6.4.3"
   },
   "dependencies": {
+    "firebase": "^12.19.0",
     "maplibre-gl": "^5.24.0"
   }
 }

@@ -36,8 +36,36 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  test-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:sync
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-sync
+          path: playwright-report-sync/
+          retention-days: 7
+
   deploy:
-    needs: test
+    needs: [test, test-sync]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:

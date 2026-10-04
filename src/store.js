@@ -44,7 +44,13 @@ export function useCity(id) {
 export function replaceApp(a) { app = Object.assign(emptyApp(), a); useCity(app.current); }
 export function setCityPlan(s) { state = app.plans[CITY.id] = normalizePlan(s); }
 export function resetCityPlan() { state = app.plans[CITY.id] = defaultState(); }
-export function save() { try { localStorage.setItem(APP_KEY, JSON.stringify(app)); } catch (e) {} }
+// 저장할 때마다 알림을 받을 곳(동기화 모듈)
+const saveHooks = [];
+export function onSave(fn) { saveHooks.push(fn); }
+export function save() {
+  try { localStorage.setItem(APP_KEY, JSON.stringify(app)); } catch (e) {}
+  saveHooks.forEach(fn => fn());
+}
 useCity(app.current);
 save();   // v1 → v2 이전 결과를 바로 저장
 

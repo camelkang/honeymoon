@@ -18,31 +18,36 @@ const BAD_KEY = { error: { message: "API key not valid. Please pass a valid API 
 const json = (route, body, status = 200) =>
   route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 
+// 외부 서비스(지도 타일·구글·지오코딩)를 가짜로 대체. 여러 브라우저 컨텍스트에서 재사용
+export async function mockNetwork(context, { googleMode = "ok", calls = { places: [], routes: 0 } } = {}) {
+  // Playwright는 나중에 등록한 route가 먼저 적용됨 → 전체 차단을 먼저, 스타일 응답을 나중에
+  await context.route("**/tiles.openfreemap.org/**", r => r.abort());
+  await context.route("**/tiles.openfreemap.org/styles/**", r => json(r, BLANK_STYLE));
+  await context.route("**/nominatim.openstreetmap.org/**", r => json(r, [{ lat: "-31.9523", lon: "115.8613", display_name: "Perth" }]));
+  await context.route("**/maps.googleapis.com/**", r => r.abort());   // 구글 지도 JS는 더 이상 쓰지 않음
+  await context.route("**/places.googleapis.com/**", r => {
+    const u = r.request().url();
+    calls.places.push(u);
+    if (googleMode === "badkey") return json(r, BAD_KEY, 400);
+    if (u.includes("/media")) return r.abort();
+    if (u.includes("searchText")) return json(r, { places: [PLACE, { ...PLACE, id: "ChIJ_other", displayName: { text: "다른 곳" } }] });
+    return json(r, PLACE);
+  });
+  await context.route("**/routes.googleapis.com/**", r => {
+    calls.routes++;
+    if (googleMode === "badkey") return json(r, BAD_KEY, 400);
+    if (googleMode === "denied") return json(r, { error: { message: "Routes API has not been used in project 1 before or it is disabled." } }, 403);
+    return json(r, ROUTE);
+  });
+  await context.route("**/airbnb.co.kr/**", r => r.fulfill({ body: "ok" }));
+}
+
 export const test = base.extend({
   // 구글 API 응답을 테스트마다 바꿀 수 있게 옵션으로 둠
   googleMode: ["ok", { option: true }],   // "ok" | "denied" | "badkey"
   calls: async ({}, use) => use({ places: [], routes: 0 }),
   context: async ({ context, googleMode, calls }, use) => {
-    // Playwright는 나중에 등록한 route가 먼저 적용됨 → 전체 차단을 먼저, 스타일 응답을 나중에
-    await context.route("**/tiles.openfreemap.org/**", r => r.abort());
-    await context.route("**/tiles.openfreemap.org/styles/**", r => json(r, BLANK_STYLE));
-    await context.route("**/nominatim.openstreetmap.org/**", r => json(r, [{ lat: "-31.9523", lon: "115.8613", display_name: "Perth" }]));
-    await context.route("**/maps.googleapis.com/**", r => r.abort());   // 구글 지도 JS는 더 이상 쓰지 않음
-    await context.route("**/places.googleapis.com/**", r => {
-      const u = r.request().url();
-      calls.places.push(u);
-      if (googleMode === "badkey") return json(r, BAD_KEY, 400);
-      if (u.includes("/media")) return r.abort();
-      if (u.includes("searchText")) return json(r, { places: [PLACE, { ...PLACE, id: "ChIJ_other", displayName: { text: "다른 곳" } }] });
-      return json(r, PLACE);
-    });
-    await context.route("**/routes.googleapis.com/**", r => {
-      calls.routes++;
-      if (googleMode === "badkey") return json(r, BAD_KEY, 400);
-      if (googleMode === "denied") return json(r, { error: { message: "Routes API has not been used in project 1 before or it is disabled." } }, 403);
-      return json(r, ROUTE);
-    });
-    await context.route("**/airbnb.co.kr/**", r => r.fulfill({ body: "ok" }));
+    await mockNetwork(context, { googleMode, calls });
     await use(context);
   },
   page: async ({ page }, use) => {

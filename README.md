@@ -14,6 +14,12 @@
 - 설치하면 전체 화면 앱으로 열리고, 일정은 오프라인에서도 볼 수 있어요
 - 아이폰은 설치한 앱과 Safari의 저장 공간이 달라서, 앱에서 API 키를 다시 넣고 일정은 내보내기/가져오기로 옮겨주세요
 
+## 짝꿍과 함께 쓰기 (Firebase)
+- 구글 로그인 → 초대 코드(48시간 유효) 또는 초대 링크로 짝꿍 연결 → 같은 일정·내 장소·숙소 후보를 실시간 공동 편집
+- 일정은 날짜별, 장소·숙소는 항목별로 저장해서 둘이 동시에 고쳐도 서로 덮어쓰지 않음. 필터 같은 화면 설정은 기기별
+- 오프라인에서 고친 내용은 다시 연결되면 자동 반영. 로그인하지 않아도 이 기기에서 그대로 사용 가능
+- 보안 규칙: `firestore.rules` (커플 두 사람만 접근, 유효한 초대로만 합류) — 바꾸면 Firebase 콘솔 › Firestore › 규칙에 붙여넣고 게시
+
 ## 구글 지도 기능
 사용자는 키를 넣을 필요가 없어요. 배포할 때 GitHub Actions가 저장소 Secret `GOOGLE_MAPS_API_KEY`를 앱에 넣어요(저장소에는 자리표시자만 있음).
 
@@ -38,6 +44,7 @@ API 키 없이도 기본 무료 지도로 동작합니다 (이때는 경로가 �
 npm install
 npm run dev        # 개발 서버 (http://localhost:5173)
 npm test           # 빌드 후 Playwright 회귀 테스트
+npm run test:sync  # Firebase 에뮬레이터로 커플 연결·동기화·보안 규칙 테스트 (Java 필요)
 VITE_GOOGLE_MAPS_API_KEY=... npm run dev   # 내 키로 구글 기능 테스트
 ```
 
@@ -51,6 +58,7 @@ VITE_GOOGLE_MAPS_API_KEY=... npm run dev   # 내 키로 구글 기능 테스트
 | `src/stays.js` | 에어비앤비 숙소 후보 |
 | `src/cities.js` | 도시 전환·추가 |
 | `src/actions.js` | 버튼·입력 이벤트 |
+| `src/sync.js` | 로그인·짝꿍 연결·실시간 동기화 (Firebase) |
 | `src/main.js` | 앱 시작 |
 | `public/` | 매니페스트·서비스 워커·아이콘 |
 

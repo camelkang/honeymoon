@@ -1,0 +1,97 @@
+import { test, expect } from "@playwright/test";
+import { mockNetwork } from "../tests/fixtures.js";
+
+// 한 사람 = 브라우저 컨텍스트 하나 (기기 하나)
+async function person(browser, query = "") {
+  const context = await browser.newContext();
+  await mockNetwork(context);
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  page.on("dialog", d => d.accept(page.__promptAnswer ?? undefined));
+  await page.goto("/index.html?nokey=1" + query);
+  await page.waitForFunction(() => window.__map && window.__map.loaded() && window.__test);
+  return { context, page, errors };
+}
+const signIn = (p, uid, name) => p.page.evaluate(([u, n]) => window.__test.signIn(u, n), [uid, name]);
+const status = p => p.page.evaluate(() => window.__test.status());
+const plan = (p, city = "sydney") => p.page.evaluate(c => JSON.parse(localStorage.getItem("honeymoon-app-v2")).plans[c], city);
+
+test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", async ({ browser }) => {
+  // 1) 민지: 혼자 추천 일정을 만들어 두고 초대 코드 생성
+  const A = await person(browser);
+  await A.page.click(".tabs [data-tab=plan]");
+  await A.page.click("#btnSample");
+  await signIn(A, "alice", "민지");
+  await expect.poll(() => status(A)).toBe("solo");
+  await A.page.click("#btnAccount");
+  await A.page.click('[data-acc="invite"]');
+  await expect(A.page.locator("#inviteCode")).toBeVisible();
+  const code = (await A.page.textContent("#inviteCode")).replace(/\s/g, "");
+  expect(code).toMatch(/^[A-Z0-9]{6}$/);
+  await expect.poll(() => status(A)).toBe("waiting");
+  await A.page.click('[data-acc="close"]');
+
+  // 2) 준호: 초대 링크로 들어와 로그인 → 자동 연결, 민지의 일정을 받음
+  const B = await person(browser, "&join=" + code);
+  await expect(B.page.locator("#accountDlg")).toContainText("초대를 받았어요");
+  await signIn(B, "bob", "준호");
+  await expect.poll(() => status(B), { timeout: 20_000 }).toBe("connected");
+  await expect.poll(() => status(A), { timeout: 20_000 }).toBe("connected");
+  await expect.poll(async () => (await plan(B)).days[0].stops[0], { timeout: 20_000 }).toBe("syd");
+  await expect(A.page.locator("#btnAccount .av")).toHaveCount(2);
+
+  // 3) 동시에 다른 날짜 메모를 고쳐도 둘 다 남음
+  await B.page.keyboard.press("Escape");
+  await B.page.click(".tabs [data-tab=plan]");
+  await Promise.all([
+    A.page.fill('[data-note="0"]', "민지: 공항 10시 도착"),
+    B.page.fill('[data-note="2"]', "준호: 본다이 수영복 챙기기"),
+  ]);
+  for (const p of [A, B]) {
+    await expect.poll(async () => (await plan(p)).days[0].note, { timeout: 20_000 }).toBe("민지: 공항 10시 도착");
+    await expect.poll(async () => (await plan(p)).days[2].note, { timeout: 20_000 }).toBe("준호: 본다이 수영복 챙기기");
+  }
+
+  // 4) 준호가 숙소 후보를 추가하면 민지 화면에 가격 핀이 생김
+  await B.page.click(".tabs [data-tab=stays]");
+  await B.page.click("#btnAddStay");
+  await B.page.fill("[name=name]", "서리힐스 로프트");
+  await B.page.fill("[name=price]", "310");
+  await B.page.click("#stayForm button[type=submit]");
+  const box = await B.page.locator("#map").boundingBox();
+  await B.page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.6);
+  await expect.poll(async () => (await plan(A)).stays.map(s => s.name), { timeout: 20_000 }).toContain("서리힐스 로프트");
+  await expect(A.page.locator(".stay-pin", { hasText: "A$310" })).toBeVisible();
+
+  // 5) 이미 연결된 초대 코드로는 제3자가 들어올 수 없고, 커플 데이터도 읽을 수 없음
+  const C = await person(browser);
+  await signIn(C, "eve", "제3자");
+  await expect.poll(() => status(C)).toBe("solo");
+  await C.page.click("#btnAccount");
+  await C.page.fill("#joinCode", code);
+  await C.page.click('[data-acc="join"]');
+  await expect(C.page.locator("#accountBody .notice")).toContainText("이미 다른 사람과 연결된 초대");
+  const coupleId = await A.page.evaluate(() => window.__test.coupleId());
+  const denied = await C.page.evaluate(id => window.__test.read(`couples/${id}/plans/sydney`).then(() => "read", e => e.code), coupleId);
+  expect(denied).toBe("permission-denied");
+
+  // 6) 준호가 연결 해제 → 민지는 다시 기다리는 상태, 준호 기기엔 일정이 그대로 남음
+  await B.page.click("#btnAccount");
+  await B.page.click('[data-acc="disconnect"]');
+  await expect.poll(() => status(B)).toBe("solo");
+  await expect.poll(() => status(A), { timeout: 20_000 }).toBe("waiting");
+  expect((await plan(B)).days[2].note).toBe("준호: 본다이 수영복 챙기기");
+
+  for (const p of [A, B, C]) expect(p.errors).toEqual([]);
+});
+
+test("만료되거나 없는 초대 코드는 거절", async ({ browser }) => {
+  const D = await person(browser);
+  await signIn(D, "dave", "도윤");
+  await expect.poll(() => status(D)).toBe("solo");
+  await D.page.click("#btnAccount");
+  await D.page.fill("#joinCode", "ZZZ999");
+  await D.page.click('[data-acc="join"]');
+  await expect(D.page.locator("#accountBody .notice")).toContainText("찾을 수 없어요");
+});

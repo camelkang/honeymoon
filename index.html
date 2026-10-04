@@ -22,6 +22,7 @@
   <div class="sub">도시를 고르고, 장소를 눌러 일정에 담아보세요.</div>
   <button class="btn sm" id="btnInstall" hidden>📲<span class="lbl"> 앱 설치</span></button>
   <button class="btn sm" id="btnAddMode" title="지도를 클릭해 나만의 장소 추가">📍<span class="lbl"> 장소 추가</span></button>
+  <button class="btn sm" id="btnAccount" title="로그인 · 짝꿍 연결">👤<span class="lbl"> 로그인</span></button>
   <button class="btn sm" id="btnSettings" title="지도 설정">⚙️</button>
 </header>
 
@@ -108,6 +109,14 @@
     <div class="banner" id="banner">지도를 클릭해 장소를 추가하세요 (Esc 취소)</div>
   </div>
 </div>
+
+<dialog id="accountDlg" aria-labelledby="accountTitle">
+  <div class="row" style="justify-content:space-between;flex-wrap:nowrap">
+    <h2 id="accountTitle" style="margin:0">💑 함께 쓰기</h2>
+    <button class="btn sm" data-acc="close" aria-label="닫기">✕</button>
+  </div>
+  <div id="accountBody" style="margin-top:12px"></div>
+</dialog>
 
 <dialog id="stayDlg">
   <h2 id="stayDlgTitle">🏠 숙소 후보 추가</h2>
