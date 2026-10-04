@@ -1,4 +1,5 @@
 import { addToDay, toast } from "./actions.js";
+import { lastPartnerComment } from "./comments.js";
 import { CATS } from "./data.js";
 import { gcache, photoUrl } from "./google.js";
 import { icon } from "./icons.js";
@@ -104,6 +105,7 @@ function cardHtml(p, back) {
       <h3>${esc(p.name)}</h3>
       ${p.desc ? `<p>${esc(p.desc)}</p>` : ""}
       ${p.tip ? `<p class="pcard-tip">${icon("sparkles", 14)} ${esc(p.tip)}</p>` : ""}
+      ${(cm => cm ? `<p class="pcard-cm">${icon("messageCircle", 14)} <span>"${esc(cm.text)}" — ${esc(nameOf(cm.by))}</span></p>` : "")(lastPartnerComment(p.id))}
     </div>
   </article>`;
 }

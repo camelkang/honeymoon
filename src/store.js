@@ -8,6 +8,7 @@ export const defaultState = () => ({
   startDate: "", days: Array.from({length:5}, () => ({ stops:[], note:"", times:{} })),
   mode: "transit", routesOn: true, custom: [], cats: Object.keys(CATS), focusDay: null,
   stays: [], stayChosen: null, guests: 2, staySort: "price",
+  comments: {},       // 장소별 한마디: { placeId: { 메모id: { by, text, at } } }
   votes: {},          // 함께 고르기: { placeId: { 사람: 1(좋아요) | -1(패스) } }
   likeFilter: "all",  // 장소 목록·지도 필터 (기기별): all | liked | match
   budget: 0, currency: "AUD", fx: 0,   // 총예산(현지 통화), 1단위 = fx원

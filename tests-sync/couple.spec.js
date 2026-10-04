@@ -96,6 +96,21 @@ test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", a
   await B.page.locator(".ck", { hasText: "여행자 보험" }).locator(".ck-box").click();
   await expect(A.page.locator(".ck", { hasText: "여행자 보험" })).toContainText("준호 완료", { timeout: 20_000 });
 
+  // 4-4) 장소 메모: 민지가 남긴 한마디가 준호 화면에 알림·장소 창·고르기 카드로 보임
+  await A.page.click(".tabs [data-tab=places]");
+  await A.page.locator("#list .place", { hasText: "본다이" }).first().click();
+  await A.page.locator(".maplibregl-popup .cm-form [name=t]").fill("수영복 챙겨서 꼭 가자!");
+  await A.page.locator(".maplibregl-popup .cm-form [name=t]").press("Enter");
+  await expect(B.page.locator("#banner")).toContainText("수영복 챙겨서 꼭 가자!", { timeout: 20_000 });
+  await B.page.click(".tabs [data-tab=places]");
+  await B.page.locator("#list .place", { hasText: "본다이" }).first().click();
+  await expect(B.page.locator(".maplibregl-popup .cm-msg:not(.mine)")).toContainText("수영복 챙겨서 꼭 가자!");
+  await expect(B.page.locator(".maplibregl-popup .cm-msg small")).toContainText("민지");
+  await B.page.locator(".maplibregl-popup .cm-form [name=t]").fill("좋아!");
+  await B.page.locator(".maplibregl-popup .cm-form [name=t]").press("Enter");
+  await expect.poll(async () => Object.values((await plan(A)).comments || {}).flatMap(b => Object.values(b)).map(c => c.text).sort(), { timeout: 20_000 })
+    .toEqual(["수영복 챙겨서 꼭 가자!", "좋아!"]);
+
   // 5) 이미 연결된 초대 코드로는 제3자가 들어올 수 없고, 커플 데이터도 읽을 수 없음
   const C = await person(browser);
   await signIn(C, "eve", "제3자");

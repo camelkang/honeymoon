@@ -17,6 +17,7 @@ import { toast } from "./actions.js";
 import { icon } from "./icons.js";
 import { setPeople, renderPick, isMatch } from "./pick.js";
 import { renderPrep } from "./prep.js";
+import { refreshOpenComments } from "./comments.js";
 
 const EMULATOR = !!import.meta.env.VITE_FIREBASE_EMULATOR;
 const fb = initializeApp(EMULATOR ? { ...firebaseConfig, projectId: "demo-honeymoon", apiKey: "demo-key" } : firebaseConfig);
@@ -43,7 +44,7 @@ const status = () => !S.user ? "signedout" : !S.loaded ? "loading" : !S.coupleId
 // 내 장소·숙소 후보는 항목별 맵으로 나눠서 — 둘이 다른 날짜·다른 항목을 동시에 고쳐도 서로 덮어쓰지 않음
 const SHARED = ["startDate", "mode", "stayChosen", "guests", "budget", "currency", "fx"];
 const MAPS = ["custom", "stays", "expenses", "checklist", "bookings"];
-const NESTED = ["votes"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
+const NESTED = ["votes", "comments"];   // 함께 고르기: votes.<장소>.<사람> — 둘이 같은 장소에 동시에 눌러도 따로 저장
 const clean = v => JSON.parse(JSON.stringify(v ?? null));
 const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]));
 
@@ -160,6 +161,8 @@ function subscribeData(coupleId) {
     if (!first && flushT) { flush(); return; }                 // 아직 안 올린 내 변경부터 올리고, 다음 스냅샷에서 합침
     let partnerChanged = false, touchedCurrent = false;
     const matchedBefore = new Set(Object.keys(app.plans[CITY.id] && app.plans[CITY.id].votes || {}).filter(isMatch));
+    const commentKeys = () => Object.entries((app.plans[CITY.id] || {}).comments || {}).flatMap(([pid, box]) => Object.keys(box || {}).map(cid => pid + "|" + cid));
+    const commentsBefore = new Set(commentKeys());
     snap.docChanges().forEach(ch => {
       if (ch.type === "removed") return;
       const cityId = ch.doc.id, data = ch.doc.data();
@@ -176,7 +179,13 @@ function subscribeData(coupleId) {
     } else if (touchedCurrent) {
       refreshView();
       const newMatches = Object.keys(app.plans[CITY.id].votes || {}).filter(id => isMatch(id) && !matchedBefore.has(id));
-      if (newMatches.length) toast(`둘 다 좋아요! ${newMatches.map(id => (placeById(id) || {}).name).filter(Boolean).join(", ") || "새로 겹친 곳이 생겼어요"}`);
+      const newComments = commentKeys().filter(k => !commentsBefore.has(k)).map(k => k.split("|"))
+        .map(([pid, cid]) => ({ pid, c: app.plans[CITY.id].comments[pid][cid] })).filter(x => x.c && x.c.by !== me());
+      newComments.forEach(x => refreshOpenComments(x.pid));
+      if (newComments.length) {
+        const x = newComments[newComments.length - 1];
+        toast(`${profile(x.c.by).name || "짝꿍"} · ${(placeById(x.pid) || {}).name || "장소"}: "${x.c.text}"`);
+      } else if (newMatches.length) toast(`둘 다 좋아요! ${newMatches.map(id => (placeById(id) || {}).name).filter(Boolean).join(", ") || "새로 겹친 곳이 생겼어요"}`);
       else if (partnerChanged) toast(`${profile(partnerId()).name || "짝꿍"}이(가) 바꿨어요`);
     } else if (partnerChanged) renderCityBar();
   }, e => { console.warn(e); S.error = "동기화 권한이 없어요"; renderAccount(); }));

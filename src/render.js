@@ -1,5 +1,6 @@
 import { addToDay, removeCustom, saveTemp } from "./actions.js";
 import { bookingChips, dateOfDay } from "./bookings.js";
+import { commentCount, commentsHtml } from "./comments.js";
 import { CATS, DAY_COLORS } from "./data.js";
 import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
 import { icon } from "./icons.js";
@@ -81,6 +82,7 @@ export function popupHtml(p) {
       ${tempPlaces[p.id] ? `<button class="btn sm" onclick="saveTemp('${p.id}')">${icon("star", 15)} 내 장소로 저장</button>`
         : p.cat === "mine" ? `<button class="btn sm" onclick="removeCustom('${p.id}')">${icon("trash", 15)} 삭제</button>` : ""}
     </div>
+    ${tempPlaces[p.id] ? "" : commentsHtml(p.id)}
     ${GMODE ? `<div class="gd"><span class="muted">구글 장소 정보 불러오는 중…</span></div>` : ""}
   </div>`;
 }
@@ -174,7 +176,7 @@ export function filter() {
     const days = state.days.map((d,i) => d.stops.includes(p.id) ? "D" + (i+1) : null).filter(Boolean);
     return `<div class="place" data-id="${p.id}" style="--c:${c.color}">
       <span class="cat-ico">${icon(c.icon, 20)}</span>
-      <div class="txt"><div class="nm"><span>${esc(p.name)}</span>${heartsInline(p.id)}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
+      <div class="txt"><div class="nm"><span>${esc(p.name)}</span>${heartsInline(p.id)}${commentCount(p.id) ? `<span class="cm-n" title="메모 ${commentCount(p.id)}개">${icon("messageCircle", 13)}${commentCount(p.id)}</span>` : ""}${days.length ? `<span class="tag">${days.join(" ")}</span>` : ""}</div>
       <div class="ds">${esc(p.area || c.label)}${p.desc ? " · " + esc(p.desc) : ""}</div></div>
     </div>`;
   }).join("") : !PLACES.length && !q

@@ -3,6 +3,7 @@ import "./styles.css";
 import { bindUI } from "./actions.js";
 import { bindBookings } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
+import { bindComments } from "./comments.js";
 import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
@@ -10,7 +11,7 @@ import { bindOnboard, maybeOnboard } from "./onboard.js";
 import { bindPick, renderPick } from "./pick.js";
 import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
 import { setupPWA } from "./pwa.js";
-import { buildMarkers, renderChips, renderDays } from "./render.js";
+import { buildMarkers, filter, renderChips, renderDays } from "./render.js";
 import { bindSheet, onTabShown, showTab } from "./sheet.js";
 
 function start(adapter) {
@@ -20,6 +21,7 @@ function start(adapter) {
   buildMarkers(); renderChips(); renderDays(); renderCityBar(); bindUI(); setupPWA();
   bindSheet(); bindPick(); renderPick();
   onTabShown("pick", renderPick);
+  bindComments(() => { filter(); renderPick(); });
   bindPrep(); renderPrep();
   bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);

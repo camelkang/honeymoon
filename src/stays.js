@@ -1,4 +1,5 @@
 import { addToDay, setAddMode, toast } from "./actions.js";
+import { commentsHtml } from "./comments.js";
 import { GMODE, MODE_ICON, apiErrors, fmtDist, fmtDur, gTextSearch, getLeg } from "./google.js";
 import { icon } from "./icons.js";
 import { M } from "./map.js";
@@ -68,6 +69,7 @@ export function stayPopupHtml(p, opts) {
       <select id="popDay">${opts}</select>
       <button class="btn sm primary" onclick="addToDay('${p.id}', +document.getElementById('popDay').value)">${icon("plus", 15)} 일정에 추가</button>
     </div>
+    ${commentsHtml(p.id)}
   </div>`;
 }
 

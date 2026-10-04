@@ -15,6 +15,20 @@ function visiblePadding(pad) {
   if (r.height - t - btm < 120) btm = Math.max(0, r.height - t - 120);   // 시트를 크게 열었을 땐 최소한의 지도 영역만
   return { top: t, bottom: btm, left: pad, right: pad };
 }
+// 휴대폰: 핀 위로 열린 장소 창이 위쪽 바에 가리지 않게 높이를 제한 (지도가 움직인 뒤 다시 맞춤)
+function fitPopup(map, p, node) {
+  const pop = node.querySelector(".pop") || node;
+  const apply = () => {
+    if (!pop.isConnected) return;
+    const top = document.querySelector(".topbar"), mapTop = document.getElementById("map").getBoundingClientRect().top;
+    const y = map.project([p.lng, p.lat]).y + mapTop;
+    const room = y - 30 - 14 - (top ? top.getBoundingClientRect().bottom : 0) - 8 - 28;   // 핀 간격·꼬리·여백·창 안쪽 여백
+    pop.classList.add("fit");
+    pop.style.maxHeight = Math.max(160, room) + "px";
+  };
+  apply();
+  map.once("moveend", apply);
+}
 // 장소를 열 때: 휴대폰에선 핀을 보이는 영역의 아래쪽에 두어 위로 열리는 팝업이 다 보이게
 function pinOffset() {
   const p = visiblePadding(0), h = document.getElementById("map").clientHeight;
@@ -101,6 +115,7 @@ export function createMap() {
       const phone = !matchMedia("(min-width: 900px)").matches;
       popup = new maplibregl.Popup({ maxWidth: "300px", offset: 30, focusAfterOpen: false, ...(phone ? { anchor: "bottom" } : {}) })
         .setLngLat([p.lng, p.lat]).setDOMContent(node).addTo(map);
+      if (phone) fitPopup(map, p, node);
     },
     closePopup() { if (popup) { popup.remove(); popup = null; } },
     fly(p, z) { map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), toML(z || 15)), duration: 600, offset: pinOffset() }); },
