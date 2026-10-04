@@ -582,3 +582,6 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .day.drop-into { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
 .banner { pointer-events: auto; }
 .banner-act { margin-left: 10px; border: 0; background: transparent; color: #5fd3cf; font: inherit; font-weight: 800; cursor: pointer; padding: 2px 4px; }
+.off-ok { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+.off-ok svg { color: var(--brand); }
+.off-ok small { color: var(--ink-3); font-weight: 500; }

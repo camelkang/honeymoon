@@ -1,5 +1,5 @@
 // 둘이서 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도(OpenFreeMap 스타일·타일·글꼴)는 캐시해 둠
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `shell-${VERSION}`;
 const TILES = "tiles-v2";
 const SHELL_FILES = [
@@ -13,7 +13,7 @@ self.addEventListener("install", e => {
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== TILES).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== TILES && !k.startsWith("offline-")).map(k => caches.delete(k))))   // 미리 저장한 지도(offline-)는 남김
     .then(() => self.clients.claim()));
 });
 
@@ -38,7 +38,8 @@ self.addEventListener("fetch", e => {
   }
   // 기본 지도 타일: 캐시 우선 + 백그라운드 저장 (본 적 있는 지역은 오프라인에서도 보임)
   if (TILE_HOSTS.test(url.hostname)) {
-    e.respondWith(caches.open(TILES).then(c => c.match(req).then(hit => hit || fetch(req).then(res => {
+    // 미리 저장한 지도(offline-*)부터 찾고, 없으면 최근 본 타일 캐시 → 네트워크
+    e.respondWith(caches.open(TILES).then(c => caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res.ok || res.type === "opaque") { c.put(req, res.clone()); if (++puts % 100 === 0) trimTiles(); }
       return res;
     }))));

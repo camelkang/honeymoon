@@ -2,6 +2,7 @@ import { toast } from "./actions.js";
 import { bookingChips, bookingsCardHtml, dateOfDay } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { icon } from "./icons.js";
+import { offlineCardHtml } from "./offline.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
 import { dayLabel, renderDays } from "./render.js";
 import { CITY, byId, esc, gQuery, save, state } from "./store.js";
@@ -193,7 +194,8 @@ export function renderPrep() {
       </form>
       ${groups || `<div class="empty-big small">${icon("listChecks", 32)}<span>여권·ETA·보험처럼 출발 전에 챙길 것들을 둘이 나눠 체크해요.</span>
         <button class="btn" data-act="ckTemplate">${icon("sparkles", 16)}기본 목록 넣기</button></div>`}
-    </section>`;
+    </section>
+    ${offlineCardHtml()}`;
   const sd = el.querySelector('[data-prep="startDate"]'); if (sd) sd.value = state.startDate || "";
 }
 

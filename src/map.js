@@ -117,6 +117,7 @@ export function createMap() {
         .setLngLat([p.lng, p.lat]).setDOMContent(node).addTo(map);
       if (phone) fitPopup(map, p, node);
     },
+    style() { try { return map.getStyle(); } catch (e) { return null; } },
     closePopup() { if (popup) { popup.remove(); popup = null; } },
     fly(p, z) { map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), toML(z || 15)), duration: 600, offset: pinOffset() }); },
     fit(pts) {

@@ -1,6 +1,6 @@
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./styles.css";
-import { bindUI } from "./actions.js";
+import { bindUI, toast } from "./actions.js";
 import { bindBookings } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { bindComments } from "./comments.js";
@@ -8,6 +8,7 @@ import { bindDrag } from "./drag.js";
 import { setGMode } from "./google.js";
 import { icon } from "./icons.js";
 import { API_KEY, createMap, setMap } from "./map.js";
+import { bindOffline } from "./offline.js";
 import { bindOnboard, maybeOnboard } from "./onboard.js";
 import { bindPick, renderPick } from "./pick.js";
 import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
@@ -24,6 +25,7 @@ function start(adapter) {
   onTabShown("pick", renderPick);
   bindComments(() => { filter(); renderPick(); });
   bindDrag(renderDays);
+  bindOffline(toast);
   bindPrep(); renderPrep();
   bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);
