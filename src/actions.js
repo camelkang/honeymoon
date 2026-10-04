@@ -4,6 +4,7 @@ import { GMODE, apiProblemText } from "./google.js";
 import { M, USER_KEY } from "./map.js";
 import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
+import { optimizeDay } from "./route.js";
 import { peekSheet } from "./sheet.js";
 import { airbnbSearchUrl, chooseStay, openStayDlg, pickFn, removeStay, renderStays, setPickFn, submitStay } from "./stays.js";
 import { CITY, SAMPLE, app, byId, replaceApp, resetCityPlan, save, setCityPlan, state, tempPlaces } from "./store.js";
@@ -38,6 +39,20 @@ export function toast(msg) {
   b.textContent = msg; b.style.display = "block";
   clearTimeout(toastT);
   if (!addMode) toastT = setTimeout(() => b.style.display = "none", 2200);
+}
+// 알림 + 버튼 하나 (예: 되돌리기). 버튼이 있으면 조금 더 오래 보여줌
+export function toastAction(msg, label, fn) {
+  const b = document.getElementById("banner");
+  b.textContent = msg;
+  if (label) {
+    const btn = document.createElement("button");
+    btn.className = "banner-act"; btn.textContent = label;
+    btn.onclick = () => { b.style.display = "none"; fn(); };
+    b.append(" ", btn);
+  }
+  b.style.display = "block";
+  clearTimeout(toastT);
+  toastT = setTimeout(() => b.style.display = "none", label ? 6000 : 2200);
 }
 export function setAddMode(v, msg) {
   setAddModeFlag(v);
@@ -103,6 +118,8 @@ export function bindUI() {
 
   const daysEl = document.getElementById("days");
   daysEl.onclick = e => {
+    const opt = e.target.closest("[data-opt]");
+    if (opt) return optimizeDay(+opt.dataset.opt, renderDays);
     const t = e.target.closest("[data-open],[data-mv],[data-rm],[data-shift],[data-focus]"); if (!t) return;
     if (t.dataset.open) return openPlace(t.dataset.open);
     if (t.dataset.focus !== undefined) {

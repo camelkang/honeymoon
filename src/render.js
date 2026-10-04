@@ -241,6 +241,7 @@ export function renderDays() {
         <textarea data-note="${i}" placeholder="메모 (예약 시간, 준비물 등)">${esc(d.note)}</textarea>
         ${url ? `<div class="row" style="margin-top:6px">
           <a class="btn sm" href="${url}" target="_blank" rel="noopener">${icon("navigation", 15)} 구글맵 앱으로 길안내</a>
+          ${stops.length >= 3 ? `<button class="btn sm" data-opt="${i}" title="첫 장소는 그대로 두고 이동 거리가 가장 짧은 순서로">${icon("sparkles", 15)} 동선 자동 정리</button>` : ""}
           ${stops.length > 10 ? `<span class="muted">경유지는 최대 9곳까지 반영될 수 있어요.</span>` : ""}
         </div>` : ""}
       </div>
