@@ -45,7 +45,9 @@ export function useCity(id) {
   CITY = allCities()[id] || CITIES.sydney;
   app.current = CITY.id;
   PLACES = CITY.places; SAMPLE = CITY.sample; CENTER = CITY.center;
+  const fresh = !app.plans[CITY.id];
   state = app.plans[CITY.id] = normalizePlan(app.plans[CITY.id]);
+  if (fresh && CITY.currency) state.currency = CITY.currency;   // 새 도시는 그 나라 통화로 시작
 }
 // 다른 모듈은 상태를 읽기만 하고, 바꿀 땐 아래 함수를 씀 (ES 모듈 live binding)
 export function replaceApp(a) { app = Object.assign(emptyApp(), a); useCity(app.current); }

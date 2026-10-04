@@ -1,3 +1,4 @@
+import { BALI_PLACES, BALI_SAMPLE, DANANG_PLACES, DANANG_SAMPLE, HAWAII_PLACES, HAWAII_SAMPLE, PARIS_PLACES, PARIS_SAMPLE, TOKYO_PLACES, TOKYO_SAMPLE } from "./data-world.js";
 import { icon } from "./icons.js";
 
 /* ============================== 데이터 ============================== */
@@ -286,15 +287,35 @@ export const CAIRNS_SAMPLE = [
 
 export const CITIES = {
   sydney:    { id:"sydney", name:"시드니", flag:"🇦🇺", center:{ lat:-33.8650, lng:151.2094 }, zoom:14, suffix:"Sydney NSW",
-               airbnb:"Sydney--NSW--Australia", places:SYDNEY_PLACES, sample:SYDNEY_SAMPLE,
+               airbnb:"Sydney--NSW--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:SYDNEY_PLACES, sample:SYDNEY_SAMPLE,
                keySpots:[["cquay","서큘러 키"], ["qvb","시티(QVB)"], ["darling","달링 하버"], ["bondi","본다이"]] },
   melbourne: { id:"melbourne", name:"멜버른", flag:"🇦🇺", center:{ lat:-37.8136, lng:144.9631 }, zoom:14, suffix:"Melbourne VIC",
-               airbnb:"Melbourne--VIC--Australia", places:MELBOURNE_PLACES, sample:MELBOURNE_SAMPLE,
+               airbnb:"Melbourne--VIC--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:MELBOURNE_PLACES, sample:MELBOURNE_SAMPLE,
                keySpots:[["m_flinders","플린더스역"], ["m_qvm","퀸 빅토리아 마켓"], ["m_stkilda","세인트킬다"]] },
   goldcoast: { id:"goldcoast", name:"골드코스트", flag:"🇦🇺", center:{ lat:-28.0167, lng:153.4000 }, zoom:12, suffix:"Gold Coast QLD",
-               airbnb:"Gold-Coast--QLD--Australia", places:GOLDCOAST_PLACES, sample:GOLDCOAST_SAMPLE,
+               airbnb:"Gold-Coast--QLD--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:GOLDCOAST_PLACES, sample:GOLDCOAST_SAMPLE,
                keySpots:[["gc_surfers","서퍼스 파라다이스"], ["gc_burleigh","벌리 헤즈"], ["gc_ool","공항"]] },
   cairns:    { id:"cairns", name:"케언즈", flag:"🇦🇺", center:{ lat:-16.9186, lng:145.7781 }, zoom:13, suffix:"Cairns QLD",
-               airbnb:"Cairns--QLD--Australia", places:CAIRNS_PLACES, sample:CAIRNS_SAMPLE,
+               airbnb:"Cairns--QLD--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:CAIRNS_PLACES, sample:CAIRNS_SAMPLE,
                keySpots:[["c_lagoon","에스플러네이드"], ["c_reef","리프 터미널"], ["c_cns","공항"]] },
+  hawaii:    { id:"hawaii", name:"하와이 (오아후)", flag:"🇺🇸", center:{ lat:21.2850, lng:-157.8357 }, zoom:13, suffix:"Honolulu HI",
+               airbnb:"Honolulu--HI--United-States", currency:"USD", visa:"미국 ESTA(전자여행허가) 신청 — 공식 사이트 esta.cbp.dhs.gov", plug:"A·B 타입 · 110V",
+               places:HAWAII_PLACES, sample:HAWAII_SAMPLE,
+               keySpots:[["hi_waikiki","와이키키"], ["hi_ala","알라 모아나"], ["hi_hnl","공항"]] },
+  bali:      { id:"bali", name:"발리", flag:"🇮🇩", center:{ lat:-8.6500, lng:115.2000 }, zoom:10, suffix:"Bali Indonesia",
+               airbnb:"Bali--Indonesia", currency:"IDR", visa:"인도네시아 전자 도착비자(e-VOA) 신청과 발리 관광세 납부", plug:"C·F 타입 · 230V",
+               places:BALI_PLACES, sample:BALI_SAMPLE,
+               keySpots:[["ba_seminyak","스미냑"], ["ba_ubud","우붓"], ["ba_dps","공항"]] },
+  paris:     { id:"paris", name:"파리", flag:"🇫🇷", center:{ lat:48.8566, lng:2.3522 }, zoom:13, suffix:"Paris France",
+               airbnb:"Paris--France", currency:"EUR", visa:"유럽 입국 조건 확인 (ETIAS 시행 여부)", plug:"C·E 타입 · 230V",
+               places:PARIS_PLACES, sample:PARIS_SAMPLE,
+               keySpots:[["pa_louvre","루브르"], ["pa_eiffel","에펠탑"], ["pa_vosges","마레"]] },
+  tokyo:     { id:"tokyo", name:"도쿄", flag:"🇯🇵", center:{ lat:35.6812, lng:139.7671 }, zoom:12, suffix:"Tokyo Japan",
+               airbnb:"Tokyo--Japan", currency:"JPY", visa:"Visit Japan Web 입국 정보 등록", plug:"A 타입 · 100V",
+               places:TOKYO_PLACES, sample:TOKYO_SAMPLE,
+               keySpots:[["tk_shibuya","시부야"], ["tk_parkhyatt","신주쿠"], ["tk_ginza","긴자"]] },
+  danang:    { id:"danang", name:"다낭 · 호이안", flag:"🇻🇳", center:{ lat:16.0544, lng:108.2022 }, zoom:12, suffix:"Da Nang Vietnam",
+               airbnb:"Da-Nang--Vietnam", currency:"VND", visa:"베트남 입국 조건 확인 (무비자 체류 기간·여권 유효기간)", plug:"A·C 타입 · 220V",
+               places:DANANG_PLACES, sample:DANANG_SAMPLE,
+               keySpots:[["dn_mykhe","미케 비치"], ["dn_hoian","호이안"], ["dn_dad","공항"]] },
 };

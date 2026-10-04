@@ -1,0 +1,25 @@
+name: Verify place coordinates
+
+# 추천 장소 좌표가 OpenStreetMap 위치와 크게 다르지 않은지 확인 (결과는 실행 로그에)
+on:
+  workflow_dispatch:
+    inputs:
+      cities:
+        description: "도시 id (빈칸이면 전체, 예: bali paris)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/verify-places.mjs ${{ inputs.cities }}

@@ -4,7 +4,7 @@ import { renderCityBar } from "./cities.js";
 import { icon } from "./icons.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
 import { dayLabel, renderDays } from "./render.js";
-import { byId, esc, gQuery, save, state } from "./store.js";
+import { CITY, byId, esc, gQuery, save, state } from "./store.js";
 
 // 준비 탭: D-day, 함께 쓰는 예산·지출(누가 냈는지, 반반 정산), 출발 전 체크리스트
 // 그리고 여행 중 "오늘" 카드(일정 탭 맨 위)
@@ -28,7 +28,7 @@ export function tripDay() {
 }
 
 /* ---------- 돈 ---------- */
-export const CURRENCIES = { AUD: "호주 달러", KRW: "원", USD: "미국 달러", JPY: "엔", EUR: "유로", NZD: "뉴질랜드 달러", GBP: "파운드", THB: "바트", VND: "동" };
+export const CURRENCIES = { AUD: "호주 달러", KRW: "원", USD: "미국 달러", JPY: "엔", EUR: "유로", IDR: "루피아", VND: "동", NZD: "뉴질랜드 달러", GBP: "파운드", THB: "바트", MXN: "멕시코 페소", MVR: "몰디브 루피야" };
 export const EXP_CATS = {
   flight: { label: "항공",     icon: "plane",    color: "#1c7ed6" },
   stay:   { label: "숙소",     icon: "bed",      color: "#7048e8" },
@@ -39,7 +39,7 @@ export const EXP_CATS = {
   etc:    { label: "기타",     icon: "receipt",  color: "#868e96" },
 };
 export function money(n, cur = state.currency || "AUD") {
-  const frac = cur === "KRW" || cur === "JPY" || cur === "VND" || !((n || 0) % 1) ? 0 : 2;   // 소수점은 센트가 있을 때만
+  const frac = ["KRW", "JPY", "VND", "IDR"].includes(cur) || !((n || 0) % 1) ? 0 : 2;   // 소수점은 센트가 있을 때만
   try { return new Intl.NumberFormat("ko-KR", { style: "currency", currency: cur, minimumFractionDigits: frac, maximumFractionDigits: frac }).format(n || 0); }
   catch (e) { return `${Math.round(n || 0).toLocaleString()} ${cur}`; }
 }
@@ -68,12 +68,12 @@ const TEMPLATE = [
   ["여권 유효기간 6개월 이상 남았는지 확인", 90],
   ["항공권 예약 (이름 철자는 여권과 똑같이)", 90],
   ["숙소 예약 확정", 60],
-  ["호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", 30],
+  [() => CITY.visa || "입국 조건(비자·전자여행허가) 확인", 30],
   ["여행자 보험 가입", 30],
   ["꼭 가고 싶은 곳 예약 (공연·레스토랑·투어)", 30],
   ["트래블 카드 만들고 환전", 14],
   ["eSIM·유심·로밍 준비", 7],
-  ["돼지코 어댑터 (호주는 I 타입)", 7],
+  [() => `전원 어댑터 챙기기${CITY.plug ? ` (${CITY.name}: ${CITY.plug})` : ""}`, 7],
   ["항공권·숙소·보험 서류 휴대폰에 저장", 3],
   ["온라인 체크인", 1],
   ["여권·지갑·충전기 마지막 확인", 0],
@@ -226,7 +226,7 @@ export function bindPrep() {
     const t = e.target.closest("[data-act],[data-ck],[data-ckdel],[data-exp]"); if (!t) return;
     if (t.dataset.act === "addExp") return openExp(null);
     if (t.dataset.act === "ckTemplate") {
-      state.checklist = (state.checklist || []).concat(TEMPLATE.map(([text, due], k) => ({ id: uid("c"), text, due, done: false, at: Date.now() + k })));
+      state.checklist = (state.checklist || []).concat(TEMPLATE.map(([text, due], k) => ({ id: uid("c"), text: typeof text === "function" ? text() : text, due, done: false, at: Date.now() + k })));
       save(); return renderPrep();
     }
     if (t.dataset.ck) {
