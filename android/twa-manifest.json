@@ -1,0 +1,66 @@
+{
+  "packageId": "io.github.camelkang.duriseo",
+  "host": "camelkang.github.io",
+  "name": "둘이서 · 커플 여행 지도",
+  "launcherName": "둘이서",
+  "display": "standalone",
+  "themeColor": "#0E7C7B",
+  "themeColorDark": "#000000",
+  "navigationColor": "#0E7C7B",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FFFFFF",
+  "enableNotifications": false,
+  "startUrl": "/honeymoon/",
+  "iconUrl": "https://camelkang.github.io/honeymoon/icons/icon-512.png",
+  "maskableIconUrl": "https://camelkang.github.io/honeymoon/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./upload.keystore",
+    "alias": "upload"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "함께 고르기",
+      "shortName": "함께 고르기",
+      "url": "https://camelkang.github.io/honeymoon/?tab=pick",
+      "chosenIconUrl": "https://camelkang.github.io/honeymoon/icons/icon-192.png"
+    },
+    {
+      "name": "일정",
+      "shortName": "일정",
+      "url": "https://camelkang.github.io/honeymoon/?tab=plan",
+      "chosenIconUrl": "https://camelkang.github.io/honeymoon/icons/icon-192.png"
+    },
+    {
+      "name": "준비",
+      "shortName": "준비",
+      "url": "https://camelkang.github.io/honeymoon/?tab=prep",
+      "chosenIconUrl": "https://camelkang.github.io/honeymoon/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-core 1.25.0",
+  "webManifestUrl": "https://camelkang.github.io/honeymoon/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://camelkang.github.io/honeymoon/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

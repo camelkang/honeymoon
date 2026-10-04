@@ -1,5 +1,5 @@
-// 신혼여행 지도 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도(OpenFreeMap 스타일·타일·글꼴)는 캐시해 둠
-const VERSION = "v3";
+// 둘이서 서비스 워커: 앱 화면은 오프라인에서도 열리고, 본 지도(OpenFreeMap 스타일·타일·글꼴)는 캐시해 둠
+const VERSION = "v4";
 const SHELL = `shell-${VERSION}`;
 const TILES = "tiles-v2";
 const SHELL_FILES = [

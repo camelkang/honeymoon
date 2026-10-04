@@ -127,3 +127,48 @@ test("만료되거나 없는 초대 코드는 거절", async ({ browser }) => {
   await D.page.click('[data-acc="join"]');
   await expect(D.page.locator("#accountBody .notice")).toContainText("찾을 수 없어요");
 });
+
+// 에뮬레이터 관리자 권한(Bearer owner)으로 규칙을 건너뛰고 실제로 지워졌는지 확인
+const PROJECT = "demo-honeymoon";
+const exists = async path => (await fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents/${path}`,
+  { headers: { Authorization: "Bearer owner" } })).status === 200;
+const authUsers = async () => ((await (await fetch(`http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}/accounts:query`,
+  { method: "POST", headers: { Authorization: "Bearer owner", "Content-Type": "application/json" }, body: "{}" })).json()).userInfo || []).map(u => u.localId);
+
+test("계정 삭제: 짝꿍에겐 일정이 남고, 마지막 사람이 지우면 서버에서 모두 사라짐", async ({ browser }) => {
+  const F = await person(browser);
+  await F.page.click(".tabs [data-tab=plan]");
+  await F.page.click("#btnSample");
+  await signIn(F, "fiona", "서연");
+  await expect.poll(() => status(F)).toBe("solo");
+  await F.page.click("#btnAccount");
+  await F.page.click('[data-acc="invite"]');
+  const code = (await F.page.textContent("#inviteCode")).replace(/\s/g, "");
+  await F.page.click('[data-acc="close"]');
+  const G = await person(browser, "&join=" + code);
+  await signIn(G, "gary", "지훈");
+  await expect.poll(() => status(F), { timeout: 20_000 }).toBe("connected");
+  const coupleId = await F.page.evaluate(() => window.__test.coupleId());
+  const [fUid, gUid] = await Promise.all([F, G].map(p => p.page.evaluate(() => window.__test.uid())));
+  await expect.poll(() => exists(`couples/${coupleId}/plans/sydney`), { timeout: 20_000 }).toBe(true);
+
+  // 지훈이 계정 삭제 → 서연은 다시 혼자, 일정은 서버에 그대로
+  await expect.poll(() => status(G), { timeout: 20_000 }).toBe("connected");
+  await expect(G.page.locator("#accountDlg")).toBeVisible();   // 초대 링크로 들어오면 계정 창이 열려 있음
+  await G.page.click('[data-acc="delete"]');
+  await expect.poll(() => status(G), { timeout: 20_000 }).toBe("signedout");
+  await expect.poll(() => status(F), { timeout: 20_000 }).toBe("waiting");
+  expect(await exists(`users/${gUid}`)).toBe(false);
+  expect(await exists(`couples/${coupleId}/plans/sydney`)).toBe(true);
+  expect(await authUsers()).not.toContain(gUid);
+  expect((await plan(G)).days[0].stops.length).toBeGreaterThan(0);   // 지훈 기기의 일정은 남음
+
+  // 서연도 삭제 → 커플·일정·초대·내 정보 모두 사라짐
+  await F.page.click("#btnAccount");
+  await F.page.click('[data-acc="delete"]');
+  await expect.poll(() => status(F), { timeout: 20_000 }).toBe("signedout");
+  for (const path of [`couples/${coupleId}`, `couples/${coupleId}/plans/sydney`, `couples/${coupleId}/meta/app`, `users/${fUid}`, `invites/${code}`])
+    expect(await exists(path), path).toBe(false);
+  expect(await authUsers()).not.toContain(fUid);
+  for (const p of [F, G]) expect(p.errors).toEqual([]);
+});

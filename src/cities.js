@@ -19,7 +19,7 @@ export function renderCityBar() {
     + `<option value="__add">➕ 다른 도시 추가…</option>`;
   sel.value = CITY.id;
   document.getElementById("btnCityDel").hidden = !CITY.custom;
-  document.title = `${CITY.name} 신혼여행 지도`;
+  document.title = `${CITY.name} · 둘이서`;
 }
 export function refreshCity(move) {
   if (move) M.view(CENTER, CITY.zoom);

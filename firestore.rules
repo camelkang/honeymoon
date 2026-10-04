@@ -41,7 +41,8 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'profiles', 'joinedAt'])
             && request.resource.data.profiles.diff(resource.data.profiles).affectedKeys().hasOnly([request.auth.uid]))
       );
-      allow delete: if false;
+      // 계정 삭제: 혼자 남은 멤버만 커플 문서를 지울 수 있음
+      allow delete: if signedIn() && resource.data.members == [request.auth.uid];
 
       // 도시별 일정(plans)·공유 설정(meta): 멤버만
       match /{sub=**} {

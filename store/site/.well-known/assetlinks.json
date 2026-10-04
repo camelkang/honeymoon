@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.camelkang.duriseo",
+      "sha256_cert_fingerprints": [
+        "B4:37:31:45:9E:A2:17:E3:5E:05:3C:6D:EA:4F:43:D0:36:DF:4F:89:93:10:C7:08:A5:7A:00:E3:60:A4:77:BC"
+      ]
+    }
+  }
+]

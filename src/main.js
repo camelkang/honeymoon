@@ -20,6 +20,9 @@ function start(adapter) {
   onTabShown("pick", renderPick);
   bindPrep(); renderPrep();
   onTabShown("prep", renderPrep);
+  // 홈 화면 바로가기(?tab=plan 등)로 열면 그 탭부터
+  const want = new URLSearchParams(location.search).get("tab");
+  if (["places", "pick", "plan", "stays", "prep"].includes(want)) return showTab(want);
   // 여행 중이면 하루에 한 번, 앱을 열 때 오늘 일정부터 보여줌
   try {
     if (tripDay() !== null && localStorage.getItem("today-opened") !== todayStr()) {

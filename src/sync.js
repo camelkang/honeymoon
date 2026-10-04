@@ -2,11 +2,11 @@
 import { initializeApp } from "firebase/app";
 import {
   getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut,
-  connectAuthEmulator, signInWithCredential,
+  connectAuthEmulator, signInWithCredential, deleteUser, reauthenticateWithPopup,
 } from "firebase/auth";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
-  doc, collection, getDoc, setDoc, updateDoc, onSnapshot, writeBatch, runTransaction,
+  doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction,
   serverTimestamp, deleteField, FieldPath, Timestamp, arrayRemove,
 } from "firebase/firestore";
 import { firebaseConfig } from "./firebase-config.js";
@@ -276,6 +276,37 @@ async function disconnect() {
   toast("연결을 해제했어요");
 }
 
+// 계정 삭제: 서버에 있는 내 정보를 지우고 로그인 계정도 없앰. 짝꿍과 함께 쓰던 일정은 짝꿍 쪽에 남고,
+// 혼자 쓰던(또는 짝꿍이 이미 떠난) 커플 데이터는 모두 지움. 이 기기에 저장된 일정은 그대로 둠
+async function deleteAccount() {
+  if (!confirm("계정을 삭제할까요?\n\n· 로그인 정보와 서버에 저장된 내 정보가 지워져요\n· 짝꿍과 연결돼 있었다면 함께 만든 일정은 짝꿍에게 남아요\n· 혼자 쓰던 일정은 서버에서 지워지고, 이 기기에만 남아요\n\n되돌릴 수 없어요.")) return;
+  const user = auth.currentUser, uid = me(), id = S.coupleId, c = S.couple;
+  stopSubs();
+  if (id && c) {
+    if (c.members.length > 1) {
+      await updateDoc(doc(db, "couples", id), { members: arrayRemove(uid), [`profiles.${uid}`]: deleteField() });
+    } else {
+      for (const sub of ["plans", "meta"]) {
+        const snap = await getDocs(collection(db, `couples/${id}/${sub}`));
+        await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+      }
+      if (c.inviteCode) await deleteDoc(doc(db, "invites", c.inviteCode)).catch(() => {});
+      await deleteDoc(doc(db, "couples", id));
+    }
+  }
+  await deleteDoc(doc(db, "users", uid));
+  try { await deleteUser(user); }
+  catch (e) {
+    if (e.code !== "auth/requires-recent-login") throw e;
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());   // 오래전에 로그인했다면 한 번 더 확인
+    await deleteUser(user);
+  }
+  try { localStorage.removeItem("voter-id"); } catch (e) {}
+  leaveLocal();
+  document.getElementById("accountDlg").close();
+  toast("계정을 삭제했어요. 이 기기의 일정은 그대로 남아 있어요.");
+}
+
 /* ---------- 로그인 ---------- */
 async function signIn() {
   const provider = new GoogleAuthProvider();
@@ -374,7 +405,9 @@ function renderAccount() {
   }
   if (st !== "signedout") box.innerHTML += `<div class="row" style="justify-content:space-between;margin-top:16px">
       ${st === "connected" ? `<button class="btn sm" data-acc="disconnect">연결 해제</button>` : "<span></span>"}
-      <button class="btn sm" data-acc="signout">로그아웃</button></div>`;
+      <button class="btn sm" data-acc="signout">로그아웃</button></div>
+      <p class="acc-foot"><a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <button class="linkish" data-acc="delete">계정 삭제</button></p>`;
+  else box.innerHTML += `<p class="acc-foot"><a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>`;
   const input = document.getElementById("joinCode");
   if (input && typed) input.value = typed;
 }
@@ -392,6 +425,7 @@ function bindAccountUI() {
     if (act === "invite") return run(createInvite);
     if (act === "join") { const v = document.getElementById("joinCode").value; return run(() => joinWithCode(v)); }
     if (act === "disconnect") return run(disconnect);
+    if (act === "delete") return run(deleteAccount);
     const code = S.couple && S.couple.inviteCode;
     if (act === "share" && code) {
       const text = `우리 여행 지도에 초대할게! 코드: ${code.slice(0, 3)} ${code.slice(3)}`;
@@ -425,6 +459,7 @@ export function initSync() {
       signIn: (uid, name) => signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify({ sub: uid, email: `${uid}@test.dev`, name, email_verified: true }))),
       read: path => getDoc(doc(db, path)).then(d => d.exists() ? d.data() : null),
       coupleId: () => S.coupleId,
+      uid: () => me(),
       status,
       flush,
     };
