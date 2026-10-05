@@ -1,9 +1,8 @@
-import { dateOfDay } from "./bookings.js";
 import { icon } from "./icons.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
 import { money, todayStr, totals } from "./prep.js";
 import { dayLabel } from "./render.js";
-import { byId, esc, km, save, state } from "./store.js";
+import { byId, dateOfDay, esc, km, save, state } from "./store.js";
 
 // 여행 일기: 날마다 둘이 각자 기분 + 한 줄, 다녀온 장소 별점, 그리고 "우리 여행 돌아보기"
 // 저장: state.diary[날짜순번][사람] = { mood, text, at }, state.ratings[장소][사람] = 1~5 (둘이 동시에 써도 안 겹침)

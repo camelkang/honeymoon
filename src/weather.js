@@ -1,5 +1,5 @@
 import { icon } from "./icons.js";
-import { CITY, state } from "./store.js";
+import { CITY, dateOfDay, state } from "./store.js";
 
 // 일정 날짜별 날씨: 16일 안은 예보, 그보다 먼 날은 작년 같은 날 날씨로 분위기만 (Open-Meteo, 키 불필요)
 
@@ -38,8 +38,8 @@ export function weatherChip(date) {
 let loading = false, failedAt = 0;
 // 여행 날짜에 필요한 날씨를 불러와 캐시. 새로 받은 게 있으면 onDone 호출
 export async function loadWeather(onDone) {
-  if (!state.startDate || loading || Date.now() - failedAt < 10 * 60e3) return;
-  const dates = state.days.map((_, i) => addDays(state.startDate, i));
+  const dates = state.days.map((_, i) => dateOfDay(i)).filter(Boolean).sort();
+  if (!dates.length || loading || Date.now() - failedAt < 10 * 60e3) return;
   const today = iso(new Date()), last = addDays(today, FORECAST_DAYS - 1);
   const c = cache[place()] || (cache[place()] = { days: {}, forecastAt: 0 });
   const needForecast = dates.filter(d => d >= today && d <= last);

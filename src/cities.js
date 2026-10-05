@@ -5,13 +5,17 @@ import { renderPick } from "./pick.js";
 import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, renderChips, renderDays } from "./render.js";
 import { CENTER, CITY, allCities, app, esc, save, useCity } from "./store.js";
+import { cityRanges, hasTrip } from "./trip.js";
+import { rangeText } from "./tripui.js";
 
 /* ============================== 도시 전환 ============================== */
 export function cityOptionLabel(c) {
   const plan = app.plans[c.id];
   const n = plan ? plan.days.reduce((a, d) => a + d.stops.length, 0) : 0;
   let extra = "";
-  if (plan && plan.startDate) { const [, m, d] = plan.startDate.split("-"); extra = ` · ${+m}/${+d}~`; }
+  const ranges = hasTrip() ? cityRanges(c.id) : [];
+  if (ranges.length) extra = " · " + ranges.map(rangeText).join(", ");
+  else if (plan && plan.startDate) { const [, m, d] = plan.startDate.split("-"); extra = ` · ${+m}/${+d}~`; }
   else if (n) extra = ` · ${n}곳`;
   return `${c.flag || "📍"} ${c.name}${extra}`;
 }

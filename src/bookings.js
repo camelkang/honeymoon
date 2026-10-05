@@ -1,7 +1,8 @@
 import { toast } from "./actions.js";
 import { icon } from "./icons.js";
 import { ME, nameOf } from "./pick.js";
-import { esc, save, state } from "./store.js";
+import { app, esc, save, state } from "./store.js";
+import { hasTrip, tripCities } from "./trip.js";
 
 // 예약 정보 모음: 항공·숙소·투어 등 예약번호·시간·바우처 링크를 한곳에. 날짜가 맞는 일정 카드와 오늘 카드에도 보여줌
 
@@ -17,13 +18,13 @@ const uid = () => "b" + Date.now().toString(36) + Math.random().toString(36).sli
 const md = s => { if (!s) return ""; const [, m, d] = s.split("-"); const wd = "일월화수목금토"[new Date(s + "T00:00:00").getDay()]; return `${+m}/${+d}(${wd})`; };
 const when = (date, time) => [md(date), time].filter(Boolean).join(" ");
 
-export function dateOfDay(i) {
-  if (!state.startDate) return null;
-  const d = new Date(state.startDate + "T00:00:00"); d.setDate(d.getDate() + i);
-  const p = n => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-const sorted = () => [...(state.bookings || [])].sort((a, b) =>
+// 여러 도시 일정이면 일정표에 있는 모든 도시의 예약을 함께 봄 (시드니에서 넣은 케언즈행 항공편이 케언즈 날에도 보이게)
+const bookingPlans = () => {
+  const plans = hasTrip() ? tripCities().map(c => app.plans[c]).filter(Boolean) : [];
+  return plans.includes(state) ? plans : [state, ...plans];
+};
+const findBooking = id => { for (const plan of bookingPlans()) { const b = (plan.bookings || []).find(x => x.id === id); if (b) return { b, plan }; } return null; };
+const sorted = () => bookingPlans().flatMap(p => p.bookings || []).sort((a, b) =>
   (a.date || "9999").localeCompare(b.date || "9999") || (a.time || "").localeCompare(b.time || "") || (a.at || 0) - (b.at || 0));
 
 // 그날 일어나는 예약 (숙소는 체크인·체크아웃 날 모두)
@@ -70,7 +71,7 @@ export function bookingsCardHtml() {
 let afterChange = () => {};
 export function openBooking(id, preset = {}) {
   const dlg = document.getElementById("bookDlg"), f = document.getElementById("bookForm");
-  const b = id ? (state.bookings || []).find(x => x.id === id) : null;
+  const b = id ? (findBooking(id) || {}).b : null;
   f.reset();
   dlg.dataset.id = b ? b.id : "";
   document.getElementById("bookDlgTitle").textContent = b ? "예약 고치기" : "예약 추가";
@@ -98,9 +99,9 @@ function submit() {
   if (!BOOK_TYPES[type].end) { data.endDate = ""; data.endTime = ""; }
   if (!data.title && !data.code) { f.title.focus(); return toast("이름이나 예약번호를 넣어 주세요"); }
   if (data.link && !/^https?:\/\//i.test(data.link)) data.link = "https://" + data.link;
-  state.bookings = state.bookings || [];
-  const b = state.bookings.find(x => x.id === dlg.dataset.id);
-  if (b) Object.assign(b, data); else state.bookings.push({ id: uid(), at: Date.now(), by: ME, ...data });
+  const found = findBooking(dlg.dataset.id);
+  if (found) Object.assign(found.b, data);
+  else (state.bookings = state.bookings || []).push({ id: uid(), at: Date.now(), by: ME, ...data });
   save(); dlg.close(); afterChange();
 }
 
@@ -120,7 +121,8 @@ export function bindBookings(onChange) {
   document.getElementById("bookCancel").onclick = () => dlg.close();
   document.getElementById("bookDel").onclick = () => {
     if (!confirm("이 예약 정보를 지울까요?")) return;
-    state.bookings = (state.bookings || []).filter(x => x.id !== dlg.dataset.id);
+    const found = findBooking(dlg.dataset.id);
+    if (found) found.plan.bookings = found.plan.bookings.filter(x => x.id !== dlg.dataset.id);
     save(); dlg.close(); afterChange();
   };
   // 어디서든(준비 탭·일정 카드·오늘 카드) 예약 칩을 누르면 열림, 예약번호는 눌러서 복사

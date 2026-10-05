@@ -4,7 +4,8 @@ import { GMODE, MODE_ICON, apiErrors, fmtDist, fmtDur, gTextSearch, getLeg } fro
 import { icon } from "./icons.js";
 import { M } from "./map.js";
 import { buildMarkers, openPlace, renderChips, renderDays } from "./render.js";
-import { CENTER, CITY, byId, esc, km, save, state } from "./store.js";
+import { CENTER, CITY, byId, esc, isoAdd, km, save, state } from "./store.js";
+import { cityRanges, hasTrip } from "./trip.js";
 
 /* ============================== 에어비앤비 숙소 후보 ============================== */
 // 에어비앤비는 공개 API가 없어 매물을 자동으로 가져올 수 없음 → 지도 영역으로 검색을 열고, 고른 숙소를 후보로 저장해 비교
@@ -16,11 +17,9 @@ export let pickFn = null;
 export function setPickFn(f) { pickFn = f; }   // 지도 클릭으로 위치를 받을 콜백
 export let editingStay = null;
 
-export function isoAdd(iso, n) {
-  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 export function stayDates() {
+  // 여러 도시 일정이면 이 도시에 처음 머무는 구간
+  if (hasTrip()) { const r = cityRanges(CITY.id)[0]; return r ? { checkin: r.from, checkout: isoAdd(r.to, 1) } : null; }
   return state.startDate ? { checkin: state.startDate, checkout: isoAdd(state.startDate, tripNights()) } : null;
 }
 export function airbnbSearchUrl() {

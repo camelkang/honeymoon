@@ -161,7 +161,9 @@ export function bindUI() {
   document.getElementById("btnSample").onclick = () => {
     if (state.days.some(d => d.stops.length) && !confirm("현재 일정을 추천 일정으로 바꿀까요?")) return;
     if (!SAMPLE) return;
-    state.days = SAMPLE.map(d => ({ stops:[...d.stops], note:d.note }));
+    // 여러 도시 일정표로 날짜가 정해진 도시는 날짜 칸은 그대로 두고 장소만 채움
+    if (state.days.some(d => "date" in d)) state.days.forEach((d, k) => { if (SAMPLE[k]) { d.stops = [...SAMPLE[k].stops]; d.note = SAMPLE[k].note; } });
+    else state.days = SAMPLE.map(d => ({ stops:[...d.stops], note:d.note }));
     state.focusDay = null; save(); renderDays();
     const far = new Set(["blueview", "m_gor", "m_phillip", "m_yarra", "c_mossman"]);
     M.fit(state.days.flatMap(d => d.stops).map(byId).filter(p => p && !far.has(p.id)));

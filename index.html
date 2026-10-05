@@ -70,9 +70,10 @@
     </div>
 
     <div class="pane" id="pane-plan">
+      <div id="tripBar"></div>
       <div class="plan-controls">
-        <label class="field"><span>출발일</span><input type="date" id="startDate"></label>
-        <div class="field"><span>일수</span>
+        <label class="field f-start"><span>출발일</span><input type="date" id="startDate"></label>
+        <div class="field f-days"><span>일수</span>
           <div class="stepper"><button class="icon-btn sm" id="dayMinus" aria-label="하루 빼기">−</button><b id="dayCount">5</b><button class="icon-btn sm" id="dayPlus" aria-label="하루 더하기">+</button></div>
         </div>
         <label class="field"><span>이동</span>
@@ -151,6 +152,17 @@
       <button class="btn primary" type="submit">저장</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="tripDlg" aria-labelledby="tripDlgTitle">
+  <div class="dlg-head"><h2 id="tripDlgTitle">여러 도시 일정표</h2></div>
+  <div id="tripBody" class="form"></div>
+  <div class="row end">
+    <button class="btn danger" type="button" id="tripDel" hidden>일정표 없애기</button>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="tripCancel">취소</button>
+    <button class="btn primary" type="button" id="tripSave">저장</button>
+  </div>
 </dialog>
 
 <dialog id="bookDlg" aria-labelledby="bookDlgTitle">

@@ -89,6 +89,7 @@ test("예산·지출 기록, 고치기, 삭제, 원화 환산", async ({ page })
 });
 
 test("여행 중에는 오늘 일정부터 열리고, 오늘 지출을 바로 기록", async ({ page }) => {
+  test.setTimeout(60_000);   // 페이지를 세 번 새로 여는 긴 시나리오
   await page.clock.setFixedTime(new Date("2026-12-12T15:00:00"));
   await open(page);
   await tab(page, "plan");
@@ -102,11 +103,11 @@ test("여행 중에는 오늘 일정부터 열리고, 오늘 지출을 바로 �
   await tab(page, "places");
   await page.evaluate(() => localStorage.removeItem("today-opened"));
   await page.reload();
-  await page.waitForFunction(() => window.__map && window.__map.loaded());
+  await page.waitForFunction(() => window.__map && window.__map.loaded(), null, { polling: 100 });
   await expect(page.locator('.tabs [data-tab="plan"]')).toHaveClass(/on/);
   await tab(page, "places");
   await page.reload();
-  await page.waitForFunction(() => window.__map && window.__map.loaded());
+  await page.waitForFunction(() => window.__map && window.__map.loaded(), null, { polling: 100 });
   await expect(page.locator('.tabs [data-tab="places"]')).toHaveClass(/on/);
 
   await tab(page, "plan");

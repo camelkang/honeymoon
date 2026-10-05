@@ -610,3 +610,24 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .recap-days { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
 .recap-days li { display: flex; flex-direction: column; gap: 2px; }
 .recap-days small { color: var(--ink-3); }
+
+/* ===== 여러 도시 일정표 ===== */
+#pane-plan.trip-on .f-start, #pane-plan.trip-on .f-days { display: none; }
+.trip-add { display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--line-strong); background: transparent; color: var(--ink-2); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+.trip-add svg { color: var(--brand); }
+.trip-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.trip-segs { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.trip-segs::-webkit-scrollbar { display: none; }
+.trip-seg { flex: none; display: flex; flex-direction: column; align-items: flex-start; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 5px 10px; font: inherit; cursor: pointer; }
+.trip-seg span { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.trip-seg small { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.trip-seg.on { border-color: var(--brand); background: var(--brand-soft); }
+.trip-arrow { color: var(--ink-3); font-weight: 700; }
+.trip-stops { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.trip-stop { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; gap: 4px 6px; align-items: center; padding: 8px; border-radius: 12px; background: var(--surface-2); }
+.trip-stop select { grid-column: 1 / 4; }
+.trip-stop [data-tsdel] { grid-column: 4; grid-row: 1; }
+.trip-stop input { background: var(--surface); }
+.trip-stop input, .trip-stop select { margin: 0 !important; font-size: 13px; padding: 7px 6px; min-width: 0; }
+.trip-preview { margin: 12px 0 4px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--brand-soft); font-size: 13.5px; line-height: 1.6; }
+.trip-preview small { color: var(--ink-2); }

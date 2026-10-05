@@ -5,7 +5,7 @@ process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 
 export default defineConfig({
   testDir: "tests",
-  timeout: 30_000,
+  timeout: 60_000,   // 새로고침이 여러 번 들어가는 시나리오가 있어 여유 있게
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {

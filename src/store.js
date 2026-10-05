@@ -24,7 +24,7 @@ export function normalizePlan(s) {
   if (!s.stays && Array.isArray(s.cats) && !s.cats.includes("stay")) s.cats.push("stay");
   return Object.assign(defaultState(), s);
 }
-export const emptyApp = () => ({ current: "sydney", plans: {}, myCities: [] });
+export const emptyApp = () => ({ current: "sydney", plans: {}, myCities: [], trip: null });
 export function loadApp() {
   try {
     const a = JSON.parse(localStorage.getItem(APP_KEY));
@@ -66,6 +66,23 @@ useCity(app.current);
 save();   // v1 → v2 이전 결과를 바로 저장
 
 export const allPlaces = () => PLACES.concat(state.custom, state.stays);
+// 다른 도시의 장소 찾기 (여러 도시 일정 이미지 등)
+export function placeIn(cityId, id) {
+  const c = allCities()[cityId], plan = app.plans[cityId] || {};
+  return ((c && c.places) || []).concat(plan.custom || [], plan.stays || []).find(p => p.id === id) || null;
+}
+
+/* ---------- 날짜 ---------- */
+export function isoAdd(iso, n) {
+  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+// i번째 날의 날짜. 여러 도시 일정이면 날마다 정해진 날짜(date), 아니면 출발일부터 차례로
+export function dateOfDay(i, plan = state) {
+  const d = plan.days[i];
+  if (d && "date" in d) return d.date || null;   // date: "" = 일정표에서 빠진 날(날짜 미정)
+  return plan.startDate ? isoAdd(plan.startDate, i) : null;
+}
 export const tempPlaces = {};   // 구글 검색/클릭으로 열어본, 아직 저장 안 한 장소
 export const byId = id => allPlaces().find(p => p.id === id) || tempPlaces[id];
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

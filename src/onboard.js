@@ -62,7 +62,7 @@ function render() {
   </div>`;
 }
 
-function applyTrip() {
+function applyChoices() {
   if (start) state.startDate = start;
   const want = Math.max(1, Math.min(21, days));
   if (useSample && SAMPLE && !state.days.some(d => d.stops.length)) {
@@ -104,7 +104,7 @@ export function bindOnboard() {
     if (act === "back") { step--; return render(); }
     if (act === "next") {
       if (step === 0) days = Math.max(state.days.length, SAMPLE ? SAMPLE.length : 0) || 5;
-      if (step === 1) applyTrip();
+      if (step === 1) applyChoices();
       step++; return render();
     }
     if (act === "solo") return finish();

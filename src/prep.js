@@ -1,12 +1,13 @@
 import { toast } from "./actions.js";
-import { bookingChips, bookingsCardHtml, dateOfDay } from "./bookings.js";
+import { bookingChips, bookingsCardHtml } from "./bookings.js";
 import { renderCityBar } from "./cities.js";
 import { recapHtml } from "./diary.js";
 import { icon } from "./icons.js";
 import { offlineCardHtml } from "./offline.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
 import { dayLabel, renderDays } from "./render.js";
-import { CITY, byId, esc, gQuery, save, state } from "./store.js";
+import { CITY, allCities, app, byId, dateOfDay, esc, gQuery, save, state } from "./store.js";
+import { hasTrip, segments, tripDates } from "./trip.js";
 import { weatherChip } from "./weather.js";
 
 // 준비 탭: D-day, 함께 쓰는 예산·지출(누가 냈는지, 반반 정산), 출발 전 체크리스트
@@ -20,14 +21,17 @@ export function todayStr(now = new Date()) {
   return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
 }
 // 출발까지 남은 날 (오늘 출발이면 0, 지났으면 음수). 출발일이 없으면 null
+// 여러 도시 일정이면 전체 여행의 첫날 기준
 export function daysLeft() {
-  if (!state.startDate) return null;
-  return Math.round((localDate(state.startDate) - localDate(todayStr())) / DAY);
+  const start = hasTrip() ? app.trip.start : state.startDate;
+  if (!start) return null;
+  return Math.round((localDate(start) - localDate(todayStr())) / DAY);
 }
-// 여행 중이면 오늘이 며칠째인지(0부터), 아니면 null
+export const tripLength = () => hasTrip() ? tripDates().length : state.days.length;
+// 이 도시 일정에서 오늘이 몇 번째 칸인지(0부터), 오늘이 이 도시 날이 아니면 null
 export function tripDay() {
-  const d = daysLeft();
-  return d !== null && d <= 0 && -d < state.days.length ? -d : null;
+  const today = todayStr(), k = state.days.findIndex((_, i) => dateOfDay(i) === today);
+  return k < 0 ? null : k;
 }
 
 /* ---------- 돈 ---------- */
@@ -126,12 +130,15 @@ export function renderPrep() {
   const list = state.checklist || [];
   const doneN = list.filter(c => c.done).length;
 
+  const total = tripLength(), onTrip = left !== null && left <= 0 && -left < total;
+  const route = hasTrip() ? segments().map(sg => (allCities()[sg.city] || {}).name).filter(Boolean).join(" → ") : "";
+  const startLabel = (() => { const s = hasTrip() ? app.trip.start : state.startDate; if (!s) return ""; const d = new Date(s + "T00:00:00"); return `${d.getMonth() + 1}/${d.getDate()}(${"일월화수목금토"[d.getDay()]})`; })();
   const hero = left === null
     ? `<div class="dday-hero"><div><small>출발일을 정하면</small><b>D-day</b></div><label class="field"><span>출발일</span><input type="date" data-prep="startDate"></label></div>`
-    : `<div class="dday-hero ${today !== null ? "on-trip" : ""}">
-        <div><small>${today !== null ? "여행 중" : left > 0 ? "출발까지" : "다녀온 지"}</small>
-        <b>${today !== null ? `${today + 1}일째` : left > 0 ? `D-${left}` : left === 0 ? "D-Day" : `${-left - state.days.length + 1}일`}</b></div>
-        <div class="dday-meta">${esc(dayLabel(0).replace(/^Day 1 · /, ""))} 출발 · ${state.days.length}일<br>
+    : `<div class="dday-hero ${onTrip ? "on-trip" : ""}">
+        <div><small>${onTrip ? "여행 중" : left > 0 ? "출발까지" : "다녀온 지"}</small>
+        <b>${onTrip ? `${-left + 1}일째` : left > 0 ? `D-${left}` : left === 0 ? "D-Day" : `${-left - total + 1}일`}</b></div>
+        <div class="dday-meta">${esc(startLabel)} 출발 · ${total}일<br>${route ? `${esc(route)}<br>` : ""}
         ${list.length ? `준비 ${doneN}/${list.length}` : ""}</div>
       </div>`;
 

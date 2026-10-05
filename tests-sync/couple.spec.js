@@ -18,6 +18,7 @@ const status = p => p.page.evaluate(() => window.__test.status());
 const plan = (p, city = "sydney") => p.page.evaluate(c => JSON.parse(localStorage.getItem("honeymoon-app-v2")).plans[c], city);
 
 test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", async ({ browser }) => {
+  test.setTimeout(180_000);   // 연결부터 해제까지 한 번에 확인하는 긴 시나리오
   // 1) 민지: 혼자 추천 일정을 만들어 두고 초대 코드 생성
   const A = await person(browser);
   await A.page.click(".tabs [data-tab=plan]");
@@ -110,6 +111,23 @@ test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", a
   await B.page.locator(".maplibregl-popup .cm-form [name=t]").press("Enter");
   await expect.poll(async () => Object.values((await plan(A)).comments || {}).flatMap(b => Object.values(b)).map(c => c.text).sort(), { timeout: 20_000 })
     .toEqual(["수영복 챙겨서 꼭 가자!", "좋아!"]);
+
+  // 4-5) 여러 도시 일정표: 민지가 만들면 준호에게도 같은 날짜 칸이 생김
+  await A.page.click(".tabs [data-tab=plan]");
+  await A.page.click('#tripBar [data-trip="edit"]');
+  await A.page.locator('#tripDlg [data-tf="start"]').fill("2026-11-15");
+  await A.page.locator('#tripDlg [data-tf="end"]').fill("2026-11-24");
+  await A.page.locator('#tripDlg [data-tf="base"]').selectOption("sydney");
+  await A.page.locator('#tripDlg [data-trip="addStop"]').click();
+  await A.page.locator('#tripDlg [data-ts="0|city"]').selectOption("cairns");
+  await A.page.locator('#tripDlg [data-ts="0|from"]').fill("2026-11-17");
+  await A.page.locator('#tripDlg [data-ts="0|to"]').fill("2026-11-19");
+  await A.page.click("#tripSave");
+  await expect.poll(async () => (await plan(B, "cairns") || { days: [] }).days.map(d => d.date), { timeout: 20_000 })
+    .toEqual(["2026-11-17", "2026-11-18", "2026-11-19"]);
+  await B.page.click(".tabs [data-tab=plan]");
+  await expect(B.page.locator("#tripBar .trip-seg")).toHaveCount(3, { timeout: 20_000 });
+  expect((await plan(B)).days.map(d => d.date).slice(0, 3)).toEqual(["2026-11-15", "2026-11-16", "2026-11-20"]);
 
   // 5) 이미 연결된 초대 코드로는 제3자가 들어올 수 없고, 커플 데이터도 읽을 수 없음
   const C = await person(browser);

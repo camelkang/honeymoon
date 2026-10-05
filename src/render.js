@@ -1,5 +1,5 @@
 import { addToDay, removeCustom, saveTemp } from "./actions.js";
-import { bookingChips, dateOfDay } from "./bookings.js";
+import { bookingChips } from "./bookings.js";
 import { commentCount, commentsHtml } from "./comments.js";
 import { CATS, DAY_COLORS } from "./data.js";
 import { diaryHtml, ratingHtml } from "./diary.js";
@@ -10,7 +10,9 @@ import { isMatch, myVote, partnerVote, renderSuggest, toggleLike } from "./pick.
 import { todayCardHtml, tripDay } from "./prep.js";
 import { peekSheet } from "./sheet.js";
 import { renderStays, stayPopupHtml } from "./stays.js";
-import { CENTER, CITY, PLACES, SAMPLE, allPlaces, byId, esc, gDirUrl, gPlaceUrl, km, state, tempPlaces } from "./store.js";
+import { CENTER, CITY, PLACES, SAMPLE, allPlaces, byId, dateOfDay, esc, gDirUrl, gPlaceUrl, km, state, tempPlaces } from "./store.js";
+import { hasTrip, tripDayNo } from "./trip.js";
+import { renderTripBar } from "./tripui.js";
 import { loadWeather, weatherChip } from "./weather.js";
 
 /* ============================== 렌더링 ============================== */
@@ -54,11 +56,13 @@ export function buildMarkers() {
   filter();
 }
 
+// 여러 도시 일정이면 Day 번호는 전체 여행 기준 (시드니 Day 1·2 → 케언즈 Day 3·4·5 → 시드니 Day 6~)
 export function dayLabel(i) {
-  if (!state.startDate) return `Day ${i+1}`;
-  const d = new Date(state.startDate + "T00:00:00"); d.setDate(d.getDate() + i);
+  const date = dateOfDay(i);
+  if (!date) return hasTrip() && state.days[i] && "date" in state.days[i] ? "날짜 미정" : `Day ${i+1}`;
+  const d = new Date(date + "T00:00:00");
   const wd = "일월화수목금토"[d.getDay()];
-  return `Day ${i+1} · ${d.getMonth()+1}/${d.getDate()}(${wd})`;
+  return `Day ${(hasTrip() && tripDayNo(date)) || i + 1} · ${d.getMonth()+1}/${d.getDate()}(${wd})`;
 }
 
 export function popupHtml(p) {
@@ -193,6 +197,7 @@ export function refreshWeather() {
   document.querySelectorAll("[data-wx]").forEach(el => { el.innerHTML = weatherChip(el.dataset.wx); });
 }
 export function renderDays() {
+  renderTripBar();
   document.getElementById("dayCount").textContent = state.days.length;
   document.getElementById("btnSample").hidden = !SAMPLE;
   document.getElementById("startDate").value = state.startDate;

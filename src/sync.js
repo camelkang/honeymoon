@@ -18,6 +18,7 @@ import { icon } from "./icons.js";
 import { setPeople, renderPick, isMatch } from "./pick.js";
 import { renderPrep } from "./prep.js";
 import { refreshOpenComments } from "./comments.js";
+import { applyTrip } from "./trip.js";
 
 const EMULATOR = !!import.meta.env.VITE_FIREBASE_EMULATOR;
 const fb = initializeApp(EMULATOR ? { ...firebaseConfig, projectId: "demo-honeymoon", apiKey: "demo-key" } : firebaseConfig);
@@ -51,7 +52,7 @@ const byId = list => Object.fromEntries((list || []).map(p => [p.id, clean(p)]))
 function toFields(plan) {
   const f = { v: 1, dayCount: plan.days.length };
   SHARED.forEach(k => { f[k] = clean(plan[k]); });
-  plan.days.forEach((d, i) => { f["d" + i] = clean({ stops: d.stops || [], note: d.note || "", times: d.times || {} }); });
+  plan.days.forEach((d, i) => { f["d" + i] = clean({ stops: d.stops || [], note: d.note || "", times: d.times || {}, ...("date" in d ? { date: d.date || "" } : {}) }); });
   MAPS.forEach(k => { f[k] = byId(plan[k]); });
   NESTED.forEach(k => { f[k] = clean(plan[k] || {}); });
   return f;
@@ -109,9 +110,11 @@ async function flush() {
     synced[key] = next;
   }
   // 직접 추가한 도시(퍼스 등)는 둘이 함께 봄
-  const metaNext = snapshotOf({ myCities: byId(app.myCities) }), metaKey = "meta/app";
+  // 여러 도시 일정표(trip)도 둘이 함께 봄
+  const metaFields = () => ({ myCities: byId(app.myCities), trip: clean(app.trip || null) });
+  const metaNext = snapshotOf(metaFields()), metaKey = "meta/app";
   const metaRef = doc(db, `${base}/meta/app`);
-  if (!synced[metaKey]) writes.push(setDoc(metaRef, { myCities: byId(app.myCities) }, { merge: true }));
+  if (!synced[metaKey]) writes.push(setDoc(metaRef, metaFields(), { merge: true }));
   else {
     const pairs = diff(synced[metaKey], metaNext).map(([fp, v]) => [fp, v]);
     if (pairs.length) writes.push(updateDoc(metaRef, ...pairs.flat()));
@@ -200,8 +203,17 @@ function subscribeData(coupleId) {
     const remoteIds = new Set(remote.map(c => c.id));
     const before = app.myCities.length;
     if (synced["meta/app"]) app.myCities = app.myCities.filter(c => remoteIds.has(c.id) || !synced["meta/app"]["myCities\u0000" + c.id]);
-    synced["meta/app"] = snapshotOf({ myCities: byId(app.myCities) });
-    if (added || app.myCities.length !== before) { S.applying = true; save(); S.applying = false; renderCityBar(); }
+    // 일정표: 서버에 있으면 따름 (처음 연결할 때 서버에 없고 내 기기에만 있으면 다음 올리기 때 올라감)
+    const remoteTrip = "trip" in snap.data() ? snap.data().trip : undefined;
+    const keepLocal = !remoteTrip && !synced["meta/app"] && !!app.trip;   // 처음 연결: 서버엔 없고 내 기기에만 있음 → 올림
+    const tripChanged = !keepLocal && remoteTrip !== undefined && JSON.stringify(remoteTrip || null) !== JSON.stringify(app.trip || null);
+    if (tripChanged) { app.trip = remoteTrip || null; applyTrip(); }
+    synced["meta/app"] = snapshotOf({ myCities: byId(app.myCities), trip: keepLocal ? null : clean(app.trip || null) });
+    if (keepLocal) scheduleFlush();
+    if (added || tripChanged || app.myCities.length !== before) {
+      S.applying = true; save(); S.applying = false;
+      renderCityBar(); if (tripChanged) refreshView();
+    }
   }));
 }
 

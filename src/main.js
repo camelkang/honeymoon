@@ -2,7 +2,7 @@ import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./styles.css";
 import { bindUI, toast } from "./actions.js";
 import { bindBookings } from "./bookings.js";
-import { renderCityBar } from "./cities.js";
+import { renderCityBar, switchCity } from "./cities.js";
 import { bindComments } from "./comments.js";
 import { bindDiary } from "./diary.js";
 import { bindDrag } from "./drag.js";
@@ -16,6 +16,9 @@ import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
 import { setupPWA } from "./pwa.js";
 import { buildMarkers, filter, openPlace, renderChips, renderDays } from "./render.js";
 import { bindSheet, onTabShown, showTab } from "./sheet.js";
+import { CITY } from "./store.js";
+import { cityOf, hasTrip, inTrip } from "./trip.js";
+import { bindTrip } from "./tripui.js";
 
 function start(adapter) {
   setMap(adapter);
@@ -28,6 +31,7 @@ function start(adapter) {
   bindDrag(renderDays);
   bindOffline(toast);
   bindDiary((kind, id) => { if (kind === "rating") openPlace(id, false); else { renderDays(); renderPrep(); } });
+  bindTrip();
   bindPrep(); renderPrep();
   bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);
@@ -36,8 +40,10 @@ function start(adapter) {
   // 홈 화면 바로가기(?tab=plan 등)로 열면 그 탭부터
   const want = new URLSearchParams(location.search).get("tab");
   if (["places", "pick", "plan", "stays", "prep"].includes(want)) return showTab(want);
-  // 여행 중이면 하루에 한 번, 앱을 열 때 오늘 일정부터 보여줌
+  // 여행 중이면 하루에 한 번, 앱을 열 때 오늘 일정부터 보여줌 (여러 도시 일정이면 오늘 머무는 도시로)
   try {
+    const today = todayStr();
+    if (hasTrip() && inTrip(today) && cityOf(today) !== CITY.id && localStorage.getItem("today-opened") !== today) switchCity(cityOf(today));
     if (tripDay() !== null && localStorage.getItem("today-opened") !== todayStr()) {
       localStorage.setItem("today-opened", todayStr());
       showTab("plan");
