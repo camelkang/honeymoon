@@ -22,7 +22,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: node scripts/read-gmaps-list.mjs "${{ inputs.url }}"
+      - run: node scripts/read-gmaps-list.mjs "$LIST_URL"
+        env:
+          LIST_URL: ${{ inputs.url }}   # 입력값은 환경 변수로 넘김 (셸 주입 방지)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
