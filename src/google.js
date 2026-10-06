@@ -26,7 +26,7 @@ export async function gApi(service, url, body, fieldMask) {
   }
   return data;
 }
-// 사용자에게는 무엇이 대신 보이는지만 짧게 알리고(닫기 가능), 원인(영문 오류)은 ⚙️ 설정에서 확인
+// 사용자에게는 무엇이 대신 보이는지만 짧게 알리고(닫기 가능), 원인(영문 오류)은 개발자 콘솔에만
 let noticeClosed = false;
 export function apiProblemText() {
   return Object.entries(apiErrors).map(([k, m]) => `${API_NAMES[k]}: ${m}`).join("\n");

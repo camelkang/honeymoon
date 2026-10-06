@@ -1,7 +1,7 @@
 import { addCity, deleteCity, refreshCity, renderCityBar, switchCity } from "./cities.js";
 import { CATS } from "./data.js";
-import { GMODE, apiProblemText } from "./google.js";
-import { M, USER_KEY } from "./map.js";
+import { GMODE } from "./google.js";
+import { M } from "./map.js";
 import { renderPrep } from "./prep.js";
 import { addMode, buildMarkers, dayLabel, drawRoutes, filter, googleSearch, openPlace, renderChips, renderDays, setAddModeFlag, showPoi } from "./render.js";
 import { optimizeDay } from "./route.js";
@@ -214,19 +214,4 @@ export function bindUI() {
     save(); buildMarkers(); renderChips(); filter(); openPlace(p.id, false);
   });
 
-  const dlg = document.getElementById("settings");
-  document.getElementById("btnSettings").onclick = () => {
-    document.getElementById("keyStatus").textContent = !GMODE ? "지금은 기본 무료 지도로 표시하고 있어요."
-      : USER_KEY ? "테스트용 키로 구글 지도를 쓰고 있어요." : "구글 지도·실제 경로·장소 정보가 켜져 있어요. 따로 설정할 것은 없어요.";
-    const problem = apiProblemText();
-    if (problem) document.getElementById("keyStatus").textContent += "\n\n일부 구글 기능이 거부됐어요 (앱 관리자용 정보):\n" + problem;
-    document.getElementById("apiKey").value = USER_KEY;
-    dlg.showModal();
-  };
-  document.getElementById("setCancel").onclick = () => dlg.close();
-  document.getElementById("setSave").onclick = () => {
-    const k = document.getElementById("apiKey").value.trim();
-    try { k ? localStorage.setItem("gmaps-key", k) : localStorage.removeItem("gmaps-key"); } catch (e) {}
-    const u = new URL(location.href); u.searchParams.delete("key"); u.searchParams.delete("nokey"); location.href = u.toString();
-  };
 }

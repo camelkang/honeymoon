@@ -60,8 +60,6 @@ test.describe("API 거부", () => {
     await expect(page.locator(".leg").first()).toContainText("직선");
     await page.click("#apiNotice [data-x]");
     await expect(page.locator("#apiNotice")).toBeHidden();
-    await page.click("#btnSettings");
-    await expect(page.locator("#keyStatus")).toContainText("Routes API: Routes API has not been used");
   });
 });
 
@@ -72,9 +70,6 @@ test.describe("잘못된 키", () => {
     await tab(page, "plan");
     await page.click("#btnSample");
     await expect(page.locator("#apiNotice")).toBeVisible();
-    await page.click("#btnSettings");
-    await expect(page.locator("#keyStatus")).toContainText("API key not valid");
-    await page.click("#setCancel");
     await expect(page.locator(".leg").first()).toContainText("직선");
     await expect(page.locator(".mk-pin").first()).toBeVisible();
   });

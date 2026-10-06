@@ -42,10 +42,10 @@ function pinOffset() {
 export const params = new URLSearchParams(location.search);
 // 앱 기본 키: 배포 빌드 때 저장소 Secret(GOOGLE_MAPS_API_KEY)이 VITE_GOOGLE_MAPS_API_KEY로 들어옴. 저장소에는 키가 없음
 export const BUILD_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-export let USER_KEY = params.get("key") || "";   // 개발·테스트용 키 (선택)
-try { USER_KEY = USER_KEY || localStorage.getItem("gmaps-key") || ""; } catch (e) {}
+export const USER_KEY = params.get("key") || "";   // 개발·테스트용 키 (주소에 ?key=...)
+try { localStorage.removeItem("gmaps-key"); } catch (e) {}   // 예전 설정 화면에서 저장한 키는 지움 (앱 기본 키를 쓰도록)
 // ?nokey=1 → 구글 기능 없이 사용
-export let API_KEY = params.has("nokey") ? "" : (USER_KEY || BUILD_KEY);
+export const API_KEY = params.has("nokey") ? "" : (USER_KEY || BUILD_KEY);
 
 export const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
@@ -70,6 +70,17 @@ export function createMap() {
     container: "map", style: MAP_STYLE,
     center: [CENTER.lng, CENTER.lat], zoom: toML(CITY.zoom),
     attributionControl: { compact: true },
+    // 평평한 기본 지도만: 기울이기·돌리기 없음
+    maxPitch: 0, dragRotate: false, pitchWithRotate: false, touchPitch: false,
+  });
+  map.touchZoomRotate.disableRotation();
+  map.keyboard.disableRotation();
+  // 건물 입체(3D)·지형 음영을 끄고 평면으로 (OpenFreeMap liberty 스타일에 들어 있음)
+  map.on("style.load", () => {
+    for (const l of map.getStyle().layers || []) {
+      if (l.type === "fill-extrusion") { map.setPaintProperty(l.id, "fill-extrusion-height", 0); map.setPaintProperty(l.id, "fill-extrusion-base", 0); }
+      else if (l.type === "hillshade" || l.type === "raster") map.setLayoutProperty(l.id, "visibility", "none");
+    }
   });
   // 화면 안(+여유 30%)에 있는 핀만 지도에 붙임. 장소가 수백 곳이어도 지도를 움직일 때 버벅이지 않게
   // (지도는 붙어 있는 핀의 위치를 매 프레임 다시 계산함) — 움직임이 끝나면 새로 보이는 핀을 붙임

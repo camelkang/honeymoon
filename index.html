@@ -33,7 +33,6 @@
     <button class="icon-btn" id="btnInstall" title="앱 설치" aria-label="앱 설치" hidden><span data-icon="phone"></span></button>
     <button class="icon-btn" id="btnAddMode" title="지도를 눌러 내 장소 추가" aria-label="내 장소 추가"><span data-icon="pin"></span></button>
     <button class="account-btn" id="btnAccount" title="로그인 · 짝꿍 연결"></button>
-    <button class="icon-btn" id="btnSettings" title="설정" aria-label="설정"><span data-icon="settings"></span></button>
   </header>
 
   <nav class="tabs" aria-label="주요 메뉴">
@@ -230,26 +229,6 @@
   <div class="row end"><button class="btn primary" onclick="this.closest('dialog').close()">확인</button></div>
 </dialog>
 
-<dialog id="settings" aria-labelledby="settingsTitle">
-  <div class="dlg-head"><h2 id="settingsTitle">설정</h2></div>
-  <p class="hint" id="keyStatus"></p>
-  <details>
-  <summary class="hint">개발자용: 내 Google Maps API 키로 테스트하기</summary>
-  <input type="text" id="apiKey" placeholder="AIza... (비워두면 앱 기본 키 사용)" style="margin-top:8px;width:100%">
-  <ol class="hint">
-    <li><a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 선택</li>
-    <li><b>결제 계정 연결</b> (<a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">결제</a>) — 연결이 안 되어 있으면 경로·장소 정보 요청이 거부돼요. 월 무료 사용량 안에서는 과금되지 않아요.</li>
-    <li><a href="https://console.cloud.google.com/apis/library" target="_blank" rel="noopener">API 라이브러리</a>에서 2개 사용 설정:
-      <b>Places API (New)</b>, <b>Routes API</b> (지도 자체는 무료 지도라 Maps JavaScript API는 필요 없음)</li>
-    <li>API 키에 제한을 걸었다면 위 2개 API를 허용 목록에 포함</li>
-    <li>키를 여기 붙여넣고 저장 (주소창에 <code>?key=...</code>로 넣어도 됩니다)</li>
-  </ol>
-  </details>
-  <div class="row end">
-    <button class="btn" id="setCancel">닫기</button>
-    <button class="btn primary" id="setSave">저장 후 새로고침</button>
-  </div>
-</dialog>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
