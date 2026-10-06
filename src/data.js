@@ -1,3 +1,4 @@
+import { SYDNEY_LIST_IDS, SYDNEY_LIST_PLACES } from "./data-sydney-list.js";
 import { BALI_PLACES, BALI_SAMPLE, DANANG_PLACES, DANANG_SAMPLE, HAWAII_PLACES, HAWAII_SAMPLE, PARIS_PLACES, PARIS_SAMPLE, TOKYO_PLACES, TOKYO_SAMPLE } from "./data-world.js";
 import { icon } from "./icons.js";
 
@@ -285,9 +286,12 @@ export const CAIRNS_SAMPLE = [
   { stops:["c_kuranda","c_skyrail","c_palm"], note:"쿠란다 → 스카이레일 → 팜 코브" },
 ];
 
+// 구글 지도 "시드니 가볼만한곳" 목록에 있는 기존 추천 장소에도 목록 표시
+SYDNEY_PLACES.forEach(p => { if (SYDNEY_LIST_IDS.includes(p.id)) p.list = true; });
+
 export const CITIES = {
   sydney:    { id:"sydney", name:"시드니", flag:"🇦🇺", center:{ lat:-33.8650, lng:151.2094 }, zoom:14, suffix:"Sydney NSW",
-               airbnb:"Sydney--NSW--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:SYDNEY_PLACES, sample:SYDNEY_SAMPLE,
+               airbnb:"Sydney--NSW--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:SYDNEY_PLACES.concat(SYDNEY_LIST_PLACES), sample:SYDNEY_SAMPLE,
                keySpots:[["cquay","서큘러 키"], ["qvb","시티(QVB)"], ["darling","달링 하버"], ["bondi","본다이"]] },
   melbourne: { id:"melbourne", name:"멜버른", flag:"🇦🇺", center:{ lat:-37.8136, lng:144.9631 }, zoom:14, suffix:"Melbourne VIC",
                airbnb:"Melbourne--VIC--Australia", currency:"AUD", visa:"호주 ETA(전자여행허가) 신청 — 'AustralianETA' 앱", plug:"I 타입 · 230V", places:MELBOURNE_PLACES, sample:MELBOURNE_SAMPLE,

@@ -631,3 +631,6 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .trip-stop input, .trip-stop select { margin: 0 !important; font-size: 13px; padding: 7px 6px; min-width: 0; }
 .trip-preview { margin: 12px 0 4px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--brand-soft); font-size: 13.5px; line-height: 1.6; }
 .trip-preview small { color: var(--ink-2); }
+.chip.list-on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.chip.list-on svg { color: #fff; }
+.chip small { font-weight: 700; opacity: .7; }

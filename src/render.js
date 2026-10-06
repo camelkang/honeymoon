@@ -157,7 +157,9 @@ export function renderChips() {
   const el = document.getElementById("chips");
   const lf = state.likeFilter || "all";
   el.innerHTML = `<button class="chip ${lf === "match" ? "love-on" : ""}" data-like="match">${icon("heart", 15, 'fill="currentColor"')} 둘 다 좋아요</button>`
-    + `<button class="chip ${lf === "liked" ? "love-on" : ""}" data-like="liked">${icon("heart", 15)} 내가 좋아요</button><span class="chip-sep"></span>`
+    + `<button class="chip ${lf === "liked" ? "love-on" : ""}" data-like="liked">${icon("heart", 15)} 내가 좋아요</button>`
+    + (PLACES.some(p => p.list) ? `<button class="chip ${lf === "list" ? "list-on" : ""}" data-like="list">${icon("pin", 15)} 가볼만한곳 목록 <small>${PLACES.filter(p => p.list).length}</small></button>` : "")
+    + `<span class="chip-sep"></span>`
     + Object.entries(CATS).map(([k,c]) =>
     `<button class="chip ${state.cats.includes(k) ? "" : "off"}" data-cat="${k}" style="--c:${c.color}">${icon(c.icon, 15)} ${c.label}</button>`
   ).join("") + `<button class="chip" data-cat="__all">전체</button>`;
@@ -167,6 +169,7 @@ export function matches(p, q) {
   if (!state.cats.includes(p.cat)) return false;
   if (state.likeFilter === "match" && !isMatch(p.id)) return false;
   if (state.likeFilter === "liked" && myVote(p.id) !== 1) return false;
+  if (state.likeFilter === "list" && !p.list) return false;
   if (!q) return true;
   const hay = [p.name, p.en, p.desc, p.area, CATS[p.cat].label].join(" ").toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));

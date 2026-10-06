@@ -3,10 +3,17 @@ import { test, expect, open, tab, savedPlan, clickPoi } from "./fixtures.js";
 test.describe("장소·일정 (기본 지도)", () => {
   test("추천 장소 목록과 카테고리·검색 필터", async ({ page }) => {
     await open(page);
-    await expect(page.locator("#list .place")).toHaveCount(50);
+    await expect(page.locator("#list .place")).toHaveCount(155);   // 추천 50 + 구글 목록에서 가져온 105
+    // 구글 지도 "시드니 가볼만한곳" 목록 140곳 = 새로 넣은 105 + 이미 있던 26 (+ 목록 안 중복 정리)
+    await page.click('#chips [data-like="list"]');
+    await expect(page.locator('#chips [data-like="list"] small')).toHaveText("131");
+    await expect(page.locator("#list .place")).toHaveCount(131);
+    await expect(page.locator("#list .place", { hasText: "마러브라 비치" })).toHaveCount(1);
+    await expect(page.locator("#list .place", { hasText: "시드니 오페라 하우스" })).toHaveCount(1);   // 겹치는 곳은 한 번만
+    await page.click('#chips [data-like="list"]');
     await page.click('#chips [data-cat="sight"]');               // 명소 끄기
     const n = await page.locator("#list .place").count();
-    expect(n).toBeLessThan(50);
+    expect(n).toBeLessThan(155);
     await page.fill("#q", "오페라");
     await expect(page.locator("#list .place").first()).toContainText("오페라");
   });
@@ -78,7 +85,7 @@ test.describe("장소·일정 (기본 지도)", () => {
 
   test("지도 마커와 날짜별 동선이 그려짐", async ({ page }) => {
     await open(page);
-    await expect(page.locator(".mk-pin")).toHaveCount(50);
+    await expect(page.locator(".mk-pin")).toHaveCount(155);
     await tab(page, "plan");
     await page.click("#btnSample");
     await expect(page.locator(".mk-num")).not.toHaveCount(0);
