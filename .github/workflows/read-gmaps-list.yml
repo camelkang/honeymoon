@@ -1,0 +1,31 @@
+name: Read Google Maps list
+
+# 구글 지도 저장 목록 공유 링크에서 장소 이름을 읽어 로그로 출력 (앱에 추천 장소로 넣을 때 사용)
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "구글 지도 목록 공유 링크 (maps.app.goo.gl/...)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/read-gmaps-list.mjs "${{ inputs.url }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gmaps-list-screenshot
+          path: gmaps-list.png
+          if-no-files-found: ignore
