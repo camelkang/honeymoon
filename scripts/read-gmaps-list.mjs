@@ -2,6 +2,7 @@
 // 사용: node scripts/read-gmaps-list.mjs <공유 링크>
 // 목록 화면이 내부적으로 부르는 JSON(entitylist/getlist)을 읽어 140곳처럼 긴 목록도 스크롤 없이 한 번에 가져옴
 import { chromium } from "@playwright/test";
+import fs from "node:fs";
 
 const url = process.argv[2];
 if (!url) { console.error("공유 링크를 넘겨 주세요"); process.exit(1); }
@@ -36,4 +37,6 @@ function walk(x) {
 walk(data);
 console.log("COUNT", places.length);
 for (const p of places) console.log("PLACE\t" + JSON.stringify(p));
+// 결과 파일: 두 번째 인자로 경로를 주면 저장
+if (process.argv[3]) fs.writeFileSync(process.argv[3], JSON.stringify({ source: url, listId: id, fetchedAt: new Date().toISOString(), places }, null, 1) + "\n");
 await browser.close();

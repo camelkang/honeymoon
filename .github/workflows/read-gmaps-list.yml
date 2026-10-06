@@ -7,9 +7,13 @@ on:
       url:
         description: "구글 지도 목록 공유 링크 (maps.app.goo.gl/...)"
         required: true
+      name:
+        description: "저장할 파일 이름 (store/imports/<이름>.json, 영문)"
+        required: true
+        default: "list"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   read:
@@ -22,12 +26,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: node scripts/read-gmaps-list.mjs "$LIST_URL"
+      - run: |
+          case "$LIST_NAME" in *[!a-zA-Z0-9_-]*|"") echo "파일 이름은 영문·숫자·-·_ 만"; exit 1;; esac
+          mkdir -p store/imports
+          node scripts/read-gmaps-list.mjs "$LIST_URL" "store/imports/$LIST_NAME.json"
         env:
           LIST_URL: ${{ inputs.url }}   # 입력값은 환경 변수로 넘김 (셸 주입 방지)
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gmaps-list-screenshot
-          path: gmaps-list.png
-          if-no-files-found: ignore
+          LIST_NAME: ${{ inputs.name }}
+      - name: Commit result
+        env:
+          LIST_NAME: ${{ inputs.name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "store/imports/$LIST_NAME.json"
+          git diff --cached --quiet || git commit -m "Import Google Maps list: $LIST_NAME"
+          git push
