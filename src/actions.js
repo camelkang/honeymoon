@@ -53,7 +53,13 @@ export function toastAction(msg, label, fn) {
   }
   b.style.display = "block";
   clearTimeout(toastT);
-  toastT = setTimeout(() => b.style.display = "none", label ? 6000 : 2200);
+  const hide = () => { b.style.display = "none"; };
+  toastT = setTimeout(hide, label ? 8000 : 2200);
+  // 되돌리기 같은 버튼이 있으면, 손가락·마우스를 올려 둔 동안은 사라지지 않게
+  if (label) {
+    b.onpointerenter = () => clearTimeout(toastT);
+    b.onpointerleave = () => { clearTimeout(toastT); toastT = setTimeout(hide, 3000); };
+  } else b.onpointerenter = b.onpointerleave = null;
 }
 export function setAddMode(v, msg) {
   setAddModeFlag(v);

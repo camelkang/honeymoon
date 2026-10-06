@@ -1,7 +1,7 @@
 import { addToDay, removeCustom, saveTemp } from "./actions.js";
 import { bookingChips } from "./bookings.js";
 import { commentCount, commentsHtml } from "./comments.js";
-import { CATS, DAY_COLORS } from "./data.js";
+import { CATS, DAY_COLORS, LIST_NAMES } from "./data.js";
 import { diaryHtml, ratingHtml } from "./diary.js";
 import { GMODE, apiErrors, decodePolyline, detailsHtml, fmtDist, fmtDur, gTextSearch, gcache, getDetails, getLeg, saveCache } from "./google.js";
 import { icon } from "./icons.js";
@@ -47,7 +47,7 @@ function tapPlace(p) {
 }
 
 export function buildMarkers() {
-  Object.values(markers).forEach(m => m.show(false));
+  Object.values(markers).forEach(m => m.destroy ? m.destroy() : m.show(false));
   for (const k in markers) delete markers[k];
   allPlaces().forEach(p => {
     const c = CATS[p.cat];
@@ -158,7 +158,9 @@ export function renderChips() {
   const lf = state.likeFilter || "all";
   el.innerHTML = `<button class="chip ${lf === "match" ? "love-on" : ""}" data-like="match">${icon("heart", 15, 'fill="currentColor"')} 둘 다 좋아요</button>`
     + `<button class="chip ${lf === "liked" ? "love-on" : ""}" data-like="liked">${icon("heart", 15)} 내가 좋아요</button>`
-    + (PLACES.some(p => p.list) ? `<button class="chip ${lf === "list" ? "list-on" : ""}" data-like="list">${icon("pin", 15)} 가볼만한곳 목록 <small>${PLACES.filter(p => p.list).length}</small></button>` : "")
+    // 구글 지도에서 가져온 목록마다 칩 하나 (가볼만한곳·맛집·카페)
+    + Object.entries(LIST_NAMES).map(([k, label]) => { const n = PLACES.filter(p => (p.lists || []).includes(k)).length;
+        return n ? `<button class="chip ${lf === "list:" + k ? "list-on" : ""}" data-like="list:${k}">${icon(k === "food" ? "utensils" : k === "cafe" ? "coffee" : "pin", 15)} ${label} <small>${n}</small></button>` : ""; }).join("")
     + `<span class="chip-sep"></span>`
     + Object.entries(CATS).map(([k,c]) =>
     `<button class="chip ${state.cats.includes(k) ? "" : "off"}" data-cat="${k}" style="--c:${c.color}">${icon(c.icon, 15)} ${c.label}</button>`
@@ -169,7 +171,7 @@ export function matches(p, q) {
   if (!state.cats.includes(p.cat)) return false;
   if (state.likeFilter === "match" && !isMatch(p.id)) return false;
   if (state.likeFilter === "liked" && myVote(p.id) !== 1) return false;
-  if (state.likeFilter === "list" && !p.list) return false;
+  if ((state.likeFilter || "").startsWith("list:") && !(p.lists || []).includes(state.likeFilter.slice(5))) return false;
   if (!q) return true;
   const hay = [p.name, p.en, p.desc, p.area, CATS[p.cat].label].join(" ").toLowerCase();
   return q.toLowerCase().split(/\s+/).every(t => hay.includes(t));

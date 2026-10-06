@@ -3,17 +3,21 @@ import { test, expect, open, tab, savedPlan, clickPoi } from "./fixtures.js";
 test.describe("장소·일정 (기본 지도)", () => {
   test("추천 장소 목록과 카테고리·검색 필터", async ({ page }) => {
     await open(page);
-    await expect(page.locator("#list .place")).toHaveCount(155);   // 추천 50 + 구글 목록에서 가져온 105
-    // 구글 지도 "시드니 가볼만한곳" 목록 140곳 = 새로 넣은 105 + 이미 있던 26 (+ 목록 안 중복 정리)
-    await page.click('#chips [data-like="list"]');
-    await expect(page.locator('#chips [data-like="list"] small')).toHaveText("131");
-    await expect(page.locator("#list .place")).toHaveCount(131);
-    await expect(page.locator("#list .place", { hasText: "마러브라 비치" })).toHaveCount(1);
-    await expect(page.locator("#list .place", { hasText: "시드니 오페라 하우스" })).toHaveCount(1);   // 겹치는 곳은 한 번만
-    await page.click('#chips [data-like="list"]');
+    // 추천 50 + 구글 지도 목록에서 가져온 302 (가볼만한곳 105 · 맛집·카페 197, 이미 있던 곳·목록끼리 겹치는 곳은 한 번만)
+    await expect(page.locator("#list .place")).toHaveCount(352);
+    for (const [k, n] of [["must", 131], ["food", 125], ["cafe", 91]]) {
+      await page.click(`#chips [data-like="list:${k}"]`);
+      await expect(page.locator(`#chips [data-like="list:${k}"] small`)).toHaveText(String(n));
+      await expect(page.locator("#list .place")).toHaveCount(n);   // 목록에 있는 곳 수 그대로
+      await page.click(`#chips [data-like="list:${k}"]`);
+    }
+    await page.click('#chips [data-like="list:food"]');
+    await expect(page.locator("#list .place", { hasText: "Icebergs" })).toHaveCount(1);       // 원래 있던 곳은 한 번만
+    await expect(page.locator("#list .place", { hasText: "bills (서리 힐스)" })).toHaveCount(1);
+    await page.click('#chips [data-like="list:food"]');
     await page.click('#chips [data-cat="sight"]');               // 명소 끄기
     const n = await page.locator("#list .place").count();
-    expect(n).toBeLessThan(155);
+    expect(n).toBeLessThan(352);
     await page.fill("#q", "오페라");
     await expect(page.locator("#list .place").first()).toContainText("오페라");
   });
@@ -85,7 +89,13 @@ test.describe("장소·일정 (기본 지도)", () => {
 
   test("지도 마커와 날짜별 동선이 그려짐", async ({ page }) => {
     await open(page);
-    await expect(page.locator(".mk-pin")).toHaveCount(155);
+    // 화면 근처의 핀만 지도에 붙임 (352곳 전부가 아니라)
+    const near = await page.locator(".mk-pin").count();
+    expect(near).toBeGreaterThan(100);
+    expect(near).toBeLessThan(352);
+    await expect(page.locator('.mk-pin[aria-label="노스 컬 컬 비치"]')).toHaveCount(0);   // 멀리 북쪽 해변은 아직 안 붙음
+    await page.evaluate(() => window.__map.jumpTo({ center: [151.2982, -33.7673], zoom: 13 }));
+    await expect(page.locator('.mk-pin[aria-label="노스 컬 컬 비치"]')).toHaveCount(1);   // 지도를 옮기면 붙음
     await tab(page, "plan");
     await page.click("#btnSample");
     await expect(page.locator(".mk-num")).not.toHaveCount(0);

@@ -53,13 +53,15 @@ export const MAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const toML = z => z - 1;
 
 export let M; // 지도 어댑터
+const pins = new Set();   // 장소 핀 (원하는 표시 여부 want, 실제로 지도에 붙었는지 on)
+let syncPin = () => {};
 export function setMap(a) { M = a; }
 
 // html 문자열을 MapLibre 마커 요소로: 바깥 div는 MapLibre가 위치(transform)를 잡고, 안쪽이 모양
 function markerEl(html, cls) {
   const el = document.createElement("div");
   el.className = "mk " + cls;
-  el.innerHTML = html;
+  el.innerHTML = `<div class="mk-in">${html}</div>`;   // 크기 조절은 안쪽(mk-in)만
   return el;
 }
 
@@ -69,6 +71,26 @@ export function createMap() {
     center: [CENTER.lng, CENTER.lat], zoom: toML(CITY.zoom),
     attributionControl: { compact: true },
   });
+  // 화면 안(+여유 30%)에 있는 핀만 지도에 붙임. 장소가 수백 곳이어도 지도를 움직일 때 버벅이지 않게
+  // (지도는 붙어 있는 핀의 위치를 매 프레임 다시 계산함) — 움직임이 끝나면 새로 보이는 핀을 붙임
+  const viewBox = () => {
+    const b = map.getBounds(), dx = (b.getEast() - b.getWest()) * 0.3, dy = (b.getNorth() - b.getSouth()) * 0.3;
+    return { w: b.getWest() - dx, e: b.getEast() + dx, s: b.getSouth() - dy, n: b.getNorth() + dy };
+  };
+  syncPin = (pin, box = viewBox()) => {
+    const v = pin.want && pin.lng >= box.w && pin.lng <= box.e && pin.lat >= box.s && pin.lat <= box.n;
+    if (v === pin.on) return;
+    pin.on = v;
+    v ? pin.m.addTo(map) : pin.m.remove();
+  };
+  map.on("moveend", () => { const box = viewBox(); pins.forEach(p => syncPin(p, box)); });
+  // 멀리서 볼 때는 핀을 작게 (장소가 많은 도시에서 겹쳐 보이지 않게)
+  const zoomClass = () => {
+    const z = map.getZoom(), el = map.getContainer();
+    el.classList.toggle("z-far", z < toML(14.5));
+    el.classList.toggle("z-mid", z >= toML(14.5) && z < toML(15.5));
+  };
+  map.on("zoom", zoomClass); zoomClass();
   window.__map = map;   // 테스트·디버깅용
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
   map.addControl(new maplibregl.GeolocateControl({ trackUserLocation: true }), "top-left");
@@ -84,7 +106,13 @@ export function createMap() {
       el.setAttribute("aria-label", p.name);   // 화면 낭독기가 "Map marker" 대신 장소 이름을 읽도록
       el.addEventListener("click", e => { e.stopPropagation(); onClick(); });
       const m = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat([p.lng, p.lat]);
-      return { show(v) { v ? m.addTo(map) : m.remove(); }, z(v) { el.style.zIndex = v; } };
+      const pin = { m, lng: p.lng, lat: p.lat, want: false, on: false };
+      pins.add(pin);
+      return {
+        show(v) { pin.want = v; syncPin(pin); },
+        z(v) { el.style.zIndex = v; },
+        destroy() { pin.want = false; syncPin(pin); pins.delete(pin); },
+      };
     },
     num(p, html, onClick) {
       const el = markerEl(html, "mk-num");

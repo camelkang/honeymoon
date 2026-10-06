@@ -1,4 +1,4 @@
-import { SYDNEY_LIST_IDS, SYDNEY_LIST_PLACES } from "./data-sydney-list.js";
+import { SYDNEY_LIST_MARKS, SYDNEY_LIST_NAMES, SYDNEY_LIST_PLACES } from "./data-sydney-list.js";
 import { BALI_PLACES, BALI_SAMPLE, DANANG_PLACES, DANANG_SAMPLE, HAWAII_PLACES, HAWAII_SAMPLE, PARIS_PLACES, PARIS_SAMPLE, TOKYO_PLACES, TOKYO_SAMPLE } from "./data-world.js";
 import { icon } from "./icons.js";
 
@@ -286,8 +286,9 @@ export const CAIRNS_SAMPLE = [
   { stops:["c_kuranda","c_skyrail","c_palm"], note:"쿠란다 → 스카이레일 → 팜 코브" },
 ];
 
-// 구글 지도 "시드니 가볼만한곳" 목록에 있는 기존 추천 장소에도 목록 표시
-SYDNEY_PLACES.forEach(p => { if (SYDNEY_LIST_IDS.includes(p.id)) p.list = true; });
+// 구글 지도 목록(가볼만한곳·맛집·카페)에 있는 기존 추천 장소에도 목록 표시
+SYDNEY_PLACES.forEach(p => { if (SYDNEY_LIST_MARKS[p.id]) p.lists = SYDNEY_LIST_MARKS[p.id]; });
+export const LIST_NAMES = SYDNEY_LIST_NAMES;
 
 export const CITIES = {
   sydney:    { id:"sydney", name:"시드니", flag:"🇦🇺", center:{ lat:-33.8650, lng:151.2094 }, zoom:14, suffix:"Sydney NSW",

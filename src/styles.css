@@ -634,3 +634,10 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .chip.list-on { background: var(--brand); border-color: var(--brand); color: #fff; }
 .chip.list-on svg { color: #fff; }
 .chip small { font-weight: 700; opacity: .7; }
+
+/* 멀리서 볼 때 핀 크기 (z-far: 도시 전체, z-mid: 동네) */
+.mk-in { transform-origin: 50% 100%; transition: scale .15s; }
+.z-far .mk-pin .mk-in { scale: .58; }
+.z-mid .mk-pin .mk-in { scale: .78; }
+.z-far .mk-pin .pin-heart { display: none; }
+.z-far .mk-pin .pin { box-shadow: none; border-width: 2px; }

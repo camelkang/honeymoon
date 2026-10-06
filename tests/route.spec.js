@@ -36,7 +36,12 @@ test("동선 자동 정리: 첫 장소는 그대로, 더 짧은 순서로, 되�
   }, [shuffled]);
   await page.reload(); await page.waitForFunction(() => window.__map && window.__map.loaded());
   await tab(page, "plan");
-  await page.locator('#days [data-opt="1"]').click();
+  // 정리 버튼을 누르고 곧바로 알림에 손가락을 올림 → 올려 둔 동안은 알림이 사라지지 않음 (느린 환경에서도 안정적으로)
+  await page.locator('#days [data-opt="1"]').scrollIntoViewIfNeeded();
+  await page.evaluate(() => {
+    document.querySelector('#days [data-opt="1"]').click();
+    document.getElementById("banner").dispatchEvent(new PointerEvent("pointerenter"));
+  });
   await page.locator("#banner .banner-act").click();
   expect((await savedPlan(page)).days[1].stops).toEqual(shuffled);
 });
