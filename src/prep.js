@@ -123,6 +123,7 @@ export function renderPrep() {
   const el = document.getElementById("pane-prep"); if (!el) return;
   loadFx(state.currency || "AUD");
   const setOpen = !!el.querySelector(".budget-set[open]");   // 다시 그려도 펼친 설정은 그대로
+  const guideOpen = new Set([...el.querySelectorAll(".guide details[open]")].map(d => d.dataset.g));
   const left = daysLeft(), today = tripDay();
   const t = totals(), budget = +state.budget || 0, cur = state.currency || "AUD";
   const pct = budget ? Math.min(100, Math.round(t.sum / budget * 100)) : 0;
@@ -204,8 +205,20 @@ export function renderPrep() {
       ${groups || `<div class="empty-big small">${icon("listChecks", 32)}<span>여권·ETA·보험처럼 출발 전에 챙길 것들을 둘이 나눠 체크해요.</span>
         <button class="btn" data-act="ckTemplate">${icon("sparkles", 16)}기본 목록 넣기</button></div>`}
     </section>
+    ${guideHtml(guideOpen)}
     ${offlineCardHtml()}`;
   const sd = el.querySelector('[data-prep="startDate"]'); if (sd) sd.value = state.startDate || "";
+}
+
+// 도시별 교통·면세 같은 현지 안내 (CITY.guide가 있는 도시만)
+function guideHtml(open) {
+  if (!CITY.guide?.length) return "";
+  return `<section class="card guide">
+      <div class="card-h">${icon("train", 18)}<b>교통·면세 가이드</b></div>
+      ${CITY.guide.map((g, k) => `<details data-g="${k}" ${open.has(String(k)) ? "open" : ""}><summary>${esc(g.title)}</summary>
+        <ul>${g.items.map(t => `<li>${esc(t)}</li>`).join("")}</ul></details>`).join("")}
+      <p class="hint">가격·규정은 바뀔 수 있어요. 출발 전 공식 사이트에서 한 번 더 확인하세요.</p>
+    </section>`;
 }
 
 /* ---------- 여행 중: 오늘 카드 (일정 탭 위) ---------- */
@@ -270,7 +283,7 @@ export function bindPrep() {
     const t = e.target.closest("[data-act],[data-ck],[data-ckdel],[data-exp]"); if (!t) return;
     if (t.dataset.act === "addExp") return openExp(null);
     if (t.dataset.act === "ckTemplate") {
-      state.checklist = (state.checklist || []).concat(TEMPLATE.map(([text, due], k) => ({ id: uid("c"), text: typeof text === "function" ? text() : text, due, done: false, at: Date.now() + k })));
+      state.checklist = (state.checklist || []).concat(TEMPLATE.concat(CITY.prep || []).map(([text, due], k) => ({ id: uid("c"), text: typeof text === "function" ? text() : text, due, done: false, at: Date.now() + k })));
       save(); return renderPrep();
     }
     if (t.dataset.ck) {

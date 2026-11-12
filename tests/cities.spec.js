@@ -90,3 +90,18 @@ test("오사카: 교토·나라 당일치기를 포함한 5일 추천 일정", a
   expect(days[3].stops).toContain("os_narapark");
   expect(days[4].stops.at(-1)).toBe("os_kix");
 });
+
+test("오사카: 준비 탭에 교통·면세 가이드와 맞춤 할 일", async ({ page }) => {
+  await open(page);
+  await page.selectOption("#citySel", "osaka");
+  await page.click(".tabs [data-tab=prep]");
+  const guide = page.locator("#pane-prep .guide");
+  await expect(guide.locator("summary")).toHaveCount(4);
+  await guide.locator("summary", { hasText: "면세" }).click();
+  await expect(guide.locator("li", { hasText: "출국 심사 전에 세관 확인" })).toBeVisible();
+  await page.click('[data-act="ckTemplate"]');
+  await expect(page.locator("#pane-prep .ck", { hasText: "ICOCA" })).toHaveCount(1);
+  await expect(guide.locator("details[open] summary")).toHaveText(/면세/);   // 다시 그려도 펼친 항목 유지
+  await page.selectOption("#citySel", "tokyo");
+  await expect(page.locator("#pane-prep .guide")).toHaveCount(0);
+});
