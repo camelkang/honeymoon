@@ -1,5 +1,5 @@
 import { SYDNEY_LIST_MARKS, SYDNEY_LIST_NAMES, SYDNEY_LIST_PLACES } from "./data-sydney-list.js";
-import { BALI_PLACES, BALI_SAMPLE, DANANG_PLACES, DANANG_SAMPLE, HAWAII_PLACES, HAWAII_SAMPLE, PARIS_PLACES, PARIS_SAMPLE, TOKYO_PLACES, TOKYO_SAMPLE } from "./data-world.js";
+import { BALI_PLACES, BALI_SAMPLE, DANANG_PLACES, DANANG_SAMPLE, HAWAII_PLACES, HAWAII_SAMPLE, OSAKA_PLACES, OSAKA_SAMPLE, PARIS_PLACES, PARIS_SAMPLE, TOKYO_PLACES, TOKYO_SAMPLE } from "./data-world.js";
 import { icon } from "./icons.js";
 
 /* ============================== 데이터 ============================== */
@@ -319,6 +319,10 @@ export const CITIES = {
                airbnb:"Tokyo--Japan", currency:"JPY", visa:"Visit Japan Web 입국 정보 등록", plug:"A 타입 · 100V",
                places:TOKYO_PLACES, sample:TOKYO_SAMPLE,
                keySpots:[["tk_shibuya","시부야"], ["tk_parkhyatt","신주쿠"], ["tk_ginza","긴자"]] },
+  osaka:     { id:"osaka", name:"오사카", flag:"🇯🇵", center:{ lat:34.6800, lng:135.5000 }, zoom:13, suffix:"Osaka Japan",
+               airbnb:"Osaka--Japan", currency:"JPY", visa:"Visit Japan Web 입국 정보 등록", plug:"A 타입 · 100V",
+               places:OSAKA_PLACES, sample:OSAKA_SAMPLE,
+               keySpots:[["os_dotonbori","도톤보리"], ["os_umedasky","우메다"], ["os_namba","난바역"]] },
   danang:    { id:"danang", name:"다낭 · 호이안", flag:"🇻🇳", center:{ lat:16.0544, lng:108.2022 }, zoom:12, suffix:"Da Nang Vietnam",
                airbnb:"Da-Nang--Vietnam", currency:"VND", visa:"베트남 입국 조건 확인 (무비자 체류 기간·여권 유효기간)", plug:"A·C 타입 · 220V",
                places:DANANG_PLACES, sample:DANANG_SAMPLE,

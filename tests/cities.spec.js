@@ -74,3 +74,19 @@ test("새 여행지: 그 나라 통화와 맞춤 준비물로 시작", async ({ 
   await page.click('[data-act="ckTemplate"]');
   await expect(page.locator("#pane-prep .ck", { hasText: "Visit Japan Web" })).toHaveCount(1);
 });
+
+test("오사카: 교토·나라 당일치기를 포함한 5일 추천 일정", async ({ page }) => {
+  await open(page);
+  await page.selectOption("#citySel", "osaka");
+  await expect(page).toHaveTitle(/오사카/);
+  await tab(page, "plan");
+  await page.click("#btnSample");
+  const a = await savedApp(page);
+  const days = a.plans.osaka.days;
+  expect(days).toHaveLength(5);
+  expect(days[0].stops[0]).toBe("os_kix");
+  expect(days[1].stops).toEqual(["os_usj"]);
+  expect(days[2].stops).toContain("os_fushimi");
+  expect(days[3].stops).toContain("os_narapark");
+  expect(days[4].stops.at(-1)).toBe("os_kix");
+});
