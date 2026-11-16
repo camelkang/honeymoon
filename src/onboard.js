@@ -66,7 +66,7 @@ function applyChoices() {
   if (start) state.startDate = start;
   const want = Math.max(1, Math.min(21, days));
   if (useSample && SAMPLE && !state.days.some(d => d.stops.length)) {
-    state.days = SAMPLE.slice(0, want).map(d => ({ stops: [...d.stops], note: d.note, times: {} }));
+    state.days = SAMPLE.slice(0, want).map(d => ({ stops: [...d.stops], note: d.note, times: { ...d.times } }));
   }
   while (state.days.length < want) state.days.push({ stops: [], note: "", times: {} });
   if (state.days.length > want && !state.days.slice(want).some(d => d.stops.length || d.note)) state.days.length = want;

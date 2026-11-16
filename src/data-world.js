@@ -303,8 +303,8 @@ export const OSAKA_PLACES = [
   { id:"os_kasuga", cat:"sight", name:"가스가타이샤", en:"Kasuga-taisha", lat:34.6813, lng:135.8484, area:"나라",
     desc:"3,000개 석등·청동 등롱이 늘어선 숲속 신사.", tip:"" },
   // 숙소·교통
-  { id:"os_swissotel", cat:"hotel", name:"스위소텔 난카이 오사카", en:"Swissotel Nankai Osaka", lat:34.6625, lng:135.5016, area:"난바",
-    desc:"난카이 난바역 바로 위. 공항 열차 라피트 타기 편하고 도톤보리 도보 5분.", tip:"고층 시티뷰 객실 추천." },
+  { id:"os_bkuromon", cat:"hotel", name:"b&Kuromon3 (우리 숙소)", en:"1-7-7 Nipponbashihigashi, Naniwa Ward, Osaka", lat:34.6598, lng:135.5083, area:"닛폰바시히가시 (나니와구)",
+    desc:"아파트형 숙소. 주소: 〒556-0006 大阪市浪速区日本橋東1-7-7 (1 Chome-7-7 Nipponbashihigashi, Naniwa Ward). 난카이 난바역·구로몬 시장 걸어서 약 10분.", tip:"택시 기사님께 주소를 보여주세요. 셀프 체크인 방법·체크인(보통 16:00)/체크아웃(보통 10:00) 시간은 예약 메일에서 확인." },
   { id:"os_kix", cat:"trans", name:"간사이 국제공항", en:"Kansai International Airport", lat:34.4347, lng:135.2440, area:"간사이 공항",
     desc:"난바까지 난카이 특급 라피트 약 40분 (전석 지정석). 교통카드 ICOCA는 1층 도착 후 JR 매표소·발매기에서.", tip:"출국 날엔 짐 부치기 전에 세관 면세 환급 확인부터. 출국 심사 뒤에는 되돌아올 수 없어요." },
   { id:"os_namba", cat:"trans", name:"난카이 난바역", en:"Nankai Namba Station", lat:34.6627, lng:135.5013, area:"난바",
@@ -313,8 +313,9 @@ export const OSAKA_PLACES = [
     desc:"나라행 긴테쓰 쾌속급행 출발역 (긴테쓰나라역까지 약 40분).", tip:"" },
 ];
 export const OSAKA_SAMPLE = [
-  { stops:["os_kix","os_swissotel","os_hozenji","os_dotonbori","os_cruise","os_mizuno"],
-    note:"11/17(화) 도착 → 공항에서 ICOCA 구매 → 라피트로 난바(약 40분) → 체크인 → 도톤보리 저녁 산책 · 리버 크루즈 (난바에서 모두 도보)" },
+  { stops:["os_kix","os_namba","os_bkuromon","os_hozenji","os_dotonbori","os_mizuno","os_cruise"],
+    times:{ os_kix:"14:10", os_namba:"15:50", os_bkuromon:"16:10", os_hozenji:"17:00", os_dotonbori:"17:20", os_mizuno:"18:00", os_cruise:"19:30" },
+    note:"11/17(화) 12:10 인천 출발 → 14:10 간사이공항 도착\n입국 심사·짐 찾기 약 1시간 (Visit Japan Web QR 미리 띄워두기) → 역 쪽 JR 매표소에서 ICOCA 2장 구매 → 15시대 난카이 라피트 (난바까지 약 40분)\n난카이 난바역 → 숙소 b&Kuromon3 (닛폰바시히가시 1-7-7)까지 캐리어 끌고 걸어서 약 10~15분, 짐이 많으면 택시 (기본요금 거리) → 16시 체크인 후 잠깐 휴식\n저녁은 모두 걸어서: 호젠지 요코초 (해 질 녘 16:50쯤) → 도톤보리 → 미즈노 오코노미야키 (줄 서요) → 톤보리 리버 크루즈 야경" },
   { stops:["os_usj"],
     note:"11/18(수) USJ 하루 종일 (평일이라 덜 붐벼요). 익스프레스 패스 미리 구매\n이동: 오사카난바 → 한신 난바선 니시쿠조 → JR 유메사키선 유니버설시티 (약 30분, ICOCA)" },
   { stops:["os_fushimi","os_tofukuji","os_kiyomizu","os_ninenzaka","os_gion","os_pontocho"],
@@ -335,7 +336,7 @@ export const OSAKA_GUIDE = [
     "트래블카드(비자 컨택리스)를 개찰구에 바로 찍는 방법도 오사카 메트로·난카이 등 일부 노선에서 돼요. 교토·나라 노선은 ICOCA가 확실해요.",
   ]},
   { title:"공항 ↔ 난바: 라피트", items:[
-    "난카이 특급 라피트: 간사이공항 ↔ 난바 약 40분, 전석 지정석 (운임 + 특급권). 숙소(스위소텔)가 난바역 바로 위.",
+    "난카이 특급 라피트: 간사이공항 ↔ 난바 약 40분, 전석 지정석 (운임 + 특급권). 숙소(b&Kuromon3, 닛폰바시히가시)는 난카이 난바역에서 걸어서 10~15분.",
     "한국에서 할인 e티켓(라피트 할인권)을 미리 사면 창구에서 좌석 지정만 받으면 돼요.",
     "급하지 않으면 공항급행(ICOCA로 탑승, 약 45분, 더 저렴). 짐이 많으면 라피트 추천.",
   ]},

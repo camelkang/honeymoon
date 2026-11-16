@@ -84,7 +84,9 @@ test("오사카: 교토·나라 당일치기를 포함한 5일 추천 일정", a
   const a = await savedApp(page);
   const days = a.plans.osaka.days;
   expect(days).toHaveLength(5);
-  expect(days[0].stops[0]).toBe("os_kix");
+  expect(days[0].stops.slice(0, 3)).toEqual(["os_kix", "os_namba", "os_bkuromon"]);
+  expect(days[0].times.os_kix).toBe("14:10");
+  await expect(page.locator('.day input[type=time][value="14:10"]')).toHaveCount(1);
   expect(days[1].stops).toEqual(["os_usj"]);
   expect(days[2].stops).toContain("os_fushimi");
   expect(days[3].stops).toContain("os_narapark");
