@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.56은 ubuntu 26.04(latest)에 브라우저를 설치하지 못함
     permissions:
       contents: read
     steps:
@@ -37,7 +37,7 @@ jobs:
           retention-days: 7
 
   test-sync:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

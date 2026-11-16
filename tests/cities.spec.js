@@ -74,3 +74,38 @@ test("새 여행지: 그 나라 통화와 맞춤 준비물로 시작", async ({ 
   await page.click('[data-act="ckTemplate"]');
   await expect(page.locator("#pane-prep .ck", { hasText: "Visit Japan Web" })).toHaveCount(1);
 });
+
+test("오사카: 교토·나라 당일치기를 포함한 5일 추천 일정", async ({ page }) => {
+  await open(page);
+  await page.selectOption("#citySel", "osaka");
+  await expect(page).toHaveTitle(/오사카/);
+  await tab(page, "plan");
+  await page.click("#btnSample");
+  const a = await savedApp(page);
+  const days = a.plans.osaka.days;
+  expect(days).toHaveLength(5);
+  expect(days[0].stops.slice(0, 3)).toEqual(["os_kix", "os_namba", "os_bkuromon"]);
+  expect(days[0].times.os_kix).toBe("14:10");
+  await expect(page.locator('.day input[type=time][value="14:10"]')).toHaveCount(1);
+  expect(days[1].stops).toEqual(["os_usj"]);
+  expect(days[2].stops).toContain("os_fushimi");
+  expect(days[3].stops).toContain("os_narapark");
+  expect(days[4].stops.at(-1)).toBe("os_kix");
+  expect(days[4].times.os_kix).toBe("15:20");
+  expect(days[4].note).toContain("MM709");
+});
+
+test("오사카: 준비 탭에 교통·면세 가이드와 맞춤 할 일", async ({ page }) => {
+  await open(page);
+  await page.selectOption("#citySel", "osaka");
+  await page.click(".tabs [data-tab=prep]");
+  const guide = page.locator("#pane-prep .guide");
+  await expect(guide.locator("summary")).toHaveCount(4);
+  await guide.locator("summary", { hasText: "면세" }).click();
+  await expect(guide.locator("li", { hasText: "출국 심사 전에 세관 확인" })).toBeVisible();
+  await page.click('[data-act="ckTemplate"]');
+  await expect(page.locator("#pane-prep .ck", { hasText: "ICOCA" })).toHaveCount(1);
+  await expect(guide.locator("details[open] summary")).toHaveText(/면세/);   // 다시 그려도 펼친 항목 유지
+  await page.selectOption("#citySel", "tokyo");
+  await expect(page.locator("#pane-prep .guide")).toHaveCount(0);
+});

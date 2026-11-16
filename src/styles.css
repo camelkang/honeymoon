@@ -640,3 +640,10 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .z-mid .mk-pin .mk-in { scale: .78; }
 .z-far .mk-pin .pin-heart { display: none; }
 .z-far .mk-pin .pin { box-shadow: none; border-width: 2px; }
+
+/* 준비 탭: 교통·면세 가이드 */
+.guide details { border-top: 1px solid var(--line, #e9ecef); padding: 8px 0; }
+.guide details:first-of-type { border-top: 0; }
+.guide summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.guide ul { margin: 8px 0 2px; padding-left: 18px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+.guide li + li { margin-top: 4px; }
