@@ -91,6 +91,8 @@ test("오사카: 교토·나라 당일치기를 포함한 5일 추천 일정", a
   expect(days[2].stops).toContain("os_fushimi");
   expect(days[3].stops).toContain("os_narapark");
   expect(days[4].stops.at(-1)).toBe("os_kix");
+  expect(days[4].times.os_kix).toBe("15:20");
+  expect(days[4].note).toContain("MM709");
 });
 
 test("오사카: 준비 탭에 교통·면세 가이드와 맞춤 할 일", async ({ page }) => {

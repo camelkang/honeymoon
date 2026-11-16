@@ -306,7 +306,7 @@ export const OSAKA_PLACES = [
   { id:"os_bkuromon", cat:"hotel", name:"b&Kuromon3 (우리 숙소)", en:"1-7-7 Nipponbashihigashi, Naniwa Ward, Osaka", lat:34.6598, lng:135.5083, area:"닛폰바시히가시 (나니와구)",
     desc:"아파트형 숙소. 주소: 〒556-0006 大阪市浪速区日本橋東1-7-7 (1 Chome-7-7 Nipponbashihigashi, Naniwa Ward). 난카이 난바역·구로몬 시장 걸어서 약 10분.", tip:"택시 기사님께 주소를 보여주세요. 셀프 체크인 방법·체크인(보통 16:00)/체크아웃(보통 10:00) 시간은 예약 메일에서 확인." },
   { id:"os_kix", cat:"trans", name:"간사이 국제공항", en:"Kansai International Airport", lat:34.4347, lng:135.2440, area:"간사이 공항",
-    desc:"난바까지 난카이 특급 라피트 약 40분 (전석 지정석). 교통카드 ICOCA는 1층 도착 후 JR 매표소·발매기에서.", tip:"출국 날엔 짐 부치기 전에 세관 면세 환급 확인부터. 출국 심사 뒤에는 되돌아올 수 없어요." },
+    desc:"난바까지 난카이 특급 라피트 약 40분 (전석 지정석). 기차역·ICOCA 판매(JR 매표소)는 제1터미널(T1)에. Peach는 제2터미널(T2) — T1과 무료 셔틀버스로 약 10분.", tip:"출국 날엔 짐 부치기 전에 세관 면세 환급 확인부터. 출국 심사 뒤에는 되돌아올 수 없어요." },
   { id:"os_namba", cat:"trans", name:"난카이 난바역", en:"Nankai Namba Station", lat:34.6627, lng:135.5013, area:"난바",
     desc:"공항 라피트·지하철 미도스지선 환승.", tip:"라피트는 지정석 특급권이 따로 필요해요. 급하지 않으면 공항급행(ICOCA로 탑승, 약 45분)도 있어요." },
   { id:"os_kintetsu", cat:"trans", name:"오사카난바역 (긴테쓰)", en:"Osaka Namba Station", lat:34.6667, lng:135.5009, area:"난바",
@@ -315,15 +315,16 @@ export const OSAKA_PLACES = [
 export const OSAKA_SAMPLE = [
   { stops:["os_kix","os_namba","os_bkuromon","os_hozenji","os_dotonbori","os_mizuno","os_cruise"],
     times:{ os_kix:"14:10", os_namba:"15:50", os_bkuromon:"16:10", os_hozenji:"17:00", os_dotonbori:"17:20", os_mizuno:"18:00", os_cruise:"19:30" },
-    note:"11/17(화) 12:10 인천 출발 → 14:10 간사이공항 도착\n입국 심사·짐 찾기 약 1시간 (Visit Japan Web QR 미리 띄워두기) → 역 쪽 JR 매표소에서 ICOCA 2장 구매 → 15시대 난카이 라피트 (난바까지 약 40분)\n난카이 난바역 → 숙소 b&Kuromon3 (닛폰바시히가시 1-7-7)까지 캐리어 끌고 걸어서 약 10~15분, 짐이 많으면 택시 (기본요금 거리) → 16시 체크인 후 잠깐 휴식\n저녁은 모두 걸어서: 호젠지 요코초 (해 질 녘 16:50쯤) → 도톤보리 → 미즈노 오코노미야키 (줄 서요) → 톤보리 리버 크루즈 야경" },
+    note:"11/17(화) 12:10 인천 출발 → 14:10 간사이공항 도착\n입국 심사·짐 찾기 약 1시간 (Visit Japan Web QR 미리 띄워두기) → 제2터미널(T2) 도착이면 무료 셔틀버스로 제1터미널 역까지 (약 10분) → 역 쪽 JR 매표소에서 ICOCA 2장 구매 → 15시대 난카이 라피트 (난바까지 약 40분)\n난카이 난바역 → 숙소 b&Kuromon3 (닛폰바시히가시 1-7-7)까지 캐리어 끌고 걸어서 약 10~15분, 짐이 많으면 택시 (기본요금 거리) → 16시 체크인 후 잠깐 휴식\n저녁은 모두 걸어서: 호젠지 요코초 (해 질 녘 16:50쯤) → 도톤보리 → 미즈노 오코노미야키 (줄 서요) → 톤보리 리버 크루즈 야경" },
   { stops:["os_usj"],
     note:"11/18(수) USJ 하루 종일 (평일이라 덜 붐벼요). 익스프레스 패스 미리 구매\n이동: 오사카난바 → 한신 난바선 니시쿠조 → JR 유메사키선 유니버설시티 (약 30분, ICOCA)" },
   { stops:["os_fushimi","os_tofukuji","os_kiyomizu","os_ninenzaka","os_gion","os_pontocho"],
     note:"11/19(목) 교토 단풍 당일치기 (ICOCA)\n이동: 난바 → 미도스지선 요도야바시 → 게이한 특급(교토 방면) 후시미이나리역 (약 50분) → 게이한 1정거장 도후쿠지 → 버스·택시로 기요미즈데라 → 걸어서 산넨자카·기온 → 귀가는 게이한 기온시조역 → 요도야바시" },
   { stops:["os_kintetsu","os_narapark","os_todaiji","os_kasuga","os_harukas","os_tsutenkaku","os_daruma"],
     note:"11/20(금) 나라 사슴 → 하루카스 노을 → 신세카이 쿠시카츠 (ICOCA)\n이동: 오사카난바 → 긴테쓰 쾌속급행 긴테쓰나라 (약 40분) → 공원까지 도보 → 귀가는 긴테쓰나라 → 쓰루하시(JR 환승) → 텐노지, 또는 JR나라역 → 야마토지 쾌속 텐노지 (약 35분) → 하루카스는 역 바로 위, 신세카이는 걸어서 15분" },
-  { stops:["os_castle","os_kuromon","os_shinsaibashi","os_rikuro","os_namba","os_kix"],
-    note:"11/21(토) 오사카성 단풍 산책 → 쿠로몬 시장 → 신사이바시 쇼핑 → 라피트로 공항\n이동: 난바 → 지하철 다니마치욘초메(오사카성) → 닛폰바시(쿠로몬) → 신사이바시 → 난바\n공항엔 출발 3시간 전 도착: 면세 환급 세관 확인 → ICOCA 환불 → 짐 부치기 순서" },
+  { stops:["os_bkuromon","os_kuromon","os_castle","os_shinsaibashi","os_namba","os_kix"],
+    times:{ os_bkuromon:"09:30", os_kuromon:"09:45", os_castle:"10:50", os_shinsaibashi:"12:40", os_namba:"14:30", os_kix:"15:20" },
+    note:"11/21(토) 귀국: Peach MM709 간사이공항 제2터미널(T2) 18:10 출발 → 인천 T1 20:15 도착\n09:30 체크아웃, 숙소에 짐 맡기기 (안 되면 난카이 난바역 코인로커·짐 보관소) → 걸어서 쿠로몬 시장 아침\n이동: 닛폰바시역 → 사카이스지선·주오선 다니마치욘초메 (오사카성, 약 20분) → 주오선·미도스지선 신사이바시 (약 15분) → 면세 쇼핑\n14:00 숙소에서 짐 찾기 → 난카이 난바역 14시 반쯤 라피트 (여유 있으면 역 앞 리쿠로 치즈케이크)\n15:20 공항역(제1터미널) 도착 → JR 매표소에서 ICOCA 환불 → 무료 셔틀버스로 T2 (약 10분, 기차역 없음)\n15:40 T2: 면세품 세관 확인 먼저 → 짐 부치기 → 출국 심사. Peach 체크인 마감은 출발 50분 전쯤이니 예약 메일 확인" },
 ];
 
 // 준비 탭 "교통·면세 가이드" 카드. 가격·규정은 바뀔 수 있어요 (2026년 11월 기준)
