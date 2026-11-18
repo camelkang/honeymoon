@@ -40,6 +40,7 @@
     <button data-tab="pick"><span data-icon="heart"></span><span>함께 고르기</span><b class="badge-dot" id="pickBadge" hidden></b></button>
     <button data-tab="plan"><span data-icon="calendar"></span><span>일정</span></button>
     <button data-tab="stays"><span data-icon="house"></span><span>숙소</span></button>
+    <button data-tab="ledger"><span data-icon="wallet"></span><span>가계부</span></button>
     <button data-tab="prep"><span data-icon="listChecks"></span><span>준비</span></button>
   </nav>
 
@@ -120,6 +121,8 @@
       <div id="stayList"></div>
     </div>
 
+    <div class="pane" id="pane-ledger"></div>
+
     <div class="pane" id="pane-prep"></div>
   </section>
 
@@ -142,8 +145,14 @@
       <label style="flex:1">분류<select name="cat"></select></label>
       <label style="flex:1">날짜<select name="day"></select></label>
     </div>
+    <div class="field-l cur-l">통화</div>
+    <div class="seg who cur" role="radiogroup" aria-label="통화"></div>
     <div class="field-l">누가 냈나요?</div>
-    <div class="seg who" role="radiogroup" aria-label="누가 냈나요?"></div>
+    <div class="seg who paid" role="radiogroup" aria-label="누가 냈나요?"></div>
+    <div class="field-l for-l">누구 몫인가요?</div>
+    <div class="seg who for" role="radiogroup" aria-label="누구 몫인가요?"></div>
+    <div class="field-l">결제</div>
+    <div class="seg who pay" role="radiogroup" aria-label="결제 수단"></div>
     <div class="row end">
       <button class="btn danger" type="button" id="expDel" hidden>삭제</button>
       <span class="spacer"></span>

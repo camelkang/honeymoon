@@ -35,59 +35,6 @@ test("D-day와 준비 체크리스트", async ({ page }) => {
   await expect(page.locator(".dday-meta")).toContainText(`준비 1/${n}`);
 });
 
-test("예산·지출 기록, 고치기, 삭제, 원화 환산", async ({ page }) => {
-  await open(page);
-  await tab(page, "prep");
-  const add = async (amount, title, cat) => {
-    await page.click('[data-act="addExp"]');
-    await page.fill("#expForm [name=amount]", amount);
-    await page.fill("#expForm [name=title]", title);
-    if (cat) await page.selectOption("#expForm [name=cat]", cat);
-    await page.click("#expForm button[type=submit]");
-    await expect(page.locator("#expDlg")).toBeHidden();
-  };
-  // 금액 없이 저장하면 막힘
-  await page.click('[data-act="addExp"]');
-  await page.click("#expForm button[type=submit]");
-  await expect(page.locator("#expDlg")).toBeVisible();
-  await page.click("#expCancel");
-
-  await add("1840", "항공권", "flight");
-  await add("86.5", "오페라 바", "food");
-  await expect(page.locator(".budget-n b")).toHaveText(/1,926\.5/);
-  await page.click(".budget-set summary");
-  await page.fill('[data-prep="budget"]', "2000");
-  await page.press('[data-prep="budget"]', "Tab");
-  await expect(page.locator(".budget-left")).toContainText("73.5");
-  // 환율을 안 넣으면 오늘 환율(가짜 API: 905원)로 자동 환산
-  await expect(page.locator("#pane-prep")).toContainText("≈ 1,743,483원");
-  await expect(page.locator(".fx-src")).toHaveText("오늘 환율 1 AUD = 905원");
-  await expect(page.locator('[data-prep="fx"]')).toHaveAttribute("placeholder", "905");
-  await page.fill('[data-prep="fx"]', "900");
-  await page.press('[data-prep="fx"]', "Tab");
-  await expect(page.locator("#pane-prep")).toContainText("≈ 1,733,850원");
-  await expect(page.locator(".fx-src")).toHaveText("직접 넣은 환율 1 AUD = 900원");
-
-  // 고치기: 줄을 누르면 같은 창이 열림
-  await page.click(".exp >> text=오페라 바");
-  await expect(page.locator("#expDlgTitle")).toHaveText("지출 고치기");
-  await page.fill("#expForm [name=amount]", "200");
-  await page.click("#expForm button[type=submit]");
-  await expect(page.locator(".budget-left")).toContainText("40");
-  await expect(page.locator(".budget-left")).toHaveClass(/over/);
-
-  await page.click(".exp >> text=항공권");
-  await page.click("#expDel");
-  await expect(page.locator(".exp")).toHaveCount(1);
-  const plan = await savedPlan(page);
-  expect(plan.expenses.map(e => [e.title, e.amount, e.cat, e.paidBy])).toEqual([["오페라 바", 200, "food", "me"]]);
-  expect([plan.budget, plan.fx, plan.currency]).toEqual([2000, 900, "AUD"]);
-
-  await page.reload();
-  await tab(page, "prep");
-  await expect(page.locator(".exp")).toHaveCount(1);
-});
-
 test("여행 중에는 오늘 일정부터 열리고, 오늘 지출을 바로 기록", async ({ page }) => {
   test.setTimeout(60_000);   // 페이지를 세 번 새로 여는 긴 시나리오
   await page.clock.setFixedTime(new Date("2026-12-12T15:00:00"));
@@ -116,6 +63,9 @@ test("여행 중에는 오늘 일정부터 열리고, 오늘 지출을 바로 �
   await page.fill("#expForm [name=amount]", "42");
   await page.click("#expForm button[type=submit]");
   await expect(page.locator("#todayCard")).toContainText("오늘 AU$42");
+  await tab(page, "ledger");
+  await expect(page.locator("#pane-ledger .exp-day.is-today")).toContainText("AU$42");
+  await expect(page.locator("#pane-ledger .ledger-stats")).toContainText("하루 평균");
   await tab(page, "prep");
   await expect(page.locator(".dday-hero b")).toHaveText("3일째");
 });

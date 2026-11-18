@@ -118,7 +118,7 @@ textarea { width: 100%; resize: vertical; min-height: 44px; }
 
 .tabs {
   position: absolute; z-index: 30; left: 0; right: 0; bottom: 0; height: var(--nav-h);
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--surface);
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--surface);
   border-top: 1px solid var(--line); padding: 6px 4px env(safe-area-inset-bottom);
 }
 .tabs button {
@@ -170,7 +170,7 @@ textarea { width: 100%; resize: vertical; min-height: 44px; }
   .account-btn .lbl { display: inline; }
   .tabs {
     position: relative; grid-column: 1; grid-row: 2; height: auto; border-top: 0; padding: 6px 16px 10px;
-    grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;
+    grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px;
   }
   .tabs button { flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 2px; border-radius: 14px; min-height: 40px; color: var(--ink-2); }
   .tabs button svg { width: 18px; height: 18px; }
@@ -445,6 +445,29 @@ body.gmode .g-only { display: revert !important; }
 .exp .txt b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .exp .txt span { font-size: 12px; color: var(--ink-3); }
 .exp .amt { font-variant-numeric: tabular-nums; font-size: 14.5px; }
+
+/* ===== 가계부 탭 ===== */
+.amt-col { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.amt-col small { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.exp.settle-row .txt b { color: var(--brand); }
+.exp-day { padding-top: 8px; }
+.exp-day + .exp-day { border-top: 1px dashed var(--line); margin-top: 4px; }
+.exp-day-h { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); padding: 2px 2px 2px; }
+.exp-day-h .sub { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.exp-day-h .pill { background: var(--love); color: #fff; font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 999px; }
+.exp-filter { padding-top: 0; }
+.seg.who-filter { margin: 8px 0 4px; }
+.seg.who-filter button { min-height: 32px; font-size: 13px; }
+.filter-sum b { color: var(--ink); }
+.ledger-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.ledger-stats div { background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 10px; display: flex; flex-direction: column; }
+.ledger-stats b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.ledger-stats b.over { color: var(--love); }
+.ledger-stats span { font-size: 11.5px; color: var(--ink-3); }
+.settle .btn { margin-top: 8px; }
+.hint.warn { color: var(--love); }
+.ledger-mini .btn.block { width: 100%; justify-content: center; margin-top: 12px; }
+.form .seg.who.cur { margin: 0; }
 .ck-add { display: flex; gap: 6px; margin-bottom: 6px; }
 .ck-add input { flex: 1; min-width: 0; }
 .ck-add select { width: auto; max-width: 120px; font-size: 13px; }

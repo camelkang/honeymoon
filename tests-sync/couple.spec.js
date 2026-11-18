@@ -84,15 +84,30 @@ test("커플 연결 → 실시간 공동 편집 → 권한 → 연결 해제", a
 
   // 4-3) 준비: 민지가 낸 돈은 준호 화면에 반반 정산으로, 준호가 체크한 준비물은 민지 화면에 "준호 완료"로
   await A.page.click(".tabs [data-tab=prep]");
-  await A.page.click('[data-act="addExp"]');
+  await A.page.click('#pane-prep [data-act="addExp"]');
   await A.page.fill("#expForm [name=amount]", "300");
   await A.page.fill("#expForm [name=title]", "투어 예약");
   await A.page.click("#expForm button[type=submit]");
   await A.page.click('[data-act="ckTemplate"]');
   await B.page.click(".tabs [data-tab=prep]");
-  await expect(B.page.locator(".settle")).toContainText("내가 민지에게", { timeout: 20_000 });
-  await expect(B.page.locator(".settle")).toContainText("150");
-  await expect(A.page.locator(".settle")).toContainText("준호이(가) 나에게");
+  await expect(B.page.locator("#pane-prep .settle")).toContainText("내가 민지에게", { timeout: 20_000 });
+  await expect(B.page.locator("#pane-prep .settle")).toContainText("150");
+  await expect(A.page.locator("#pane-prep .settle")).toContainText("준호이(가) 나에게");
+  // 가계부: 준호 몫으로 민지가 낸 50은 준호가 전부 부담 → 150 + 50 = 200, 정산 완료로 기록하면 0
+  await A.page.click(".tabs [data-tab=ledger]");
+  await A.page.click('#pane-ledger [data-act="addExp"] >> nth=0');
+  await A.page.fill("#expForm [name=amount]", "50");
+  await A.page.fill("#expForm [name=title]", "준호 기념품");
+  await A.page.locator("#expForm .for .seg-opt", { hasText: "준호만" }).click();
+  await A.page.click("#expForm button[type=submit]");
+  await B.page.click(".tabs [data-tab=ledger]");
+  await expect(B.page.locator("#pane-ledger .settle")).toContainText("200", { timeout: 20_000 });
+  await expect(B.page.locator("#pane-ledger .exp", { hasText: "준호 기념품" })).toContainText("나 몫");
+  await B.page.click('#pane-ledger [data-act="settleDone"]');
+  await expect(B.page.locator("#pane-ledger .settle")).toContainText("정산할 돈이 없어요");
+  await expect(A.page.locator("#pane-ledger .settle")).toContainText("정산할 돈이 없어요", { timeout: 20_000 });
+  await expect(A.page.locator("#pane-ledger .settle-row")).toContainText("준호 → 나");
+  await B.page.click(".tabs [data-tab=prep]");
   await expect(B.page.locator(".ck").first()).toBeVisible({ timeout: 20_000 });
   await B.page.locator(".ck", { hasText: "여행자 보험" }).locator(".ck-box").click();
   await expect(A.page.locator(".ck", { hasText: "여행자 보험" })).toContainText("준호 완료", { timeout: 20_000 });

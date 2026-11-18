@@ -64,7 +64,7 @@ test("새 여행지: 그 나라 통화와 맞춤 준비물로 시작", async ({ 
   await expect(page).toHaveTitle(/파리/);
   await expect(page.locator("#list .place").first()).toBeVisible();
   await page.click(".tabs [data-tab=prep]");
-  await page.click('[data-act="addExp"]');
+  await page.click('#pane-prep [data-act="addExp"]');
   await expect(page.locator("#expCur")).toHaveText("EUR");
   await page.click("#expCancel");
   await page.click('[data-act="ckTemplate"]');

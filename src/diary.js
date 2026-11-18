@@ -1,6 +1,7 @@
 import { icon } from "./icons.js";
 import { ME, PARTNER, nameOf } from "./pick.js";
-import { money, todayStr, totals } from "./prep.js";
+import { money, totals } from "./ledger.js";
+import { todayStr } from "./prep.js";
 import { dayLabel } from "./render.js";
 import { byId, dateOfDay, esc, km, save, state } from "./store.js";
 

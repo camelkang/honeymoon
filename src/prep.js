@@ -4,13 +4,14 @@ import { renderCityBar } from "./cities.js";
 import { recapHtml } from "./diary.js";
 import { icon } from "./icons.js";
 import { offlineCardHtml } from "./offline.js";
-import { ME, PARTNER, nameOf } from "./pick.js";
+import { inBase, ledgerMiniHtml, money, renderLedger, spending } from "./ledger.js";
+import { ME, nameOf } from "./pick.js";
 import { dayLabel, renderDays } from "./render.js";
 import { CITY, allCities, app, byId, dateOfDay, esc, gQuery, save, state } from "./store.js";
 import { hasTrip, segments, tripDates } from "./trip.js";
 import { weatherChip } from "./weather.js";
 
-// 준비 탭: D-day, 함께 쓰는 예산·지출(누가 냈는지, 반반 정산), 출발 전 체크리스트
+// 준비 탭: D-day, 가계부 요약(자세한 건 가계부 탭 ledger.js), 출발 전 체크리스트
 // 그리고 여행 중 "오늘" 카드(일정 탭 맨 위)
 
 /* ---------- 날짜 ---------- */
@@ -34,70 +35,7 @@ export function tripDay() {
   return k < 0 ? null : k;
 }
 
-/* ---------- 돈 ---------- */
-export const CURRENCIES = { AUD: "호주 달러", KRW: "원", USD: "미국 달러", JPY: "엔", EUR: "유로", IDR: "루피아", VND: "동", NZD: "뉴질랜드 달러", GBP: "파운드", THB: "바트", MXN: "멕시코 페소", MVR: "몰디브 루피야" };
-export const EXP_CATS = {
-  flight: { label: "항공",     icon: "plane",    color: "#1c7ed6" },
-  stay:   { label: "숙소",     icon: "bed",      color: "#7048e8" },
-  food:   { label: "식비",     icon: "utensils", color: "#c2255c" },
-  move:   { label: "교통",     icon: "tram",     color: "#0b7285" },
-  fun:    { label: "관광·체험", icon: "sparkles", color: "#e8590c" },
-  shop:   { label: "쇼핑",     icon: "bag",      color: "#d6336c" },
-  etc:    { label: "기타",     icon: "receipt",  color: "#868e96" },
-};
-export function money(n, cur = state.currency || "AUD") {
-  const frac = ["KRW", "JPY", "VND", "IDR"].includes(cur) || !((n || 0) % 1) ? 0 : 2;   // 소수점은 센트가 있을 때만
-  try { return new Intl.NumberFormat("ko-KR", { style: "currency", currency: cur, minimumFractionDigits: frac, maximumFractionDigits: frac }).format(n || 0); }
-  catch (e) { return `${Math.round(n || 0).toLocaleString()} ${cur}`; }
-}
-/* ---------- 환율: 직접 넣은 값이 없으면 오늘 환율을 자동으로 (무료 API, 반나절 캐시) ---------- */
-const FX_KEY = "fx-cache-v1";
-let fxCache = {};
-try { fxCache = JSON.parse(localStorage.getItem(FX_KEY)) || {}; } catch (e) {}
-const fxLoading = new Set(), fxFailed = {};
-export async function loadFx(cur) {
-  if (!cur || cur === "KRW" || fxLoading.has(cur) || Date.now() - (fxFailed[cur] || 0) < 10 * 60e3) return;
-  const c = fxCache[cur];
-  if (c && Date.now() - c.at < 12 * 3600e3) return;
-  fxLoading.add(cur);
-  try {
-    let rate = null, date = "";
-    try {
-      const j = await (await fetch(`https://open.er-api.com/v6/latest/${cur}`)).json();
-      if (j.result === "success" && j.rates && j.rates.KRW) { rate = j.rates.KRW; date = (j.time_last_update_utc || "").slice(5, 16); }
-    } catch (e) {}
-    if (!rate) {   // 예비: 유럽중앙은행 기준 (동·루피야 등 일부 통화는 없음)
-      const j = await (await fetch(`https://api.frankfurter.app/latest?from=${cur}&to=KRW`)).json();
-      if (j.rates && j.rates.KRW) { rate = j.rates.KRW; date = j.date || ""; }
-    }
-    if (rate) {
-      fxCache[cur] = { rate, date, at: Date.now() };
-      try { localStorage.setItem(FX_KEY, JSON.stringify(fxCache)); } catch (e) {}
-      if ((state.currency || "AUD") === cur) renderPrep();
-    } else fxFailed[cur] = Date.now();
-  } catch (e) { fxFailed[cur] = Date.now(); } finally { fxLoading.delete(cur); }
-}
-export const autoFx = cur => (fxCache[cur] || {}).rate || 0;
-export const fxRate = () => state.fx > 0 ? state.fx : autoFx(state.currency || "AUD");
-const fmtRate = r => r >= 100 ? Math.round(r).toLocaleString("ko-KR") : r >= 1 ? r.toFixed(1) : r.toFixed(3);
-const won = n => fxRate() > 0 && state.currency !== "KRW" ? `≈ ${Math.round(n * fxRate()).toLocaleString("ko-KR")}원` : "";
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-
-export function totals() {
-  const ex = state.expenses || [];
-  const sum = ex.reduce((a, e) => a + (+e.amount || 0), 0);
-  const byCat = {};
-  ex.forEach(e => { byCat[e.cat || "etc"] = (byCat[e.cat || "etc"] || 0) + (+e.amount || 0); });
-  const paid = who => ex.filter(e => e.paidBy === who).reduce((a, e) => a + (+e.amount || 0), 0);
-  return { sum, byCat, mine: paid(ME), theirs: PARTNER ? paid(PARTNER) : 0 };
-}
-// 각자 낸 돈을 반반으로 맞추려면 누가 누구에게 얼마를 보내면 되는지 (같이 낸 돈은 빼고)
-export function settle() {
-  const t = totals();
-  const half = (t.mine - t.theirs) / 2;
-  if (!PARTNER || Math.abs(half) < 0.005) return null;
-  return half > 0 ? { from: PARTNER, to: ME, amount: half } : { from: ME, to: PARTNER, amount: -half };
-}
 
 /* ---------- 체크리스트 기본 목록 ---------- */
 // due: 출발 며칠 전까지 하면 좋은지
@@ -120,14 +58,10 @@ const groupOf = due => GROUPS.find(([d]) => (due ?? -1) >= d) || GROUPS[GROUPS.l
 
 /* ---------- 그리기 ---------- */
 export function renderPrep() {
+  renderLedger();   // 가계부 탭도 같이 (지출·예산이 바뀌면 둘 다 바뀜)
   const el = document.getElementById("pane-prep"); if (!el) return;
-  loadFx(state.currency || "AUD");
-  const setOpen = !!el.querySelector(".budget-set[open]");   // 다시 그려도 펼친 설정은 그대로
   const guideOpen = new Set([...el.querySelectorAll(".guide details[open]")].map(d => d.dataset.g));
-  const left = daysLeft(), today = tripDay();
-  const t = totals(), budget = +state.budget || 0, cur = state.currency || "AUD";
-  const pct = budget ? Math.min(100, Math.round(t.sum / budget * 100)) : 0;
-  const s = settle();
+  const left = daysLeft();
   const list = state.checklist || [];
   const doneN = list.filter(c => c.done).length;
 
@@ -142,19 +76,6 @@ export function renderPrep() {
         <div class="dday-meta">${esc(startLabel)} 출발 · ${total}일<br>${route ? `${esc(route)}<br>` : ""}
         ${list.length ? `준비 ${doneN}/${list.length}` : ""}</div>
       </div>`;
-
-  const bars = Object.entries(EXP_CATS).filter(([k]) => t.byCat[k]).map(([k, c]) =>
-    `<span style="flex:${t.byCat[k]};background:${c.color}" title="${c.label} ${money(t.byCat[k])}"></span>`).join("");
-  const legend = Object.entries(EXP_CATS).filter(([k]) => t.byCat[k]).map(([k, c]) =>
-    `<span class="lg"><i style="background:${c.color}"></i>${c.label} ${money(t.byCat[k])}</span>`).join("");
-  const rows = [...(state.expenses || [])].sort((a, b) => (b.at || 0) - (a.at || 0)).map(e => {
-    const c = EXP_CATS[e.cat] || EXP_CATS.etc;
-    const who = nameOf(e.paidBy);
-    return `<div class="exp" data-exp="${esc(e.id)}" style="--c:${c.color}">
-      <span class="cat-ico">${icon(c.icon, 18)}</span>
-      <div class="txt"><b>${esc(e.title || c.label)}</b><span>${[c.label, e.day != null && state.days[e.day] ? `Day ${e.day + 1}` : "", who ? `${esc(who)} 냄` : ""].filter(Boolean).join(" · ")}</span></div>
-      <b class="amt">${money(e.amount)}</b></div>`;
-  }).join("");
 
   const groups = GROUPS.map(([d, label]) => {
     const items = list.filter(c => groupOf(c.due)[0] === d).sort((a, b) => (b.due ?? -1) - (a.due ?? -1) || (a.at || 0) - (b.at || 0));
@@ -172,28 +93,7 @@ export function renderPrep() {
   el.innerHTML = `${hero}
     ${recapHtml()}
     ${bookingsCardHtml()}
-    <section class="card">
-      <div class="card-h">${icon("wallet", 18)}<b>예산·지출</b>
-        <button class="btn sm primary" data-act="addExp">${icon("plus", 15)}지출</button></div>
-      <div class="budget">
-        <div class="budget-n"><b>${money(t.sum)}</b><span>${budget ? `/ ${money(budget)}` : "썼어요"}</span></div>
-        ${budget ? `<div class="budget-left ${t.sum > budget ? "over" : ""}">${t.sum > budget ? `${money(t.sum - budget)} 초과` : `${money(budget - t.sum)} 남음`}</div>` : ""}
-      </div>
-      ${t.sum > 0 && won(t.sum) ? `<p class="hint">${won(t.sum)} <small class="fx-src">${state.fx > 0 ? `직접 넣은 환율 1 ${cur} = ${fmtRate(state.fx)}원` : `오늘 환율 1 ${cur} = ${fmtRate(autoFx(cur))}원`}</small></p>` : ""}
-      ${budget ? `<div class="meter" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>` : ""}
-      ${bars ? `<div class="stack">${bars}</div><div class="legend">${legend}</div>` : ""}
-      ${PARTNER ? `<div class="settle">${icon("users", 16)} ${s ? (s.from === ME ? `내가 <b>${esc(nameOf(s.to))}</b>에게` : `<b>${esc(nameOf(s.from))}</b>이(가) 나에게`) + ` <b>${money(s.amount)}</b> 보내면 반반이에요` : "지금은 반반이 맞아요"}
-        <small>나 ${money(t.mine)} · ${esc(nameOf(PARTNER))} ${money(t.theirs)}</small></div>` : ""}
-      <details class="budget-set" ${setOpen ? "open" : ""}><summary>예산·통화 설정</summary>
-        <div class="row">
-          <label class="field inline"><span>총예산</span><input type="number" min="0" step="1" data-prep="budget" value="${budget || ""}" placeholder="0"></label>
-          <label class="field inline"><span>통화</span><select data-prep="currency">${Object.entries(CURRENCIES).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${k} ${v}</option>`).join("")}</select></label>
-          ${cur !== "KRW" ? `<label class="field inline"><span>1 ${cur} =</span><input type="number" min="0" step="any" data-prep="fx" value="${state.fx || ""}" placeholder="${autoFx(cur) ? fmtRate(autoFx(cur)) : "자동"}"> 원</label>` : ""}
-        </div>
-        ${cur !== "KRW" ? `<p class="hint">${autoFx(cur) ? `비워두면 오늘 환율(${fxCache[cur].date ? esc(fxCache[cur].date) + " 기준" : "자동"})을 써요. 환전한 환율로 계산하고 싶으면 직접 넣어 주세요.` : "비워두면 오늘 환율을 자동으로 불러와요."} <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">환율 출처</a></p>` : ""}
-      </details>
-      <div class="exp-list">${rows || `<p class="muted">아직 기록한 지출이 없어요. 항공·숙소처럼 미리 낸 돈부터 넣어 보세요.</p>`}</div>
-    </section>
+    ${ledgerMiniHtml()}
     <section class="card">
       <div class="card-h">${icon("listChecks", 18)}<b>준비 체크리스트</b><span class="muted">${list.length ? `${doneN}/${list.length}` : ""}</span></div>
       ${list.length ? `<div class="meter thin"><span style="width:${Math.round(doneN / list.length * 100)}%"></span></div>` : ""}
@@ -229,7 +129,7 @@ export function todayCardHtml() {
   const now = new Date(), hm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   // 다음 장소: 시간이 적힌 곳 중 아직 안 지난 첫 곳, 없으면 첫 장소
   const next = stops.find(p => times[p.id] && times[p.id] >= hm) || (stops.some(p => times[p.id]) ? null : stops[0]);
-  const spent = (state.expenses || []).filter(e => e.day === i).reduce((a, e) => a + (+e.amount || 0), 0);
+  const spent = spending().filter(e => e.day === i).reduce((a, e) => a + (inBase(e) || 0), 0);
   // 출발지를 비우면 구글맵이 현재 위치에서 길을 찾음
   const url = next ? "https://www.google.com/maps/dir/?" + new URLSearchParams({ api: "1", destination: gQuery(next), travelmode: state.mode || "transit" }) : null;
   return `<div class="today">
@@ -244,44 +144,10 @@ export function todayCardHtml() {
     </div></div>`;
 }
 
-/* ---------- 지출 입력 창 ---------- */
-function openExp(id, preset = {}) {
-  const dlg = document.getElementById("expDlg"), f = document.getElementById("expForm");
-  const e = id ? (state.expenses || []).find(x => x.id === id) : null;
-  f.reset();
-  dlg.dataset.id = e ? e.id : "";
-  document.getElementById("expDlgTitle").textContent = e ? "지출 고치기" : "지출 기록";
-  document.getElementById("expDel").hidden = !e;
-  f.cat.innerHTML = Object.entries(EXP_CATS).map(([k, c]) => `<option value="${k}">${c.label}</option>`).join("");
-  f.day.innerHTML = `<option value="">여행 전·날짜 없음</option>` + state.days.map((_, i) => `<option value="${i}">${esc(dayLabel(i))}</option>`).join("");
-  const who = [[ME, "나"], ...(PARTNER ? [[PARTNER, nameOf(PARTNER)]] : []), ["both", "같이(공동)"]];
-  f.querySelector(".who").innerHTML = who.map(([v, l], k) => `<label class="seg-opt"><input type="radio" name="paidBy" value="${esc(v)}" ${k === 0 ? "checked" : ""}><span>${esc(l)}</span></label>`).join("");
-  document.getElementById("expCur").textContent = state.currency || "AUD";
-  const v = Object.assign({ cat: "food", day: tripDay() }, preset, e || {});
-  f.title.value = v.title || ""; f.amount.value = v.amount ?? ""; f.cat.value = v.cat;
-  f.day.value = v.day ?? "";
-  const r = f.querySelector(`[name=paidBy][value="${CSS.escape(v.paidBy || ME)}"]`); if (r) r.checked = true;
-  dlg.showModal();
-  f.amount.focus();   // showModal 직후 바로 (지연시키면 이미 입력 중인 칸에서 포커스를 빼앗음)
-}
-function submitExp() {
-  const dlg = document.getElementById("expDlg"), f = document.getElementById("expForm");
-  const amount = parseFloat(f.amount.value);
-  if (!(amount > 0)) { f.amount.focus(); return toast("금액을 넣어 주세요"); }
-  const data = { title: f.title.value.trim(), amount: Math.round(amount * 100) / 100, cat: f.cat.value,
-    paidBy: (f.querySelector("[name=paidBy]:checked") || {}).value || ME, day: f.day.value === "" ? null : +f.day.value };
-  state.expenses = state.expenses || [];
-  const e = state.expenses.find(x => x.id === dlg.dataset.id);
-  if (e) Object.assign(e, data); else state.expenses.push({ id: uid("e"), at: Date.now(), ...data });
-  save(); dlg.close(); renderPrep(); refreshToday();
-}
-function refreshToday() { const el = document.getElementById("todayCard"); if (el) el.innerHTML = todayCardHtml(); }
-
 export function bindPrep() {
   const el = document.getElementById("pane-prep");
   el.addEventListener("click", e => {
-    const t = e.target.closest("[data-act],[data-ck],[data-ckdel],[data-exp]"); if (!t) return;
-    if (t.dataset.act === "addExp") return openExp(null);
+    const t = e.target.closest("[data-act],[data-ck],[data-ckdel]"); if (!t) return;
     if (t.dataset.act === "ckTemplate") {
       state.checklist = (state.checklist || []).concat(TEMPLATE.concat(CITY.prep || []).map(([text, due], k) => ({ id: uid("c"), text: typeof text === "function" ? text() : text, due, done: false, at: Date.now() + k })));
       save(); return renderPrep();
@@ -294,7 +160,6 @@ export function bindPrep() {
       return;
     }
     if (t.dataset.ckdel) { state.checklist = state.checklist.filter(x => x.id !== t.dataset.ckdel); save(); return renderPrep(); }
-    if (t.dataset.exp) return openExp(t.dataset.exp);
   });
   el.addEventListener("submit", e => {
     e.preventDefault();
@@ -305,22 +170,8 @@ export function bindPrep() {
     const input = document.querySelector("#pane-prep .ck-add [name=text]"); if (input) input.focus();
   });
   el.addEventListener("change", e => {
-    const k = e.target.dataset.prep; if (!k) return;
-    const v = e.target.value;
-    if (k === "startDate") state.startDate = v;
-    else if (k === "currency") state.currency = v;
-    else state[k] = Math.max(0, parseFloat(v) || 0);
-    save(); renderPrep();
-    if (k === "startDate") { renderDays(); renderCityBar(); }
+    if (e.target.dataset.prep !== "startDate") return;
+    state.startDate = e.target.value;
+    save(); renderPrep(); renderDays(); renderCityBar();
   });
-  document.getElementById("days").parentElement.addEventListener("click", e => {
-    if (e.target.closest('[data-act="addExpToday"]')) openExp(null, { day: tripDay() });
-  });
-  const dlg = document.getElementById("expDlg");
-  document.getElementById("expForm").addEventListener("submit", e => { e.preventDefault(); submitExp(); });
-  document.getElementById("expCancel").onclick = () => dlg.close();
-  document.getElementById("expDel").onclick = () => {
-    state.expenses = (state.expenses || []).filter(x => x.id !== dlg.dataset.id);
-    save(); dlg.close(); renderPrep(); refreshToday();
-  };
 }

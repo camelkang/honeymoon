@@ -12,7 +12,8 @@ import { API_KEY, createMap, setMap } from "./map.js";
 import { bindOffline } from "./offline.js";
 import { bindOnboard, maybeOnboard } from "./onboard.js";
 import { bindPick, renderPick } from "./pick.js";
-import { bindPrep, renderPrep, todayStr, tripDay } from "./prep.js";
+import { bindLedger, renderLedger } from "./ledger.js";
+import { bindPrep, renderPrep, todayCardHtml, todayStr, tripDay } from "./prep.js";
 import { setupPWA } from "./pwa.js";
 import { buildMarkers, filter, openPlace, renderChips, renderDays } from "./render.js";
 import { bindSheet, onTabShown, showTab } from "./sheet.js";
@@ -32,14 +33,15 @@ function start(adapter) {
   bindOffline(toast);
   bindDiary((kind, id) => { if (kind === "rating") openPlace(id, false); else { renderDays(); renderPrep(); } });
   bindTrip();
-  bindPrep(); renderPrep();
+  bindPrep(); bindLedger({ showTab, todayCard: todayCardHtml }); renderPrep();
   bindBookings(() => { renderPrep(); renderDays(); });
   onTabShown("prep", renderPrep);
+  onTabShown("ledger", renderLedger);
   bindOnboard();
   if (maybeOnboard()) return;
   // 홈 화면 바로가기(?tab=plan 등)로 열면 그 탭부터
   const want = new URLSearchParams(location.search).get("tab");
-  if (["places", "pick", "plan", "stays", "prep"].includes(want)) return showTab(want);
+  if (["places", "pick", "plan", "stays", "ledger", "prep"].includes(want)) return showTab(want);
   // 여행 중이면 하루에 한 번, 앱을 열 때 오늘 일정부터 보여줌 (여러 도시 일정이면 오늘 머무는 도시로)
   try {
     const today = todayStr();
